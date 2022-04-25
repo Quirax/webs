@@ -1,6 +1,8 @@
 import React from 'react'
 import classNames from 'classnames'
 
+const COMMON_PROPS = React.createContext()
+
 class Component extends React.Component {
     constructor() {
         super()
@@ -13,11 +15,24 @@ class Component extends React.Component {
 
     render() {
         return (
-            <this.component className={this.getClassName()}>
-                {this.props.children}
-            </this.component>
+            <COMMON_PROPS.Consumer>
+                {(value) => {
+                    this.props = { ...this.props, ...value }
+                    return (
+                        <this.component className={this.getClassName()}>
+                            {this.props.children}
+                        </this.component>
+                    )
+                }}
+            </COMMON_PROPS.Consumer>
         )
     }
+}
+
+function CommonProps({ children, ...props }) {
+    return (
+        <COMMON_PROPS.Provider value={props}>{children}</COMMON_PROPS.Provider>
+    )
 }
 
 class Header extends Component {
@@ -67,4 +82,4 @@ class Article extends Component {
 }
 
 export default Component
-export { Header, Aside, Main, Flex, Footer, Article }
+export { Header, Aside, Main, Flex, Footer, Article, CommonProps }
