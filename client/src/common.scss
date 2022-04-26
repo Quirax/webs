@@ -1,2 +1,113 @@
+$unit: 16px;
 $height: 64px;
-$border: 1px solid black;
+$border: (
+    'normal': 1px solid black,
+);
+
+$justify: ('space-between');
+$align: ('center');
+$direction: ('column');
+$border-position: ('left', 'right', 'top', 'bottom', '');
+$float: ('left', 'right');
+
+$heights: (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'full');
+$widths: (
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    'full'
+);
+
+.flex {
+    display: flex;
+
+    @each $j in $justify {
+        &.justify-#{$j} {
+            justify-content: #{$j};
+        }
+    }
+
+    @each $a in $align {
+        &.align-#{$a} {
+            align-items: #{$a};
+        }
+    }
+
+    @each $d in $direction {
+        &.direction-#{$d} {
+            flex-direction: #{$d};
+        }
+    }
+}
+
+.fixsize {
+    flex: none;
+}
+
+@each $f in $float {
+    .float-#{$f} {
+        float: #{$f};
+    }
+}
+
+@each $h in $heights {
+    @if $h == 'full' {
+        .height-full {
+            height: 100%;
+        }
+    } @else {
+        .height-#{$h} {
+            height: $h * $unit;
+        }
+    }
+}
+
+@each $w in $widths {
+    @if $w == 'full' {
+        .width-full {
+            width: 100%;
+        }
+    } @else {
+        .width-#{$w} {
+            width: $w * $unit;
+        }
+    }
+}
+
+@each $n, $b in $border {
+    @each $p in $border-position {
+        @if $p == '' {
+            .border-#{$n} {
+                border: $b;
+            }
+        } @else {
+            .border-#{$n}-#{$p} {
+                border-#{$p}: $b;
+            }
+        }
+    }
+}
+
+ul,
+ol {
+    padding: 0;
+    list-style: none;
+    margin: 0;
+}
