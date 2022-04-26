@@ -1,51 +1,32 @@
-$unit: 16px;
-$height: 64px;
+$unit: 8px;
 $border: (
     'normal': 1px solid black,
 );
 
-$justify: ('space-between');
-$align: ('center');
+$flex-justify: ('space-between', 'center');
+$flex-align: ('center');
 $direction: ('column');
-$border-position: ('left', 'right', 'top', 'bottom', '');
+$sides: ('left', 'right', 'top', 'bottom', '');
 $float: ('left', 'right');
+$align: ('center', 'right');
 
-$heights: (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'full');
-$widths: (
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    7,
-    8,
-    9,
-    10,
-    11,
-    12,
-    13,
-    14,
-    15,
-    16,
-    17,
-    18,
-    19,
-    20,
-    'full'
-);
+$units: ();
+@for $i from 1 through 40 {
+    $units: append($units, $i);
+}
+$units: append($units, 'full');
 
 .flex {
     display: flex;
 
-    @each $j in $justify {
-        &.justify-#{$j} {
+    @each $j in $flex-justify {
+        &.flex-justify-#{$j} {
             justify-content: #{$j};
         }
     }
 
-    @each $a in $align {
-        &.align-#{$a} {
+    @each $a in $flex-align {
+        &.flex-align-#{$a} {
             align-items: #{$a};
         }
     }
@@ -67,32 +48,45 @@ $widths: (
     }
 }
 
-@each $h in $heights {
+@each $a in $align {
+    .align-#{$a} {
+        text-align: #{$a};
+    }
+}
+
+@each $h in $units {
     @if $h == 'full' {
         .height-full {
             height: 100%;
         }
-    } @else {
-        .height-#{$h} {
-            height: $h * $unit;
-        }
-    }
-}
-
-@each $w in $widths {
-    @if $w == 'full' {
         .width-full {
             width: 100%;
         }
     } @else {
-        .width-#{$w} {
-            width: $w * $unit;
+        $uv: $h * $unit;
+
+        .height-#{$h} {
+            height: $uv;
+        }
+        .width-#{$h} {
+            width: $uv;
+        }
+        @each $p in $sides {
+            @if $p == '' {
+                .padding-#{$h} {
+                    padding: $uv;
+                }
+            } @else {
+                .padding-#{$h}-#{$p} {
+                    padding-#{$p}: $uv;
+                }
+            }
         }
     }
 }
 
 @each $n, $b in $border {
-    @each $p in $border-position {
+    @each $p in $sides {
         @if $p == '' {
             .border-#{$n} {
                 border: $b;

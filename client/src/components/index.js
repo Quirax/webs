@@ -3,39 +3,67 @@ import classNames from 'classnames'
 
 const COMMON_PROPS = React.createContext()
 
-class Component extends React.Component {
+export default class Component extends React.Component {
     constructor() {
         super()
         this.component = ''
     }
 
     getClassName() {
-        console.log(this.props)
+        let {
+            className,
+            flex,
+            'flex-justify': justify,
+            'flex-align': flexAlign,
+            direction,
+            height,
+            width,
+            fixsize,
+            float,
+            border,
+            of: componentOf,
+            'border-bottom': borderBottom,
+            'border-top': borderTop,
+            'border-left': borderLeft,
+            'border-right': borderRight,
+            padding,
+            'padding-bottom': paddingBottom,
+            'padding-top': paddingTop,
+            'padding-left': paddingLeft,
+            'padding-right': paddingRight,
+            margin,
+            'margin-bottom': marginBottom,
+            'margin-top': marginTop,
+            'margin-left': marginLeft,
+            'margin-right': marginRight,
+            align,
+            ...args
+        } = this.props
+
+        this.args = args
 
         return classNames(
-            this.props.className,
-            this.props.of,
-            this.props.flex && 'flex',
-            this.props.flex &&
-                this.props.justify &&
-                'justify-' + this.props.justify,
-            this.props.flex && this.props.align && 'align-' + this.props.align,
-            this.props.flex &&
-                this.props.direction &&
-                'direction-' + this.props.direction,
-            this.props.height && 'height-' + this.props.height,
-            this.props.width && 'width-' + this.props.width,
-            this.props.fixsize && 'fixsize',
-            this.props.float && 'float-' + this.props.float,
-            this.props['border-bottom'] &&
-                'border-' + this.props['border-bottom'] + '-bottom',
-            this.props['border-top'] &&
-                'border-' + this.props['border-top'] + '-top',
-            this.props['border-left'] &&
-                'border-' + this.props['border-left'] + '-left',
-            this.props['border-right'] &&
-                'border-' + this.props['border-right'] + '-right',
-            this.props.border && 'border-' + this.props.border
+            className,
+            componentOf,
+            flex && 'flex',
+            flex && justify && 'flex-justify-' + justify,
+            flex && flexAlign && 'flex-align-' + flexAlign,
+            flex && direction && 'direction-' + direction,
+            height && 'height-' + height,
+            width && 'width-' + width,
+            fixsize && 'fixsize',
+            float && 'float-' + float,
+            borderBottom && 'border-' + borderBottom + '-bottom',
+            borderTop && 'border-' + borderTop + '-top',
+            borderLeft && 'border-' + borderLeft + '-left',
+            borderRight && 'border-' + borderRight + '-right',
+            border && 'border-' + border,
+            paddingBottom && 'padding-' + paddingBottom + '-bottom',
+            paddingTop && 'padding-' + paddingTop + '-top',
+            paddingLeft && 'padding-' + paddingLeft + '-left',
+            paddingRight && 'padding-' + paddingRight + '-right',
+            padding && 'padding-' + padding,
+            align && 'align-' + align
         )
     }
 
@@ -45,7 +73,9 @@ class Component extends React.Component {
                 {(value) => {
                     this.props = { ...this.props, ...value }
                     return (
-                        <this.component className={this.getClassName()}>
+                        <this.component
+                            className={this.getClassName()}
+                            {...this.args}>
                             {this.props.children}
                         </this.component>
                     )
@@ -55,53 +85,64 @@ class Component extends React.Component {
     }
 }
 
-function CommonProps({ children, ...props }) {
+export function CommonProps({ children, ...props }) {
     return (
         <COMMON_PROPS.Provider value={props}>{children}</COMMON_PROPS.Provider>
     )
 }
 
-class Header extends Component {
+export class Header extends Component {
     constructor() {
         super()
         this.component = 'header'
     }
 }
 
-class Aside extends Component {
+export class Aside extends Component {
     constructor() {
         super()
         this.component = 'aside'
     }
 }
 
-class Main extends Component {
+export class Main extends Component {
     constructor() {
         super()
         this.component = 'main'
     }
 }
 
-class Div extends Component {
+export class Div extends Component {
     constructor() {
         super()
         this.component = 'div'
     }
 }
 
-class Footer extends Component {
+export class Footer extends Component {
     constructor() {
         super()
         this.component = 'footer'
     }
 }
 
-class Article extends Component {
+export class Article extends Component {
     constructor() {
         super()
         this.component = 'article'
     }
 }
 
-export default Component
-export { Header, Aside, Main, Div, Footer, Article, CommonProps }
+export class Ul extends Component {
+    constructor() {
+        super()
+        this.component = 'Ul'
+    }
+}
+
+export class Li extends Component {
+    constructor() {
+        super()
+        this.component = 'Li'
+    }
+}
