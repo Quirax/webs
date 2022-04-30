@@ -1,20 +1,20 @@
-$unit: 8px;
 $border: (
     'normal': 1px solid black,
 );
+$background: (
+    'white': white,
+    'black': black,
+);
 
-$flex-justify: ('space-between', 'center');
+$flex-justify: ('space-between', 'center', 'space-around');
 $flex-align: ('center');
 $direction: ('column');
 $sides: ('left', 'right', 'top', 'bottom', '');
 $float: ('left', 'right');
 $align: ('center', 'right');
-
-$units: ();
-@for $i from 1 through 40 {
-    $units: append($units, $i);
-}
-$units: append($units, 'full');
+$position: ('relative', 'absolute', 'fixed', 'static');
+$display: ('inline-block', 'table', 'table-cell');
+$vertical-align: ('middle');
 
 .flex {
     display: flex;
@@ -38,6 +38,10 @@ $units: append($units, 'full');
     }
 }
 
+.grid {
+    display: grid;
+}
+
 .fixsize {
     flex: none;
 }
@@ -54,34 +58,27 @@ $units: append($units, 'full');
     }
 }
 
-@each $h in $units {
-    @if $h == 'full' {
-        .height-full {
-            height: 100%;
-        }
-        .width-full {
-            width: 100%;
-        }
-    } @else {
-        $uv: $h * $unit;
+@each $va in $vertical-align {
+    .align-#{$va} {
+        vertical-align: #{$va};
+    }
+}
 
-        .height-#{$h} {
-            height: $uv;
-        }
-        .width-#{$h} {
-            width: $uv;
-        }
-        @each $p in $sides {
-            @if $p == '' {
-                .padding-#{$h} {
-                    padding: $uv;
-                }
-            } @else {
-                .padding-#{$h}-#{$p} {
-                    padding-#{$p}: $uv;
-                }
-            }
-        }
+@each $d in $display {
+    .display-#{$d} {
+        display: #{$d};
+    }
+}
+
+@each $p in $position {
+    .position-#{$p} {
+        position: #{$p};
+    }
+}
+
+@each $n, $b in $background {
+    .background-#{$n} {
+        background: #{$b};
     }
 }
 

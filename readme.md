@@ -11,3 +11,8 @@
     -   [StackOverflow - Dynamic tag name in React JSX](https://stackoverflow.com/questions/33471880/dynamic-tag-name-in-react-jsx)
     -   [StackOverflow - Passing object as props to jsx](https://stackoverflow.com/questions/49081549/passing-object-as-props-to-jsx)
 -   [StackOverflow - How can I merge properties of two JavaScript objects dynamically?](https://stackoverflow.com/questions/171251/how-can-i-merge-properties-of-two-javascript-objects-dynamically)
+-   [How to set iframe content of a react component](https://stackoverflow.com/questions/34743264/how-to-set-iframe-content-of-a-react-component)
+-   [Maintain the aspect ratio of a div with CSS](https://stackoverflow.com/questions/1495407/maintain-the-aspect-ratio-of-a-div-with-css)
+-   CSS
+    -   [수평/수직 중앙 정렬](https://poiemaweb.com/css3-centering)
+    -   [트랜스폼](https://poiemaweb.com/css3-transform)
