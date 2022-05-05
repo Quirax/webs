@@ -16,3 +16,4 @@
 -   CSS
     -   [수평/수직 중앙 정렬](https://poiemaweb.com/css3-centering)
     -   [트랜스폼](https://poiemaweb.com/css3-transform)
+    -   [CSS Triangle](https://css-tricks.com/snippets/css/css-triangle/)

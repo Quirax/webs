@@ -36,6 +36,14 @@ export default class Component extends React.Component {
                 'aspect-ratio': aspectRatio,
                 'max-height': maxHeight,
                 'max-width': maxWidth,
+                'text-decoration': textDecoration,
+                'flex-justify': justifyContent,
+                'flex-align': alignItems,
+                'flex-direction': flexDirection,
+                align: textAlign,
+                float,
+                position,
+                cursor,
                 ...args
             } = this.args
 
@@ -61,6 +69,13 @@ export default class Component extends React.Component {
                 aspectRatio,
                 maxHeight,
                 maxWidth,
+                textDecoration,
+                justifyContent,
+                alignItems,
+                flexDirection,
+                float,
+                position,
+                cursor,
                 ...style,
             }
         }
@@ -70,14 +85,9 @@ export default class Component extends React.Component {
                 className,
                 flex,
                 grid,
-                'flex-justify': justify,
-                'flex-align': flexAlign,
-                direction,
                 fixsize,
-                float,
                 of: componentOf,
                 align,
-                position,
                 border,
                 'border-bottom': borderBottom,
                 'border-top': borderTop,
@@ -86,6 +96,11 @@ export default class Component extends React.Component {
                 'vertical-align': verticalAlign,
                 background,
                 display,
+                'inline-block': inlineBlock,
+                table,
+                arrow,
+                hover,
+                selected,
                 ...args
             } = this.args
 
@@ -94,23 +109,22 @@ export default class Component extends React.Component {
             return classNames(
                 className,
                 componentOf,
+                inlineBlock && 'inline-block',
+                table && 'table',
+                grid && 'grid',
                 flex && 'flex',
-                flex && justify && 'flex-justify-' + justify,
-                flex && flexAlign && 'flex-align-' + flexAlign,
-                flex && direction && 'direction-' + direction,
                 fixsize && 'fixsize',
-                float && 'float-' + float,
                 borderBottom && 'border-' + borderBottom + '-bottom',
                 borderTop && 'border-' + borderTop + '-top',
                 borderLeft && 'border-' + borderLeft + '-left',
                 borderRight && 'border-' + borderRight + '-right',
                 border && 'border-' + border,
-                align && 'align-' + align,
-                position && 'position-' + position,
                 background && 'background-' + background,
-                display && 'display-' + display,
+                align && 'align-' + align,
                 verticalAlign && 'align-' + verticalAlign,
-                grid && 'grid'
+                arrow && 'arrow-' + arrow,
+                hover && 'hover-' + (hover || 'hover'),
+                selected && 'background-selected'
             )
         }
     }
@@ -119,7 +133,7 @@ export default class Component extends React.Component {
         return (
             <COMMON_PROPS.Consumer>
                 {(value) => {
-                    this.args = { ...this.props, ...value }
+                    this.args = { ...this.args, ...this.props, ...value }
                     let { referrer, ...args } = this.args
                     this.args = args
                     return (
@@ -217,5 +231,58 @@ export class Canvas extends Component {
     constructor() {
         super()
         this.component = 'canvas'
+    }
+}
+
+export class Menu extends Component {
+    constructor() {
+        super()
+        this.component = 'menu'
+    }
+}
+
+export class Span extends Component {
+    constructor() {
+        super()
+        this.component = 'span'
+    }
+}
+
+export class Form extends Component {
+    constructor() {
+        super()
+        this.component = 'form'
+        this.args = {
+            onSubmit: (e) => {
+                e.preventDefault()
+                return false
+            },
+            onAbort: (e) => {
+                e.preventDefault()
+                return false
+            },
+        }
+        // return <form on
+    }
+}
+
+export class P extends Component {
+    constructor() {
+        super()
+        this.component = 'p'
+    }
+}
+
+export class Button extends Component {
+    constructor() {
+        super()
+        this.component = 'button'
+    }
+}
+
+export class Dialog extends Component {
+    constructor() {
+        super()
+        this.component = 'dialog'
     }
 }

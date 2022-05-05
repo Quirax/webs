@@ -11,6 +11,10 @@ import {
     Li,
     Nav,
     Canvas,
+    Form,
+    P,
+    Button,
+    Dialog,
 } from '../components'
 import './index.scss'
 
@@ -50,7 +54,7 @@ class Broadcast extends React.Component {
 
     render() {
         return (
-            <CommonProps of='broadcast'>
+            <CommonProps>
                 <Header
                     flex
                     fixsize
@@ -70,29 +74,44 @@ class Broadcast extends React.Component {
                 <Div flex height='calc(100% - 65px)' width='100%'>
                     <Nav
                         flex
-                        direction='column'
+                        flex-direction='column'
                         flex-justify='space-between'
                         fixsize
                         width='256'
                         border-right='normal'>
                         <Ul>
-                            <Li padding='8' border-bottom='normal'>
-                                목록 1
+                            <Li
+                                padding='8'
+                                border-bottom='normal'
+                                cursor='default'
+                                selected>
+                                Just Chatting
                             </Li>
-                            <Li padding='8' border-bottom='normal'>
-                                목록 2
+                            <Li
+                                padding='8'
+                                border-bottom='normal'
+                                cursor='default'>
+                                ASMR
                             </Li>
-                            <Li padding='8' border-bottom='normal'>
-                                목록 3
+                            <Li
+                                padding='8'
+                                border-bottom='normal'
+                                align='center'
+                                cursor='default'>
+                                장면 추가
                             </Li>
                         </Ul>
                         <Ul>
-                            <Li padding='8' border-top='normal'>
-                                목록 4
+                            <Li
+                                padding='8'
+                                border-top='normal'
+                                align='center'
+                                cursor='default'>
+                                장면 전환 설정
                             </Li>
                         </Ul>
                     </Nav>
-                    <Main flex direction='column' width='100%'>
+                    <Main flex flex-direction='column' width='100%'>
                         <Article
                             position='relative'
                             align='center'
@@ -144,7 +163,7 @@ class Broadcast extends React.Component {
                             border-top='normal'>
                             <Div
                                 flex
-                                direction='column'
+                                flex-direction='column'
                                 flex-justify='center'
                                 padding-left='8'>
                                 <input type='text' defaultValue='방송제목' />
@@ -156,7 +175,7 @@ class Broadcast extends React.Component {
                             </Div>
                             <Div
                                 flex
-                                direction='column'
+                                flex-direction='column'
                                 flex-justify='center'
                                 padding-right='8'
                                 align='right'>
@@ -166,6 +185,75 @@ class Broadcast extends React.Component {
                         </Footer>
                     </Main>
                 </Div>
+                <Dialog
+                    position='fixed'
+                    top='200'
+                    left='200'
+                    border='normal'
+                    background='white'
+                    open>
+                    <Div
+                        display='inline-block'
+                        height='0'
+                        width='0'
+                        arrow='right'
+                        position='absolute'
+                        top='calc(50% - 8px)'
+                        left='-16'
+                        z-index='-1'
+                    />
+                    <Form>
+                        <Div padding='8'>
+                            <P>
+                                이름: <input type='text' />
+                            </P>
+                            <P padding-top='8'>
+                                종류:{' '}
+                                <select>
+                                    <option>이미지</option>
+                                    <option>웹 뷰 (URL)</option>
+                                </select>
+                            </P>
+                        </Div>
+                        <Div
+                            padding='8'
+                            border-top='normal'
+                            border-bottom='normal'>
+                            <P>
+                                파일: <input type='file' />
+                            </P>
+                        </Div>
+                        <Div>
+                            <Button width='50%'>저장</Button>
+                            <Button width='50%'>취소</Button>
+                        </Div>
+                    </Form>
+                </Dialog>
+                <Dialog
+                    position='fixed'
+                    top='100'
+                    left='100'
+                    border='normal'
+                    background='white'
+                    open>
+                    <Div padding='8' hover='hover' cursor='default'>
+                        복제
+                    </Div>
+                    <Div
+                        padding='8'
+                        border-top='normal'
+                        hover='hover'
+                        cursor='default'>
+                        수정
+                    </Div>
+                    <Div
+                        padding='8'
+                        border-top='normal'
+                        hover='hover'
+                        cursor='default'>
+                        삭제
+                    </Div>
+                </Dialog>
             </CommonProps>
         )
     }

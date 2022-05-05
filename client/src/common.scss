@@ -1,41 +1,55 @@
 $border: (
     'normal': 1px solid black,
 );
-$background: (
-    'white': white,
-    'black': black,
+$bc: ( // name: (backgruound, color)
+    'white': (
+        white,
+        black,
+    ),
+    'black': (
+        black,
+        white,
+    ),
+    'selected': (
+        blue,
+        white,
+    ),'hover': (
+        #88f,
+        black,
+    ),
 );
 
-$flex-justify: ('space-between', 'center', 'space-around');
-$flex-align: ('center');
-$direction: ('column');
 $sides: ('left', 'right', 'top', 'bottom', '');
-$float: ('left', 'right');
 $align: ('center', 'right');
-$position: ('relative', 'absolute', 'fixed', 'static');
-$display: ('inline-block', 'table', 'table-cell');
 $vertical-align: ('middle');
+
+.inline-block {
+    display: inline-block;
+}
+
+.table {
+    display: table;
+
+    & > * {
+        display: table-cell;
+    }
+}
+
+@each $p in $sides {
+    @if $p != '' {
+        .arrow-#{$p} {
+            @each $q in $sides {
+                @if ($q != '' and $q != $p) {
+                    border-#{$q}: 8px solid transparent;
+                }
+            }
+            border-#{$p}: 8px solid black;
+        }
+    }
+}
 
 .flex {
     display: flex;
-
-    @each $j in $flex-justify {
-        &.flex-justify-#{$j} {
-            justify-content: #{$j};
-        }
-    }
-
-    @each $a in $flex-align {
-        &.flex-align-#{$a} {
-            align-items: #{$a};
-        }
-    }
-
-    @each $d in $direction {
-        &.direction-#{$d} {
-            flex-direction: #{$d};
-        }
-    }
 }
 
 .grid {
@@ -44,12 +58,6 @@ $vertical-align: ('middle');
 
 .fixsize {
     flex: none;
-}
-
-@each $f in $float {
-    .float-#{$f} {
-        float: #{$f};
-    }
 }
 
 @each $a in $align {
@@ -64,21 +72,12 @@ $vertical-align: ('middle');
     }
 }
 
-@each $d in $display {
-    .display-#{$d} {
-        display: #{$d};
-    }
-}
-
-@each $p in $position {
-    .position-#{$p} {
-        position: #{$p};
-    }
-}
-
-@each $n, $b in $background {
-    .background-#{$n} {
+@each $n, $bx in $bc {
+    $b: nth($bx, 1);
+    $c: nth($bx, 2);
+    .background-#{$n},.hover-#{$n}:hover {
         background: #{$b};
+        color: #{$c};
     }
 }
 
@@ -94,11 +93,4 @@ $vertical-align: ('middle');
             }
         }
     }
-}
-
-ul,
-ol {
-    padding: 0;
-    list-style: none;
-    margin: 0;
 }
