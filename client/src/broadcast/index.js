@@ -17,6 +17,7 @@ import {
     Dialog,
 } from '../components'
 import './index.scss'
+import Moveable from 'react-moveable'
 
 class Broadcast extends React.Component {
     constructor() {
@@ -27,6 +28,8 @@ class Broadcast extends React.Component {
         }
 
         this.canvasRef = React.createRef()
+        this.contextMenuRef = React.createRef()
+        this.propertyDialogRef = React.createRef()
 
         this.getRects = () => {
             const canvas = this.canvasRef.current
@@ -80,19 +83,17 @@ class Broadcast extends React.Component {
                         width='256'
                         border-right='normal'>
                         <Ul>
-                            <Li
-                                padding='8'
-                                border-bottom='normal'
-                                cursor='default'
-                                selected>
+                            <Item
+                                selected
+                                menu={this.contextMenuRef}
+                                propertyDialog={this.propertyDialogRef}>
                                 Just Chatting
-                            </Li>
-                            <Li
-                                padding='8'
-                                border-bottom='normal'
-                                cursor='default'>
+                            </Item>
+                            <Item
+                                menu={this.contextMenuRef}
+                                propertyDialog={this.propertyDialogRef}>
                                 ASMR
-                            </Li>
+                            </Item>
                             <Li
                                 padding='8'
                                 border-bottom='normal'
@@ -118,6 +119,7 @@ class Broadcast extends React.Component {
                             background='black'
                             height='calc(100% - 65px)'>
                             <Div
+                                className='overlayContainer'
                                 background='white'
                                 position='absolute'
                                 width='100%'
@@ -136,12 +138,13 @@ class Broadcast extends React.Component {
                                         left='100'
                                         height='200'
                                         width='200'
+                                        rotate='0'
                                         ratio={this.getCanvasRatio(1)}>
                                         <img
-                                            alt='oc-00000001'
+                                            alt=''
                                             src='logo192.png'
-                                            height='200'
-                                            width='200'
+                                            height='100%'
+                                            width='100%'
                                         />
                                     </Overlay>
                                 </Ol>
@@ -185,75 +188,8 @@ class Broadcast extends React.Component {
                         </Footer>
                     </Main>
                 </Div>
-                <Dialog
-                    position='fixed'
-                    top='200'
-                    left='200'
-                    border='normal'
-                    background='white'
-                    open>
-                    <Div
-                        display='inline-block'
-                        height='0'
-                        width='0'
-                        arrow='right'
-                        position='absolute'
-                        top='calc(50% - 8px)'
-                        left='-16'
-                        z-index='-1'
-                    />
-                    <Form>
-                        <Div padding='8'>
-                            <P>
-                                이름: <input type='text' />
-                            </P>
-                            <P padding-top='8'>
-                                종류:{' '}
-                                <select>
-                                    <option>이미지</option>
-                                    <option>웹 뷰 (URL)</option>
-                                </select>
-                            </P>
-                        </Div>
-                        <Div
-                            padding='8'
-                            border-top='normal'
-                            border-bottom='normal'>
-                            <P>
-                                파일: <input type='file' />
-                            </P>
-                        </Div>
-                        <Div>
-                            <Button width='50%'>저장</Button>
-                            <Button width='50%'>취소</Button>
-                        </Div>
-                    </Form>
-                </Dialog>
-                <Dialog
-                    position='fixed'
-                    top='100'
-                    left='100'
-                    border='normal'
-                    background='white'
-                    open>
-                    <Div padding='8' hover='hover' cursor='default'>
-                        복제
-                    </Div>
-                    <Div
-                        padding='8'
-                        border-top='normal'
-                        hover='hover'
-                        cursor='default'>
-                        수정
-                    </Div>
-                    <Div
-                        padding='8'
-                        border-top='normal'
-                        hover='hover'
-                        cursor='default'>
-                        삭제
-                    </Div>
-                </Dialog>
+                <PropertyDialog ref={this.propertyDialogRef} />
+                <ContextMenu ref={this.contextMenuRef} />
             </CommonProps>
         )
     }
@@ -263,21 +199,35 @@ class Overlay extends React.Component {
     constructor() {
         super()
 
-        this.ResizeHandle = ({ ...props }) => (
-            <Li
-                height='0'
-                width='0'
-                padding='5'
-                border='normal'
-                border-radius='5'
-                position='absolute'
-                left={props.left}
-                top={props.top}
-                bottom={props.bottom}
-                right={props.right}
-                margin='-6'
-                background='white'
-            />
+        this.state = {
+            x: 0,
+            y: 0,
+            height: 0,
+            width: 0,
+            rotate: 0,
+            enableMoveable: false,
+        }
+
+        this.contentRef = React.createRef()
+    }
+
+    componentDidMount() {
+        this.setState({
+            x: parseFloat(this.props.left),
+            y: parseFloat(this.props.top),
+            height: parseFloat(this.props.height),
+            width: parseFloat(this.props.width),
+            rotate: parseFloat(this.props.rotate),
+        })
+
+        setTimeout(
+            (t) => {
+                t.setState({
+                    enableMoveable: true,
+                })
+            },
+            1,
+            this
         )
     }
 
@@ -285,50 +235,308 @@ class Overlay extends React.Component {
         let ratio = this.props.ratio || 1
 
         return (
-            <Li
-                position='absolute'
-                margin='-6'
-                top={this.props.top * ratio || '0'}
-                left={this.props.left * ratio || '0'}
-                border={this.props.border || 'normal'}
-                height={this.props.height * ratio}
-                width={this.props.width * ratio}
-                padding='5'
-                style={{
-                    transform: `rotate(${0}deg)`,
-                }}>
+            <li>
                 <Div
+                    className='overlay'
                     display='inline-block'
+                    position='absolute'
                     referrer={this.contentRef}
-                    height={this.props.height}
-                    width={this.props.width}
+                    height={this.state.height * ratio}
+                    width={this.state.width * ratio}
+                    top={this.state.y * ratio}
+                    left={this.state.x * ratio}
                     style={{
-                        transform: `scale(${ratio})`,
-                        transformOrigin: '0 0',
+                        transform: `rotate(${this.state.rotate}deg)`,
+                    }}
+                    onMouseDown={(e) => {
+                        e.preventDefault()
+                    }}
+                    onMouseUp={(e) => {
+                        e.preventDefault()
+                    }}
+                    onTouchStart={(e) => {
+                        e.preventDefault()
+                    }}
+                    onTouchEnd={(e) => {
+                        e.preventDefault()
                     }}>
                     {this.props.children}
                 </Div>
-                <Div
-                    border-left='normal'
-                    width='0'
-                    height='50'
-                    position='absolute'
-                    left='50%'
-                    top='-50'
-                    margin='-1'>
-                    {/* Rotate Handler */}
+                <Moveable
+                    hideDefaultLines={!this.state.enableMoveable}
+                    target={this.contentRef.current}
+                    origin={false}
+                    edge={false} //Resize event edges
+                    useResizeObserver={true}
+                    /* For draggable */
+                    draggable={this.state.enableMoveable}
+                    throttleDrag={0}
+                    onDrag={({ target, left, top }) => {
+                        target.style.left = left + 'px'
+                        target.style.top = top + 'px'
+
+                        this.setState({
+                            x: left / ratio,
+                            y: top / ratio,
+                        })
+                    }}
+                    /* For resizable */
+                    resizable={this.state.enableMoveable}
+                    keepRatio={false}
+                    throttleResize={1}
+                    onResizeStart={({ dragStart }) => {
+                        dragStart &&
+                            dragStart.set([
+                                this.state.x * ratio,
+                                this.state.y * ratio,
+                            ])
+                    }}
+                    onResize={({ target, width, height, drag }) => {
+                        let _height = height / ratio
+                        let _width = width / ratio
+
+                        target.style.height = height + 'px'
+                        target.style.width = width + 'px'
+                        target.style.left = drag.beforeTranslate[0] + 'px'
+                        target.style.top = drag.beforeTranslate[1] + 'px'
+
+                        this.setState({
+                            height: _height,
+                            width: _width,
+                            x: drag.beforeTranslate[0] / ratio,
+                            y: drag.beforeTranslate[1] / ratio,
+                        })
+                    }}
+                    /* For rotatable */
+                    rotatable={this.state.enableMoveable}
+                    throttleRotate={0}
+                    onRotate={({ target, transform }) => {
+                        this.setState({
+                            rotate: parseFloat(
+                                transform
+                                    .replace('rotate(', '')
+                                    .replace('deg)', '')
+                            ),
+                        })
+                        target.style.transform = transform
+                    }}
+                    /* For snappable */
+                    snappable={this.state.enableMoveable}
+                    snapThreshold={16}
+                    elementGuidelines={['.overlay']}
+                    snapGap={true}
+                    isDisplaySnapDigit={false}
+                    verticalGuidelines={[0, 1920 * ratio]}
+                    horizontalGuidelines={[0, 1080 * ratio]}
+                    snapDirections={{
+                        top: true,
+                        right: true,
+                        bottom: true,
+                        left: true,
+                    }}
+                    elementSnapDirections={{
+                        top: true,
+                        right: true,
+                        bottom: true,
+                        left: true,
+                    }}
+                />
+            </li>
+        )
+    }
+}
+
+class ContextMenu extends React.Component {
+    constructor() {
+        super()
+
+        this.state = {
+            top: 100,
+            left: 100,
+            target: null,
+            open: false,
+        }
+
+        this.onClick = () => {
+            if (this) {
+                this.setState({
+                    open: false,
+                })
+            }
+        }
+    }
+
+    componentDidMount() {
+        window.addEventListener('click', this.onClick)
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('click', this.onClick)
+    }
+
+    show(target, top, left) {
+        this.setState({
+            top: top,
+            left: left,
+            target: target,
+            open: true,
+        })
+    }
+
+    render() {
+        return (
+            <Dialog
+                position='fixed'
+                top={this.state.top}
+                left={this.state.left}
+                border='normal'
+                background='white'
+                open={this.state.open}>
+                <Div padding='8' hover='hover' cursor='default'>
+                    복제
                 </Div>
-                <ul>
-                    <this.ResizeHandle left='0' top='0' />
-                    <this.ResizeHandle left='0' top='50%' />
-                    <this.ResizeHandle left='0' bottom='0' />
-                    <this.ResizeHandle left='50%' bottom='0' />
-                    <this.ResizeHandle right='0' bottom='0' />
-                    <this.ResizeHandle right='0' bottom='50%' />
-                    <this.ResizeHandle right='0' top='0' />
-                    <this.ResizeHandle right='50%' top='0' />
-                </ul>
+                <Div
+                    padding='8'
+                    border-top='normal'
+                    hover='hover'
+                    cursor='default'>
+                    수정
+                </Div>
+                <Div
+                    padding='8'
+                    border-top='normal'
+                    hover='hover'
+                    cursor='default'>
+                    삭제
+                </Div>
+            </Dialog>
+        )
+    }
+}
+
+class Item extends React.Component {
+    constructor() {
+        super()
+
+        this.onContextMenu = this.onContextMenu.bind(this)
+        this.onDblClick = this.onDblClick.bind(this)
+    }
+
+    onDblClick(e) {
+        if (this.props.propertyDialog) {
+            let dialog = this.props.propertyDialog.current
+            let top = e.clientY
+            let left = e.clientX
+
+            dialog.show(this, top, left)
+        }
+    }
+
+    onContextMenu(e) {
+        e.preventDefault()
+        if (this.props.menu) {
+            let menu = this.props.menu.current
+            let top = e.clientY
+            let left = e.clientX
+
+            menu.show(this, top, left)
+        }
+    }
+    render() {
+        return (
+            <Li
+                padding='8'
+                border-bottom='normal'
+                cursor='default'
+                selected={this.props.selected}
+                onContextMenu={this.onContextMenu}
+                onDoubleClick={this.onDblClick}>
+                {this.props.children}
             </Li>
+        )
+    }
+}
+
+class PropertyDialog extends React.Component {
+    constructor() {
+        super()
+
+        this.state = {
+            top: 200,
+            left: 200,
+            target: null,
+            open: false,
+        }
+
+        this.onClick = () => {
+            if (this) {
+                this.setState({
+                    open: false,
+                })
+            }
+        }
+    }
+
+    componentDidMount() {
+        window.addEventListener('click', this.onClick)
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('click', this.onClick)
+    }
+
+    show(target, top, left) {
+        this.setState({
+            top: top - 8,
+            left: left + 8,
+            target: target,
+            open: true,
+        })
+    }
+
+    render() {
+        return (
+            <Dialog
+                position='fixed'
+                top={this.state.top}
+                left={this.state.left}
+                border='normal'
+                background='white'
+                open={this.state.open}>
+                <Div
+                    display='inline-block'
+                    height='0'
+                    width='0'
+                    arrow='right'
+                    position='absolute'
+                    top='-1'
+                    left='-16'
+                    z-index='-1'
+                />
+                <Form>
+                    <Div padding='8'>
+                        <P>
+                            이름: <input type='text' />
+                        </P>
+                        <P padding-top='8'>
+                            종류:{' '}
+                            <select>
+                                <option>이미지</option>
+                                <option>웹 뷰 (URL)</option>
+                            </select>
+                        </P>
+                    </Div>
+                    <Div padding='8' border-top='normal' border-bottom='normal'>
+                        <P>
+                            파일: <input type='file' />
+                        </P>
+                    </Div>
+                    <Div>
+                        <Button width='50%'>저장</Button>
+                        <Button width='50%'>취소</Button>
+                    </Div>
+                </Form>
+            </Dialog>
         )
     }
 }

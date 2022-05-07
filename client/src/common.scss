@@ -35,6 +35,14 @@ $vertical-align: ('middle');
     }
 }
 
+.none {
+    display: none;
+}
+
+.block {
+    display: block;
+}
+
 @each $p in $sides {
     @if $p != '' {
         .arrow-#{$p} {

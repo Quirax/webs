@@ -124,7 +124,8 @@ export default class Component extends React.Component {
                 verticalAlign && 'align-' + verticalAlign,
                 arrow && 'arrow-' + arrow,
                 hover && 'hover-' + (hover || 'hover'),
-                selected && 'background-selected'
+                selected && 'background-selected',
+                display && display
             )
         }
     }
