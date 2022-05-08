@@ -18,6 +18,8 @@ import {
 } from '../components'
 import './index.scss'
 import Moveable from 'react-moveable'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
 
 class Broadcast extends React.Component {
     constructor() {
@@ -182,7 +184,9 @@ class Broadcast extends React.Component {
                                 flex-justify='center'
                                 padding-right='8'
                                 align='right'>
-                                <div>[] 123</div>
+                                <div>
+                                    <FontAwesomeIcon icon={faUserAlt} /> 123
+                                </div>
                                 <div>12:34:56</div>
                             </Div>
                         </Footer>
@@ -209,12 +213,18 @@ class Overlay extends React.Component {
         }
 
         this.contentRef = React.createRef()
+
+        this.x = 0
+        this.y = 0
     }
 
     componentDidMount() {
+        this.x = parseFloat(this.props.left)
+        this.y = parseFloat(this.props.top)
+
         this.setState({
-            x: parseFloat(this.props.left),
-            y: parseFloat(this.props.top),
+            x: this.x,
+            y: this.y,
             height: parseFloat(this.props.height),
             width: parseFloat(this.props.width),
             rotate: parseFloat(this.props.rotate),
@@ -275,9 +285,13 @@ class Overlay extends React.Component {
                         target.style.left = left + 'px'
                         target.style.top = top + 'px'
 
+                        this.x = left / ratio
+                        this.y = top / ratio
+                    }}
+                    onDragEnd={() => {
                         this.setState({
-                            x: left / ratio,
-                            y: top / ratio,
+                            x: this.x,
+                            y: this.y,
                         })
                     }}
                     /* For resizable */
@@ -300,11 +314,18 @@ class Overlay extends React.Component {
                         target.style.left = drag.beforeTranslate[0] + 'px'
                         target.style.top = drag.beforeTranslate[1] + 'px'
 
+                        this.x = drag.beforeTranslate[0] / ratio
+                        this.y = drag.beforeTranslate[1] / ratio
+
                         this.setState({
                             height: _height,
                             width: _width,
-                            x: drag.beforeTranslate[0] / ratio,
-                            y: drag.beforeTranslate[1] / ratio,
+                        })
+                    }}
+                    onResizeEnd={() => {
+                        this.setState({
+                            x: this.x,
+                            y: this.y,
                         })
                     }}
                     /* For rotatable */
