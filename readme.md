@@ -29,3 +29,10 @@
     -   [dblclick](https://developer.mozilla.org/en-US/docs/Web/API/Element/dblclick_event)
 -   [Icons Tutorial](https://www.w3schools.com/icons/default.asp)
     -   [Font Awesome for React](https://fontawesome.com/v5/docs/web/use-with/react)
+-   [WebRTC Samples](https://webrtc.github.io/samples/)
+-   [Canvas to video stream](https://webrtc.github.io/samples/src/content/capture/canvas-video/)
+-   Send Canvas stream to server via WebRTC
+    -   [webrtc/samples/canvas-pc/main.js](https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/canvas-pc/js/main.js)
+-   Transcode from WebRTC-optimized codec to RTMP-optimized one
+    -   [browserLiveStream/server.js](https://github.com/apivideo/browserLiveStream/blob/master/server.js)
+    -   [browserLiveStream/public/index.html](https://github.com/apivideo/browserLiveStream/blob/master/public/index.html)

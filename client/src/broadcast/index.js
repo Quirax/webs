@@ -20,6 +20,14 @@ import './index.scss'
 import Moveable from 'react-moveable'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
+import { io } from 'socket.io-client'
+
+let socket = io('http://localhost:8080')
+socket.on('message', (message) => {
+    console.log(message)
+
+    socket.emit('message', 'cat')
+})
 
 class Broadcast extends React.Component {
     constructor() {
