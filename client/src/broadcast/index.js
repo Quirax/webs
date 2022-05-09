@@ -22,13 +22,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
 import { io } from 'socket.io-client'
 
-let socket = io('http://localhost:8080')
-socket.on('message', (message) => {
-    console.log(message)
-
-    socket.emit('message', 'cat')
-})
-
 class Broadcast extends React.Component {
     constructor() {
         super()
@@ -38,27 +31,87 @@ class Broadcast extends React.Component {
         }
 
         this.canvasRef = React.createRef()
+        this.workplaceRef = React.createRef()
         this.contextMenuRef = React.createRef()
         this.propertyDialogRef = React.createRef()
 
         this.getRects = () => {
-            const canvas = this.canvasRef.current
+            const wp = this.workplaceRef.current
 
             this.setState({
                 canvasRect: {
-                    height: canvas.clientHeight,
-                    width: canvas.clientWidth,
+                    height: wp.clientHeight,
+                    width: wp.clientWidth,
                 },
             })
         }
 
         this.getCanvasRatio = (size) =>
             (this.state.canvasRect.width / 1920) * size
+
+        this.socket = null
     }
 
     componentDidMount() {
         window.addEventListener('resize', this.getRects)
         this.getRects()
+
+        if (!this.socket) {
+            let socket = io('http://localhost:8080')
+            let client = new RTCPeerConnection(null)
+
+            socket.on('answer', async (sdp) => {
+                try {
+                    await client.setRemoteDescription(
+                        new RTCSessionDescription(sdp)
+                    )
+                } catch (err) {
+                    console.error(err)
+                }
+            })
+
+            socket.on('candidate', async (candidate) => {
+                try {
+                    if (!candidate) return
+                    client.addIceCandidate(new RTCIceCandidate(candidate))
+                } catch (err) {
+                    console.error(err)
+                }
+            })
+
+            let stream = this.canvasRef.current.captureStream()
+
+            client.onicecandidate = (e) => {
+                if (e.candidate) {
+                    socket.emit('candidate', e.candidate)
+                }
+            }
+
+            client.oniceconnectionstatechange = () => {}
+
+            if (stream) {
+                stream.getTracks().forEach((track) => {
+                    client.addTrack(track, stream)
+                })
+            }
+
+            ;(async () => {
+                try {
+                    let sdp = await client.createOffer({
+                        offerToReceiveAudio: false,
+                        offerToReceiveVideo: false,
+                    })
+
+                    await client.setLocalDescription(sdp)
+
+                    socket.emit('offer', sdp)
+                } catch (err) {
+                    console.error(err)
+                }
+            })()
+
+            this.socket = socket
+        }
     }
 
     componentWillUnmount() {
@@ -141,7 +194,7 @@ class Broadcast extends React.Component {
                                 style={{
                                     transform: 'translate(-50%, -50%)',
                                 }}
-                                referrer={this.canvasRef}>
+                                referrer={this.workplaceRef}>
                                 <Ol>
                                     <Overlay
                                         top='100'
@@ -165,6 +218,7 @@ class Broadcast extends React.Component {
                                     z-index='-1'
                                     top='0'
                                     left='0'
+                                    referrer={this.canvasRef}
                                 />
                             </Div>
                         </Article>
