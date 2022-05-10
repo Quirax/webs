@@ -57,60 +57,41 @@ class Broadcast extends React.Component {
         this.getRects()
 
         if (!this.socket) {
-            let socket = io('http://localhost:8080')
-            let client = new RTCPeerConnection(null)
+            let bootstrap = (stream) => {
+                let socket = io('http://localhost:8080')
 
-            socket.on('answer', async (sdp) => {
-                try {
-                    await client.setRemoteDescription(
-                        new RTCSessionDescription(sdp)
-                    )
-                } catch (err) {
+                socket.emit('destination', process.env.REACT_APP_DESTINATION)
+                socket.emit('start', 60, 44100)
+
+                let mediaRecorder = new MediaRecorder(stream)
+                mediaRecorder.start(1000)
+
+                mediaRecorder.onstop = (e) => {}
+
+                mediaRecorder.onpause = (e) => {}
+
+                mediaRecorder.onerror = ({ err }) => {
                     console.error(err)
                 }
-            })
 
-            socket.on('candidate', async (candidate) => {
-                try {
-                    if (!candidate) return
-                    client.addIceCandidate(new RTCIceCandidate(candidate))
-                } catch (err) {
-                    console.error(err)
+                mediaRecorder.ondataavailable = function (e) {
+                    socket.emit('stream', e.data)
                 }
-            })
 
-            let stream = this.canvasRef.current.captureStream()
-
-            client.onicecandidate = (e) => {
-                if (e.candidate) {
-                    socket.emit('candidate', e.candidate)
-                }
+                return socket
             }
 
-            client.oniceconnectionstatechange = () => {}
+            let my = this
 
-            if (stream) {
-                stream.getTracks().forEach((track) => {
-                    client.addTrack(track, stream)
+            navigator.mediaDevices
+                .getDisplayMedia({ audio: true, video: true })
+                .then(function (stream) {
+                    my.socket = bootstrap(stream)
                 })
-            }
 
-            ;(async () => {
-                try {
-                    let sdp = await client.createOffer({
-                        offerToReceiveAudio: false,
-                        offerToReceiveVideo: false,
-                    })
+            // let stream = this.canvasRef.current.captureStream()
 
-                    await client.setLocalDescription(sdp)
-
-                    socket.emit('offer', sdp)
-                } catch (err) {
-                    console.error(err)
-                }
-            })()
-
-            this.socket = socket
+            // this.socket = bootstrap(stream)
         }
     }
 

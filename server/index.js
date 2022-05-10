@@ -5,6 +5,14 @@ import https from 'https'
 import http from 'http'
 import { Server } from 'socket.io'
 import wrtc from 'wrtc'
+import rrtc from 'recordrtc'
+
+const WhammyRecorder = rrtc.WhammyRecorder
+
+spawn('ffmpeg', ['-h']).on('error', function (m) {
+    console.error('Not found ffmpeg on current working directory.')
+    process.exit(-1)
+})
 
 let app = Express()
 // app.use(Express.static('public'));
@@ -34,53 +42,108 @@ let io = new Server(server, {
 })
 
 io.on('connect', (socket) => {
-    socket.on('offer', async (_sdp) => {
+    let errorHandler = (err) => {
+        console.error(err)
+        socket.emit('error', err)
+    }
+
+    socket.on('destination', async (url) => {
         try {
-            let pc = new wrtc.RTCPeerConnection()
-
-            socket._pc = pc
-
-            pc.onicecandidate = (e) => {
-                socket.emit('candidate', e.candidate)
+            if (typeof url != 'string') {
+                throw `Invalid destination url - type mismatch: ${url}`
             }
-
-            pc.oniceconnectionstatechange = (e) => {}
-
-            pc.ontrack = (e) => {
-                if (socket._stream) return
-                else socket._stream = e.streams[0]
-
-                console.log(socket._stream)
+            var regexValidator = /^rtmp:\/\/[^\s]*$/
+            if (!regexValidator.test(url)) {
+                throw `Invalid destination url - not rtmp url: ${url}`
             }
-
-            await pc.setRemoteDescription(_sdp)
-
-            let sdp = await pc.createAnswer({
-                offerToReceiveAudio: true,
-                offerToReceiveVideo: true,
-            })
-            await pc.setLocalDescription(sdp)
-
-            socket.emit('answer', sdp)
+            socket._dest = url
         } catch (err) {
-            console.error(err)
-            socket.emit('error', err)
+            errorHandler(err)
         }
     })
 
-    socket.on('candidate', async (candidate) => {
+    socket.on('start', async (framerate, audioBitrate) => {
         try {
-            let pc = socket._pc
-            await pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
+            if (socket._ffmpeg || socket._feeder)
+                throw `Feeder is already running.`
+            if (!socket._dest) throw `No destination url available.`
+
+            var audioEncoding
+
+            switch (audioBitrate) {
+                case 11025:
+                    audioEncoding = '11k'
+                    break
+                case 22050:
+                    audioEncoding = '22k'
+                    break
+                case 44100:
+                    audioEncoding = '44k'
+                    break
+                default:
+                    audioEncoding = '64k'
+            }
+
+            console.log('Using encoder setting:')
+            console.log(
+                `- Audio Encoding = ${audioEncoding}, Audio Bitrate = ${audioBitrate}`
+            )
+            console.log(`- Framerate = ${framerate}`)
+
+            var option =
+                '-re -i - -c:v libx264 -preset veryfast -b:v 6000k -maxrate 6000k -bufsize 6000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv'
+
+            option = option.split(' ')
+            option.push(socket._dest)
+
+            console.log(`- Options = ${option.join(' ')}`)
+            console.log(`- RTMP Destination = ${socket._dest}`)
+
+            socket._ffmpeg = spawn('ffmpeg', option)
+            console.log('ffmpeg spawned.')
+
+            socket._feeder = (data) => {
+                try {
+                    socket._ffmpeg.stdin.write(data)
+                } catch (err) {
+                    errorHandler(err)
+                }
+            }
+
+            socket._ffmpeg.stderr.on('data', (d) => {
+                errorHandler(d.toString())
+            })
+
+            socket._ffmpeg.on('error', (e) => {
+                errorHandler(`ffmpeg caught an error: ${e}`)
+                socket.disconnect()
+            })
+
+            socket._ffmpeg.on('exit', (e) => {
+                errorHandler(`ffmpeg has been exited: ${e}`)
+                socket.disconnect()
+            })
         } catch (err) {
-            console.error(err)
+            errorHandler(err)
         }
+    })
+
+    socket.on('stream', (blob) => {
+        // if (!socket._feeder) {
+        //     socket.emit('fatal', 'rtmp not set yet.')
+        //     ffmpeg_process.stdin.end()
+        //     ffmpeg_process.kill('SIGINT')
+        //     return
+        // }
+        socket._feeder(blob)
     })
 
     socket.on('disconnect', () => {
         try {
             let pc = socket._pc
             let stream = socket._stream
+            let ffmpeg = socket._ffmpeg
+            let feeder = socket._feeder
 
             if (pc) {
                 pc.close()
@@ -90,8 +153,22 @@ io.on('connect', (socket) => {
             if (stream) {
                 delete socket._stream
             }
+
+            if (ffmpeg) {
+                try {
+                    ffmpeg.stdin.end()
+                    ffmpeg.kill('SIGINT')
+                    console.log('Ended ffmpeg!')
+                } catch (e) {
+                    errorHandler(`Error while killing ffmpeg - ${e}`)
+                } finally {
+                    delete socket._ffmpeg
+                }
+            }
+
+            if (feeder) delete socket._feeder
         } catch (err) {
-            console.error(err)
+            errorHandler(err)
         }
     })
 })

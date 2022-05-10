@@ -31,6 +31,7 @@
     -   [Font Awesome for React](https://fontawesome.com/v5/docs/web/use-with/react)
 -   [WebRTC Samples](https://webrtc.github.io/samples/)
 -   [Canvas to video stream](https://webrtc.github.io/samples/src/content/capture/canvas-video/)
+-   [MediaDevices.getDisplayMedia()](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia)
 -   Send Canvas stream to server via WebRTC
     -   [webrtc/samples/canvas-pc/main.js](https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/canvas-pc/js/main.js)
     -   [WebRTC 구현하기(1:N SFU)](https://millo-l.github.io/WebRTC-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0-1-N-SFU/)
@@ -43,3 +44,6 @@
         -   [Handling CORS](https://socket.io/docs/v3/handling-cors/)
             -   [cors options](https://github.com/expressjs/cors#configuration-options)
     -   [wrtc](https://www.npmjs.com/package/wrtc)
+-   Twitch
+    -   [Recommended Ingest Endpoints For You](https://stream.twitch.tv/ingests/)
+    -   [Stream to twitch via ffmpeg](https://discuss.dev.twitch.tv/t/stream-to-twitch-via-ffmpeg/27879)
