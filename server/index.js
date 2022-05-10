@@ -12,10 +12,7 @@ app.use(function (req, res, next) {
     if (
         req.headers.origin &&
         req.headers.origin.match(
-            // RegExp(
-            //     `^(https?:\/\/(?:.+.)?${process.env.REACT_APP_BASE_URL}(?::d{1,5})?)`
-            // )
-            'http://localhost:3000'
+            RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
         )
     ) {
         res.header('Access-Control-Allow-Origin', req.headers.origin)
@@ -31,21 +28,17 @@ const server = http.createServer({}, app)
 
 let io = new Server(server, {
     cors: {
-        origin: 'http://localhost:3000',
+        origin: RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`),
         methods: ['GET', 'POST'],
     },
 })
-
-let clients = {}
-let streams = {}
 
 io.on('connect', (socket) => {
     socket.on('offer', async (_sdp) => {
         try {
             let pc = new wrtc.RTCPeerConnection()
 
-            if (clients[socket.id]) clients[socket.id] = pc
-            else clients = { ...clients, [socket.id]: pc }
+            socket._pc = pc
 
             pc.onicecandidate = (e) => {
                 socket.emit('candidate', e.candidate)
@@ -54,10 +47,10 @@ io.on('connect', (socket) => {
             pc.oniceconnectionstatechange = (e) => {}
 
             pc.ontrack = (e) => {
-                if (streams[socket.id]) return
-                else streams = { ...streams, [socket.id]: e.streams[0] }
+                if (socket._stream) return
+                else socket._stream = e.streams[0]
 
-                console.log(streams)
+                console.log(socket._stream)
             }
 
             await pc.setRemoteDescription(_sdp)
@@ -77,7 +70,7 @@ io.on('connect', (socket) => {
 
     socket.on('candidate', async (candidate) => {
         try {
-            let pc = clients[socket.id]
+            let pc = socket._pc
             await pc.addIceCandidate(new wrtc.RTCIceCandidate(candidate))
         } catch (err) {
             console.error(err)
@@ -86,16 +79,16 @@ io.on('connect', (socket) => {
 
     socket.on('disconnect', () => {
         try {
-            let pc = clients[socket.id]
-            let stream = streams[socket.id]
+            let pc = socket._pc
+            let stream = socket._stream
 
             if (pc) {
                 pc.close()
-                delete clients[socket.id]
+                delete socket._pc
             }
 
             if (stream) {
-                delete streams[socket.id]
+                delete socket._stream
             }
         } catch (err) {
             console.error(err)

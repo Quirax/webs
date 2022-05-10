@@ -41,4 +41,5 @@
     -   Socket.IO
         -   [Client Initialization](https://socket.io/docs/v4/client-initialization/)
         -   [Handling CORS](https://socket.io/docs/v3/handling-cors/)
+            -   [cors options](https://github.com/expressjs/cors#configuration-options)
     -   [wrtc](https://www.npmjs.com/package/wrtc)
