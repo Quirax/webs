@@ -10,7 +10,6 @@ import {
     CommonProps,
     Li,
     Nav,
-    Canvas,
     Form,
     P,
     Button,
@@ -31,7 +30,6 @@ class Broadcast extends React.Component {
             isBroadcasting: false,
         }
 
-        this.canvasRef = React.createRef()
         this.workplaceRef = React.createRef()
         this.contextMenuRef = React.createRef()
         this.propertyDialogRef = React.createRef()
@@ -170,15 +168,6 @@ class Broadcast extends React.Component {
                                     </Overlay>
                                 </Ol>
                             </Div>
-                            <Canvas
-                                position='absolute'
-                                height='100%'
-                                width='100%'
-                                z-index='-1'
-                                top='0'
-                                left='0'
-                                referrer={this.canvasRef}
-                            />
                         </Article>
                         <Footer
                             flex
