@@ -32,6 +32,7 @@
 -   [WebRTC Samples](https://webrtc.github.io/samples/)
 -   [Canvas to video stream](https://webrtc.github.io/samples/src/content/capture/canvas-video/)
 -   [MediaDevices.getDisplayMedia()](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia)
+-   [MediaStreamTrack.stop()](https://developer.mozilla.org/ko/docs/Web/API/MediaStreamTrack/stop)
 -   Send Canvas stream to server via WebRTC
     -   [webrtc/samples/canvas-pc/main.js](https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/canvas-pc/js/main.js)
     -   [WebRTC 구현하기(1:N SFU)](https://millo-l.github.io/WebRTC-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0-1-N-SFU/)

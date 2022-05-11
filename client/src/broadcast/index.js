@@ -20,7 +20,7 @@ import './index.scss'
 import Moveable from 'react-moveable'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
-import { io } from 'socket.io-client'
+import Connector from './connector'
 
 class Broadcast extends React.Component {
     constructor() {
@@ -28,6 +28,7 @@ class Broadcast extends React.Component {
 
         this.state = {
             canvasRect: { height: 1080, width: 1920 },
+            isBroadcasting: false,
         }
 
         this.canvasRef = React.createRef()
@@ -49,50 +50,22 @@ class Broadcast extends React.Component {
         this.getCanvasRatio = (size) =>
             (this.state.canvasRect.width / 1920) * size
 
-        this.socket = null
+        this.toggleBroadcast = () => {
+            let connector = Connector.getInstance()
+
+            if (this.state.isBroadcasting) connector.stop()
+            else connector.start()
+
+            this.setState({
+                isBroadcasting: !this.state.isBroadcasting,
+            })
+        }
+        this.toggleBroadcast = this.toggleBroadcast.bind(this)
     }
 
     componentDidMount() {
         window.addEventListener('resize', this.getRects)
         this.getRects()
-
-        if (!this.socket) {
-            let bootstrap = (stream) => {
-                let socket = io('http://localhost:8080')
-
-                socket.emit('destination', process.env.REACT_APP_DESTINATION)
-                socket.emit('start', 60, 44100)
-
-                let mediaRecorder = new MediaRecorder(stream)
-                mediaRecorder.start(1000)
-
-                mediaRecorder.onstop = (e) => {}
-
-                mediaRecorder.onpause = (e) => {}
-
-                mediaRecorder.onerror = ({ err }) => {
-                    console.error(err)
-                }
-
-                mediaRecorder.ondataavailable = function (e) {
-                    socket.emit('stream', e.data)
-                }
-
-                return socket
-            }
-
-            let my = this
-
-            navigator.mediaDevices
-                .getDisplayMedia({ audio: true, video: true })
-                .then(function (stream) {
-                    my.socket = bootstrap(stream)
-                })
-
-            // let stream = this.canvasRef.current.captureStream()
-
-            // this.socket = bootstrap(stream)
-        }
     }
 
     componentWillUnmount() {
@@ -115,7 +88,11 @@ class Broadcast extends React.Component {
                         <button>삭제</button>
                     </Div>
                     <Div fixsize padding-right='8'>
-                        <button>방송 시작</button>
+                        <button onClick={this.toggleBroadcast}>
+                            {this.state.isBroadcasting
+                                ? '방송 종료'
+                                : '방송 시작'}
+                        </button>
                     </Div>
                 </Header>
                 <Div flex height='calc(100% - 65px)' width='100%'>
@@ -192,16 +169,16 @@ class Broadcast extends React.Component {
                                         />
                                     </Overlay>
                                 </Ol>
-                                <Canvas
-                                    position='absolute'
-                                    height='100%'
-                                    width='100%'
-                                    z-index='-1'
-                                    top='0'
-                                    left='0'
-                                    referrer={this.canvasRef}
-                                />
                             </Div>
+                            <Canvas
+                                position='absolute'
+                                height='100%'
+                                width='100%'
+                                z-index='-1'
+                                top='0'
+                                left='0'
+                                referrer={this.canvasRef}
+                            />
                         </Article>
                         <Footer
                             flex

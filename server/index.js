@@ -62,33 +62,13 @@ io.on('connect', (socket) => {
         }
     })
 
-    socket.on('start', async (framerate, audioBitrate) => {
+    socket.on('start', async () => {
         try {
             if (socket._ffmpeg || socket._feeder)
                 throw `Feeder is already running.`
             if (!socket._dest) throw `No destination url available.`
 
-            var audioEncoding
-
-            switch (audioBitrate) {
-                case 11025:
-                    audioEncoding = '11k'
-                    break
-                case 22050:
-                    audioEncoding = '22k'
-                    break
-                case 44100:
-                    audioEncoding = '44k'
-                    break
-                default:
-                    audioEncoding = '64k'
-            }
-
             console.log('Using encoder setting:')
-            console.log(
-                `- Audio Encoding = ${audioEncoding}, Audio Bitrate = ${audioBitrate}`
-            )
-            console.log(`- Framerate = ${framerate}`)
 
             var option =
                 '-re -i - -c:v libx264 -preset veryfast -b:v 6000k -maxrate 6000k -bufsize 6000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv'
@@ -116,7 +96,6 @@ io.on('connect', (socket) => {
 
             socket._ffmpeg.on('error', (e) => {
                 errorHandler(`ffmpeg caught an error: ${e}`)
-                socket.disconnect()
             })
 
             socket._ffmpeg.on('exit', (e) => {
@@ -140,19 +119,8 @@ io.on('connect', (socket) => {
 
     socket.on('disconnect', () => {
         try {
-            let pc = socket._pc
-            let stream = socket._stream
             let ffmpeg = socket._ffmpeg
             let feeder = socket._feeder
-
-            if (pc) {
-                pc.close()
-                delete socket._pc
-            }
-
-            if (stream) {
-                delete socket._stream
-            }
 
             if (ffmpeg) {
                 try {
