@@ -29,22 +29,25 @@
     -   [dblclick](https://developer.mozilla.org/en-US/docs/Web/API/Element/dblclick_event)
 -   [Icons Tutorial](https://www.w3schools.com/icons/default.asp)
     -   [Font Awesome for React](https://fontawesome.com/v5/docs/web/use-with/react)
--   [WebRTC Samples](https://webrtc.github.io/samples/)
--   [Canvas to video stream](https://webrtc.github.io/samples/src/content/capture/canvas-video/)
--   [MediaDevices.getDisplayMedia()](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia)
--   [MediaStreamTrack.stop()](https://developer.mozilla.org/ko/docs/Web/API/MediaStreamTrack/stop)
--   Send Canvas stream to server via WebRTC
-    -   [webrtc/samples/canvas-pc/main.js](https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/canvas-pc/js/main.js)
-    -   [WebRTC 구현하기(1:N SFU)](https://millo-l.github.io/WebRTC-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0-1-N-SFU/)
--   Transcode from WebRTC-optimized codec to RTMP-optimized one
+-   Broadcast stream recorded by MediaRecorder using ffmpeg
     -   [browserLiveStream/server.js](https://github.com/apivideo/browserLiveStream/blob/master/server.js)
     -   [browserLiveStream/public/index.html](https://github.com/apivideo/browserLiveStream/blob/master/public/index.html)
+    -   [MediaDevices.getDisplayMedia()](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia)
+    -   [MediaStreamTrack.stop()](https://developer.mozilla.org/ko/docs/Web/API/MediaStreamTrack/stop)
 -   Server-side Packages
     -   Socket.IO
         -   [Client Initialization](https://socket.io/docs/v4/client-initialization/)
         -   [Handling CORS](https://socket.io/docs/v3/handling-cors/)
             -   [cors options](https://github.com/expressjs/cors#configuration-options)
-    -   [wrtc](https://www.npmjs.com/package/wrtc)
 -   Twitch
     -   [Recommended Ingest Endpoints For You](https://stream.twitch.tv/ingests/)
     -   [Stream to twitch via ffmpeg](https://discuss.dev.twitch.tv/t/stream-to-twitch-via-ffmpeg/27879)
+
+### Deprecated
+
+-   Send Canvas stream to server via WebRTC
+    -   [webrtc/samples/canvas-pc/main.js](https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/canvas-pc/js/main.js)
+    -   [WebRTC 구현하기(1:N SFU)](https://millo-l.github.io/WebRTC-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0-1-N-SFU/)
+    -   [wrtc](https://www.npmjs.com/package/wrtc)
+    -   [WebRTC Samples](https://webrtc.github.io/samples/)
+    -   [Canvas to video stream](https://webrtc.github.io/samples/src/content/capture/canvas-video/)
