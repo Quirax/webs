@@ -4,6 +4,11 @@ import fs from 'fs'
 import https from 'https'
 import http from 'http'
 import { Server } from 'socket.io'
+<<<<<<< HEAD
+=======
+import wrtc from 'wrtc' //TODO: uninstall wrtc
+import rrtc from 'recordrtc' //TODO: uninstall rrtc
+>>>>>>> 672b51f43f6ba2255f2c093e64c62b863dbe971a
 //TODO: import .env
 
 spawn('ffmpeg', ['-h']).on('error', function (m) {
