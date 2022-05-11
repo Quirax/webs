@@ -4,8 +4,6 @@ import fs from 'fs'
 import https from 'https'
 import http from 'http'
 import { Server } from 'socket.io'
-import wrtc from 'wrtc' //TODO: uninstall wrtc
-import rrtc from 'recordrtc' //TODO: uninstall rrtc
 //TODO: import .env
 
 spawn('ffmpeg', ['-h']).on('error', function (m) {
@@ -38,21 +36,27 @@ let io = new Server(server, {
 })
 
 io.on('connect', (socket) => {
+    let log = (message) => {
+        console.log(`[${socket.id}][ log ] ${message}`)
+    }
     let errorHandler = (err) => {
-        console.error(err)
+        console.error(`[${socket.id}][error] ${err}`)
         socket.emit('error', err)
     }
+
+    log('Established connection')
 
     socket.on('destination', async (url) => {
         try {
             if (typeof url != 'string') {
-                throw `Invalid destination url - type mismatch: ${url}`
+                throw `Invalid destination url - type mismatch: xxx`
             }
             var regexValidator = /^rtmp:\/\/[^\s]*$/
             if (!regexValidator.test(url)) {
-                throw `Invalid destination url - not rtmp url: ${url}`
+                throw `Invalid destination url - not rtmp url: xxx`
             }
             socket._dest = url
+            log(`Set destination to xxx`)
         } catch (err) {
             errorHandler(err)
         }
@@ -61,14 +65,20 @@ io.on('connect', (socket) => {
     socket.on('start', async () => {
         try {
             if (socket._ffmpeg || socket._feeder)
-                throw `Feeder is already running.`
+                throw `Streaming already running.`
             if (!socket._dest) throw `No destination url available.`
 
+            log('Start streaming')
+
             var option =
-                '-re -i - -c:v libx264 -preset veryfast -b:v 6000k -maxrate 6000k -bufsize 6000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv -loglevel error'
+                '-re -i - -c:v libx264 -preset veryfast -b:v 6000k -maxrate 6000k -bufsize 6000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv -loglevel repeat+level+error -vf scale=1920:1080'
 
             option = option.split(' ')
             option.push(socket._dest)
+
+            socket._ffmpeg = spawn('ffmpeg', option)
+
+            log('Spawned ffmpeg')
 
             socket._feeder = (data) => {
                 try {
@@ -87,9 +97,11 @@ io.on('connect', (socket) => {
             })
 
             socket._ffmpeg.on('exit', (e) => {
-                errorHandler(`ffmpeg has been exited: ${e}`)
+                log(`ffmpeg has been exited: ${e}`)
                 socket.disconnect()
             })
+
+            log('Started streaming')
         } catch (err) {
             errorHandler(err)
         }
@@ -108,7 +120,7 @@ io.on('connect', (socket) => {
                 try {
                     ffmpeg.stdin.end()
                     ffmpeg.kill('SIGINT')
-                    console.log('Ended ffmpeg!')
+                    log('Ended ffmpeg')
                 } catch (e) {
                     errorHandler(`Error while killing ffmpeg - ${e}`)
                 } finally {
@@ -119,6 +131,8 @@ io.on('connect', (socket) => {
             if (feeder) delete socket._feeder
         } catch (err) {
             errorHandler(err)
+        } finally {
+            log('Disconnected')
         }
     })
 })

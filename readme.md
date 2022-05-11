@@ -42,6 +42,9 @@
 -   Twitch
     -   [Recommended Ingest Endpoints For You](https://stream.twitch.tv/ingests/)
     -   [Stream to twitch via ffmpeg](https://discuss.dev.twitch.tv/t/stream-to-twitch-via-ffmpeg/27879)
+        -   [Docs of ffmpeg](https://ffmpeg.org/ffmpeg.html)
+            -   [How to set loglevel](https://stackoverflow.com/questions/35169650/differentiate-between-error-and-standard-terminal-log-with-ffmpeg-nodejs)
+            -   [Using 1080p](https://video.stackexchange.com/questions/14907/how-to-downsample-4k-to-1080p-using-ffmpeg-while-maintaining-the-quality)
 
 ### Deprecated
 
