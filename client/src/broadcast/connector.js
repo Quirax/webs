@@ -18,7 +18,7 @@ export default class Connector {
         if (this.isBroadcasting) return
 
         let bootstrap = (stream) => {
-            let socket = io('http://localhost:8080')
+            let socket = io(process.env.REACT_APP_SERVER)
 
             socket.emit('destination', process.env.REACT_APP_DESTINATION)
             socket.emit('start')
