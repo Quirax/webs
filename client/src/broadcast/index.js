@@ -10,7 +10,6 @@ import {
     CommonProps,
     Li,
     Nav,
-    Canvas,
     Form,
     P,
     Button,
@@ -20,6 +19,7 @@ import './index.scss'
 import Moveable from 'react-moveable'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
+import Connector from './connector'
 
 class Broadcast extends React.Component {
     constructor() {
@@ -27,25 +27,38 @@ class Broadcast extends React.Component {
 
         this.state = {
             canvasRect: { height: 1080, width: 1920 },
+            isBroadcasting: false,
         }
 
-        this.canvasRef = React.createRef()
+        this.workplaceRef = React.createRef()
         this.contextMenuRef = React.createRef()
         this.propertyDialogRef = React.createRef()
 
         this.getRects = () => {
-            const canvas = this.canvasRef.current
+            const wp = this.workplaceRef.current
 
             this.setState({
                 canvasRect: {
-                    height: canvas.clientHeight,
-                    width: canvas.clientWidth,
+                    height: wp.clientHeight,
+                    width: wp.clientWidth,
                 },
             })
         }
 
         this.getCanvasRatio = (size) =>
             (this.state.canvasRect.width / 1920) * size
+
+        this.toggleBroadcast = () => {
+            let connector = Connector.getInstance()
+
+            if (this.state.isBroadcasting) connector.stop()
+            else connector.start()
+
+            this.setState({
+                isBroadcasting: !this.state.isBroadcasting,
+            })
+        }
+        this.toggleBroadcast = this.toggleBroadcast.bind(this)
     }
 
     componentDidMount() {
@@ -73,7 +86,11 @@ class Broadcast extends React.Component {
                         <button>삭제</button>
                     </Div>
                     <Div fixsize padding-right='8'>
-                        <button>방송 시작</button>
+                        <button onClick={this.toggleBroadcast}>
+                            {this.state.isBroadcasting
+                                ? '방송 종료'
+                                : '방송 시작'}
+                        </button>
                     </Div>
                 </Header>
                 <Div flex height='calc(100% - 65px)' width='100%'>
@@ -133,7 +150,7 @@ class Broadcast extends React.Component {
                                 style={{
                                     transform: 'translate(-50%, -50%)',
                                 }}
-                                referrer={this.canvasRef}>
+                                referrer={this.workplaceRef}>
                                 <Ol>
                                     <Overlay
                                         top='100'
@@ -150,14 +167,6 @@ class Broadcast extends React.Component {
                                         />
                                     </Overlay>
                                 </Ol>
-                                <Canvas
-                                    position='absolute'
-                                    height='100%'
-                                    width='100%'
-                                    z-index='-1'
-                                    top='0'
-                                    left='0'
-                                />
                             </Div>
                         </Article>
                         <Footer

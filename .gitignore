@@ -105,4 +105,4 @@ dist
 
 # Ignore docs
 .docs
-client.bat
+*.bat
