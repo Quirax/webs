@@ -11,7 +11,7 @@ spawn('ffmpeg', ['-h']).on('error', function (m) {
     process.exit(-1)
 })
 
-const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
+const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
 
 let app = Express()
 // app.use(Express.static('public'));
@@ -26,7 +26,13 @@ app.use(function (req, res, next) {
     next()
 })
 
-const server = http.createServer({}, app)
+const server = https.createServer(
+    {
+        key: fs.readFileSync('cert/privkey.pem'),
+        cert: fs.readFileSync('cert/cert.pem'),
+    },
+    app
+)
 
 let io = new Server(server, {
     cors: {
