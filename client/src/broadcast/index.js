@@ -50,6 +50,7 @@ class Broadcast extends React.Component {
 
         this.toggleBroadcast = () => {
             let connector = Connector.getInstance()
+            connector.connect()
 
             if (this.state.isBroadcasting) connector.stop()
             else connector.start()
@@ -68,6 +69,8 @@ class Broadcast extends React.Component {
 
     componentWillUnmount() {
         window.removeEventListener('resize', this.getRects)
+        let connector = Connector.getInstance()
+        connector.disconnect()
     }
 
     render() {

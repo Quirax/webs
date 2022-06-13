@@ -11,7 +11,8 @@ spawn('ffmpeg', ['-h']).on('error', function (m) {
     process.exit(-1)
 })
 
-const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
+// const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
+const corsOrigin = RegExp(`^(http?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
 
 let app = Express()
 // app.use(Express.static('public'));
@@ -26,11 +27,11 @@ app.use(function (req, res, next) {
     next()
 })
 
-const server = https.createServer(
-    {
-        key: fs.readFileSync('cert/privkey.pem'),
-        cert: fs.readFileSync('cert/cert.pem'),
-    },
+const server = http.createServer(
+    // {
+    //     key: fs.readFileSync('cert/privkey.pem'),
+    //     cert: fs.readFileSync('cert/cert.pem'),
+    // },
     app
 )
 
@@ -117,7 +118,7 @@ io.on('connect', (socket) => {
         socket._feeder(blob)
     })
 
-    socket.on('disconnect', () => {
+    socket.on('disconnect', async () => {
         try {
             let ffmpeg = socket._ffmpeg
             let feeder = socket._feeder

@@ -14,12 +14,14 @@ export default class Connector {
         return Connector.instance
     }
 
+    connect() {
+        this.socket = this.socket || io(process.env.REACT_APP_SERVER)
+    }
+
     start() {
         if (this.isBroadcasting) return
 
-        let bootstrap = (stream) => {
-            let socket = io(process.env.REACT_APP_SERVER)
-
+        let bootstrap = (socket, stream) => {
             socket.emit('destination', process.env.REACT_APP_DESTINATION)
             socket.emit('start')
 
@@ -48,7 +50,7 @@ export default class Connector {
         navigator.mediaDevices
             .getDisplayMedia({ audio: true, video: true })
             .then(function (stream) {
-                my.socket = bootstrap(stream)
+                bootstrap(my.socket, stream)
                 my.isBroadcasting = true
             })
     }
@@ -59,8 +61,14 @@ export default class Connector {
             this.socket.mediaRecorder.stream.getTracks().forEach((mst) => {
                 mst.stop()
             })
-            this.socket.disconnect()
         }
         this.isBroadcasting = false
+    }
+
+    disconnect() {
+        if (this.socket) {
+            this.socket.disconnect()
+            this.socket = null
+        }
     }
 }
