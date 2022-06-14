@@ -73,6 +73,17 @@ class Broadcast extends React.Component {
     }
 
     render() {
+        if (this.props.preview) {
+            return (
+                <CommonProps>
+                    <OverlayContainer
+                        ratio={this.getCanvasRatio(1)}
+                        referrer={this.workplaceRef}
+                        preview
+                    />
+                </CommonProps>
+            )
+        }
         return (
             <CommonProps>
                 <Header
