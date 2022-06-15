@@ -114,7 +114,6 @@ class Overlay extends React.Component {
             height: 0,
             width: 0,
             rotate: 0,
-            enableMoveable: false,
         }
 
         this.contentRef = React.createRef()
@@ -134,16 +133,10 @@ class Overlay extends React.Component {
             width: parseFloat(this.props.width),
             rotate: parseFloat(this.props.rotate),
         })
+    }
 
-        setTimeout(
-            (t) => {
-                t.setState({
-                    enableMoveable: true,
-                })
-            },
-            1,
-            this
-        )
+    componentWillUnmount() {
+        //
     }
 
     render() {
@@ -151,10 +144,10 @@ class Overlay extends React.Component {
             <OVERLAY_PROPS.Consumer>
                 {(value) => {
                     let ratio = this.props.ratio || value.ratio || 1
-                    let preview = this.props.preview || value.preview
+                    let moveable = !(this.props.preview || value.preview)
 
                     return (
-                        <li>
+                        <li onMouseDown={this.setFocus}>
                             <Div
                                 className='overlay'
                                 display='inline-block'
@@ -181,112 +174,98 @@ class Overlay extends React.Component {
                                 }}>
                                 {this.props.children}
                             </Div>
-                            {(() => {
-                                if (preview) return <></>
-                                return (
-                                    <Moveable
-                                        hideDefaultLines={
-                                            !this.state.enableMoveable
-                                        }
-                                        target={this.contentRef.current}
-                                        origin={false}
-                                        edge={false} //Resize event edges
-                                        useResizeObserver={true}
-                                        /* For draggable */
-                                        draggable={this.state.enableMoveable}
-                                        throttleDrag={0}
-                                        onDrag={({ target, left, top }) => {
-                                            target.style.left = left + 'px'
-                                            target.style.top = top + 'px'
+                            <Moveable
+                                hideDefaultLines={!moveable}
+                                target={this.contentRef.current}
+                                origin={false}
+                                edge={false} //Resize event edges
+                                useResizeObserver={true}
+                                /* For draggable */
+                                draggable={moveable}
+                                throttleDrag={0}
+                                onDrag={({ target, left, top }) => {
+                                    target.style.left = left + 'px'
+                                    target.style.top = top + 'px'
 
-                                            this.x = left / ratio
-                                            this.y = top / ratio
-                                        }}
-                                        onDragEnd={() => {
-                                            this.setState({
-                                                x: this.x,
-                                                y: this.y,
-                                            })
-                                        }}
-                                        /* For resizable */
-                                        resizable={this.state.enableMoveable}
-                                        keepRatio={false}
-                                        throttleResize={1}
-                                        onResizeStart={({ dragStart }) => {
-                                            dragStart &&
-                                                dragStart.set([
-                                                    this.state.x * ratio,
-                                                    this.state.y * ratio,
-                                                ])
-                                        }}
-                                        onResize={({
-                                            target,
-                                            width,
-                                            height,
-                                            drag,
-                                        }) => {
-                                            let _height = height / ratio
-                                            let _width = width / ratio
+                                    this.x = left / ratio
+                                    this.y = top / ratio
+                                }}
+                                onDragEnd={() => {
+                                    this.setState({
+                                        x: this.x,
+                                        y: this.y,
+                                    })
+                                }}
+                                /* For resizable */
+                                resizable={moveable}
+                                keepRatio={false}
+                                throttleResize={1}
+                                onResizeStart={({ dragStart }) => {
+                                    dragStart &&
+                                        dragStart.set([
+                                            this.state.x * ratio,
+                                            this.state.y * ratio,
+                                        ])
+                                }}
+                                onResize={({ target, width, height, drag }) => {
+                                    let _height = height / ratio
+                                    let _width = width / ratio
 
-                                            target.style.height = height + 'px'
-                                            target.style.width = width + 'px'
-                                            target.style.left =
-                                                drag.beforeTranslate[0] + 'px'
-                                            target.style.top =
-                                                drag.beforeTranslate[1] + 'px'
+                                    target.style.height = height + 'px'
+                                    target.style.width = width + 'px'
+                                    target.style.left =
+                                        drag.beforeTranslate[0] + 'px'
+                                    target.style.top =
+                                        drag.beforeTranslate[1] + 'px'
 
-                                            this.x =
-                                                drag.beforeTranslate[0] / ratio
-                                            this.y =
-                                                drag.beforeTranslate[1] / ratio
+                                    this.x = drag.beforeTranslate[0] / ratio
+                                    this.y = drag.beforeTranslate[1] / ratio
 
-                                            this.setState({
-                                                height: _height,
-                                                width: _width,
-                                            })
-                                        }}
-                                        onResizeEnd={() => {
-                                            this.setState({
-                                                x: this.x,
-                                                y: this.y,
-                                            })
-                                        }}
-                                        /* For rotatable */
-                                        rotatable={this.state.enableMoveable}
-                                        throttleRotate={0}
-                                        onRotate={({ target, transform }) => {
-                                            this.setState({
-                                                rotate: parseFloat(
-                                                    transform
-                                                        .replace('rotate(', '')
-                                                        .replace('deg)', '')
-                                                ),
-                                            })
-                                            target.style.transform = transform
-                                        }}
-                                        /* For snappable */
-                                        snappable={this.state.enableMoveable}
-                                        snapThreshold={16}
-                                        elementGuidelines={['.overlay']}
-                                        snapGap={true}
-                                        isDisplaySnapDigit={false}
-                                        verticalGuidelines={[0, 1920 * ratio]}
-                                        horizontalGuidelines={[0, 1080 * ratio]}
-                                        snapDirections={{
-                                            top: true,
-                                            right: true,
-                                            bottom: true,
-                                            left: true,
-                                        }}
-                                        elementSnapDirections={{
-                                            top: true,
-                                            right: true,
-                                            bottom: true,
-                                            left: true,
-                                        }}
-                                    />
-                                )
-                            })()}
+                                    this.setState({
+                                        height: _height,
+                                        width: _width,
+                                    })
+                                }}
+                                onResizeEnd={() => {
+                                    this.setState({
+                                        x: this.x,
+                                        y: this.y,
+                                    })
+                                }}
+                                /* For rotatable */
+                                rotatable={moveable}
+                                throttleRotate={0}
+                                onRotate={({ target, transform }) => {
+                                    this.setState({
+                                        rotate: parseFloat(
+                                            transform
+                                                .replace('rotate(', '')
+                                                .replace('deg)', '')
+                                        ),
+                                    })
+                                    target.style.transform = transform
+                                }}
+                                /* For snappable */
+                                snappable={moveable}
+                                snapThreshold={16}
+                                elementGuidelines={['.overlay']}
+                                snapGap={true}
+                                isDisplaySnapDigit={false}
+                                verticalGuidelines={[0, 1920 * ratio]}
+                                horizontalGuidelines={[0, 1080 * ratio]}
+                                snapDirections={{
+                                    top: true,
+                                    right: true,
+                                    bottom: true,
+                                    left: true,
+                                }}
+                                elementSnapDirections={{
+                                    top: true,
+                                    right: true,
+                                    bottom: true,
+                                    left: true,
+                                }}
+                            />
                         </li>
                     )
                 }}
