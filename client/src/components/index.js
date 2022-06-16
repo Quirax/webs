@@ -287,3 +287,17 @@ export class Dialog extends Component {
         this.component = 'dialog'
     }
 }
+
+export class Details extends Component {
+    constructor() {
+        super()
+        this.component = 'details'
+    }
+}
+
+export class Summary extends Component {
+    constructor() {
+        super()
+        this.component = 'summary'
+    }
+}

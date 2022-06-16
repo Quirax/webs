@@ -39,6 +39,10 @@
         -   [Client Initialization](https://socket.io/docs/v4/client-initialization/)
         -   [Handling CORS](https://socket.io/docs/v3/handling-cors/)
             -   [cors options](https://github.com/expressjs/cors#configuration-options)
+        -   Socket.IO-stream
+            -   [How to stream data over socket.io to client](https://stackoverflow.com/questions/48627210/how-to-stream-data-over-socket-io-to-client)
+    -   [Puppeteer-Screen-Recorder](https://github.com/prasanaworld/puppeteer-screen-recorder)
+        -   [stream.PassThrough](https://nodejs.org/api/stream.html#stream_class_stream_passthrough)
 -   Twitch
     -   [Recommended Ingest Endpoints For You](https://stream.twitch.tv/ingests/)
     -   [Stream to twitch via ffmpeg](https://discuss.dev.twitch.tv/t/stream-to-twitch-via-ffmpeg/27879)

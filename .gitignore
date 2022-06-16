@@ -106,3 +106,4 @@ dist
 # Ignore docs
 .docs
 *.bat
+cert

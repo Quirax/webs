@@ -1,4 +1,4 @@
-FROM node:17-alpine as builder
+FROM node:alpine as builder
 
 # Create working directory
 RUN mkdir /usr/src
@@ -16,25 +16,15 @@ RUN npm i -g npm
 COPY . /usr/src/app
 
 # Run additional module optimization
-RUN npm rebuild node-sass
+RUN apk update
+RUN apk add
+RUN apk add ffmpeg
 
 # Build
-RUN npm run build
 
-# Deploy via nginx
-
-FROM nginx:alpine
-
-# Copy configure files
-RUN rm -rf /etc/nginx/conf.d
-COPY conf /etc/nginx
-
-# Deploy build to nginx directory
-COPY --from=builder /usr/src/app/build /usr/share/nginx/html
 
 # Open necessary ports
-EXPOSE 80
-EXPOSE 443
+EXPOSE 8080
 
 # Launch nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "index.js"]
