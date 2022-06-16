@@ -1,0 +1,104 @@
+$border: (
+    'normal': 1px solid black,
+);
+$bc: ( // name: (backgruound, color)
+    'white': (
+        white,
+        black,
+    ),
+    'black': (
+        black,
+        white,
+    ),
+    'selected': (
+        blue,
+        white,
+    ),'hover': (
+        #88f,
+        black,
+    ),
+);
+
+$sides: ('left', 'right', 'top', 'bottom', '');
+$align: ('center', 'right');
+$vertical-align: ('middle');
+
+.inline-block {
+    display: inline-block;
+}
+
+.table {
+    display: table;
+
+    & > * {
+        display: table-cell;
+    }
+}
+
+.none {
+    display: none;
+}
+
+.block {
+    display: block;
+}
+
+@each $p in $sides {
+    @if $p != '' {
+        .arrow-#{$p} {
+            @each $q in $sides {
+                @if ($q != '' and $q != $p) {
+                    border-#{$q}: 8px solid transparent;
+                }
+            }
+            border-#{$p}: 8px solid black;
+        }
+    }
+}
+
+.flex {
+    display: flex;
+}
+
+.grid {
+    display: grid;
+}
+
+.fixsize {
+    flex: none;
+}
+
+@each $a in $align {
+    .align-#{$a} {
+        text-align: #{$a};
+    }
+}
+
+@each $va in $vertical-align {
+    .align-#{$va} {
+        vertical-align: #{$va};
+    }
+}
+
+@each $n, $bx in $bc {
+    $b: nth($bx, 1);
+    $c: nth($bx, 2);
+    .background-#{$n},.hover-#{$n}:hover {
+        background: #{$b};
+        color: #{$c};
+    }
+}
+
+@each $n, $b in $border {
+    @each $p in $sides {
+        @if $p == '' {
+            .border-#{$n} {
+                border: $b;
+            }
+        } @else {
+            .border-#{$n}-#{$p} {
+                border-#{$p}: $b;
+            }
+        }
+    }
+}

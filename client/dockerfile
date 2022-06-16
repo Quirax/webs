@@ -1,0 +1,40 @@
+FROM node:17-alpine as builder
+
+# Create working directory
+RUN mkdir /usr/src
+RUN mkdir /usr/src/app
+WORKDIR /usr/src/app
+
+# Set PATH env
+ENV PATH /usr/src/app/node_modules/.bin:$PATH
+
+# Update npm
+RUN npm i -g npm
+# RUN npm install --save
+
+# Copy sources to working directory
+COPY . /usr/src/app
+
+# Run additional module optimization
+RUN npm rebuild node-sass
+
+# Build
+RUN npm run build
+
+# Deploy via nginx
+
+FROM nginx:alpine
+
+# Copy configure files
+RUN rm -rf /etc/nginx/conf.d
+COPY conf /etc/nginx
+
+# Deploy build to nginx directory
+COPY --from=builder /usr/src/app/build /usr/share/nginx/html
+
+# Open necessary ports
+EXPOSE 80
+EXPOSE 443
+
+# Launch nginx
+CMD ["nginx", "-g", "daemon off;"]

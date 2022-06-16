@@ -1,0 +1,30 @@
+FROM node:alpine as builder
+
+# Create working directory
+RUN mkdir /usr/src
+RUN mkdir /usr/src/app
+WORKDIR /usr/src/app
+
+# Set PATH env
+ENV PATH /usr/src/app/node_modules/.bin:$PATH
+
+# Update npm
+RUN npm i -g npm
+# RUN npm install --save
+
+# Copy sources to working directory
+COPY . /usr/src/app
+
+# Run additional module optimization
+RUN apk update
+RUN apk add
+RUN apk add ffmpeg
+
+# Build
+
+
+# Open necessary ports
+EXPOSE 8080
+
+# Launch nginx
+CMD ["node", "index.js"]
