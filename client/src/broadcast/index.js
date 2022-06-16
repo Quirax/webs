@@ -1,25 +1,11 @@
 import React from 'react'
-import {
-    Header,
-    Main,
-    Div,
-    Footer,
-    Article,
-    Ul,
-    CommonProps,
-    Li,
-    Nav,
-    Form,
-    P,
-    Button,
-    Dialog,
-} from '../components'
+import { Header, Main, Div, Footer, Article, CommonProps } from '../components'
 import './index.scss'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
 import Connector from './connector'
 import OverlayContainer from './overlay'
-import Itemlist from './itemlist'
+import Itemlist, { ItemlistType } from './itemlist'
 
 export default class Broadcast extends React.Component {
     constructor() {
@@ -106,15 +92,7 @@ export default class Broadcast extends React.Component {
                     </Div>
                 </Header>
                 <Div flex height='calc(100% - 65px)' width='100%'>
-                    <Itemlist
-                        list={[
-                            {
-                                name: '텍스트',
-                                selected: true,
-                            },
-                        ]}
-                        mode={Itemlist.OVERLAYS}
-                    />
+                    <Itemlist mode={ItemlistType.OVERLAYS} />
                     <Main flex flex-direction='column' width='100%'>
                         <Article
                             position='relative'

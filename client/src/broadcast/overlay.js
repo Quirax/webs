@@ -1,27 +1,29 @@
 import React from 'react'
-import {
-    Header,
-    Ol,
-    Main,
-    Div,
-    Footer,
-    Article,
-    Ul,
-    CommonProps,
-    Li,
-    Nav,
-    Form,
-    P,
-    Button,
-    Dialog,
-} from '../components'
+import { Ol, Div } from '../components'
 import Moveable from 'react-moveable'
+import BI from './info'
 
 const OVERLAY_PROPS = React.createContext()
+
+export const OverlayType = {
+    TEXT: 'text',
+}
+
+Object.freeze(OverlayType)
 
 export default class OverlayContainer extends React.Component {
     constructor() {
         super()
+
+        this.state = {
+            overlay: [],
+        }
+    }
+
+    componentDidMount() {
+        this.setState({
+            overlay: BI().currentScene().overlay,
+        })
     }
 
     render() {
@@ -50,7 +52,15 @@ export default class OverlayContainer extends React.Component {
                     }
                     referrer={this.props.referrer}>
                     <Ol>
-                        <Overlay
+                        {this.state.overlay.map((v, i) => {
+                            switch (v.type) {
+                                case OverlayType.TEXT:
+                                    return <TextOverlay key={i} value={v} />
+                                default:
+                            }
+                            return <></>
+                        })}
+                        {/* <Overlay
                             top='100'
                             left='100'
                             height='332'
@@ -76,7 +86,7 @@ export default class OverlayContainer extends React.Component {
                                 autoPlay
                                 loop
                             />
-                        </Overlay>
+                        </Overlay> */}
                         {/* <Overlay
                             top='300'
                             left='300'
@@ -89,14 +99,6 @@ export default class OverlayContainer extends React.Component {
                                 width='100%'
                             />
                         </Overlay> */}
-                        <Overlay
-                            top='400'
-                            left='400'
-                            height='16'
-                            width='480'
-                            rotate='0'>
-                            <span>Lorem ipsum 로렘 입숨</span>
-                        </Overlay>
                     </Ol>
                 </Div>
             </OVERLAY_PROPS.Provider>
@@ -118,20 +120,20 @@ class Overlay extends React.Component {
 
         this.contentRef = React.createRef()
 
-        this.x = 0
-        this.y = 0
+        this.value = {}
+
+        this.children = <></>
     }
 
     componentDidMount() {
-        this.x = parseFloat(this.props.left)
-        this.y = parseFloat(this.props.top)
+        this.value = this.props.value
 
         this.setState({
-            x: this.x,
-            y: this.y,
-            height: parseFloat(this.props.height),
-            width: parseFloat(this.props.width),
-            rotate: parseFloat(this.props.rotate),
+            x: parseFloat(this.value.transform.x),
+            y: parseFloat(this.value.transform.y),
+            height: parseFloat(this.value.transform.height),
+            width: parseFloat(this.value.transform.width),
+            rotate: parseFloat(this.value.transform.rotate),
         })
     }
 
@@ -142,9 +144,9 @@ class Overlay extends React.Component {
     render() {
         return (
             <OVERLAY_PROPS.Consumer>
-                {(value) => {
-                    let ratio = this.props.ratio || value.ratio || 1
-                    let moveable = !(this.props.preview || value.preview)
+                {(props) => {
+                    let ratio = this.props.ratio || props.ratio || 1
+                    let moveable = !(this.props.preview || props.preview)
 
                     return (
                         <li onMouseDown={this.setFocus}>
@@ -172,7 +174,7 @@ class Overlay extends React.Component {
                                 onTouchEnd={(e) => {
                                     e.preventDefault()
                                 }}>
-                                {this.props.children}
+                                {this.children}
                             </Div>
                             <Moveable
                                 hideDefaultLines={!moveable}
@@ -187,14 +189,18 @@ class Overlay extends React.Component {
                                     target.style.left = left + 'px'
                                     target.style.top = top + 'px'
 
-                                    this.x = left / ratio
-                                    this.y = top / ratio
+                                    this.value.transform.x = left / ratio
+                                    this.value.transform.y = top / ratio
+
+                                    BI().onChange()
                                 }}
                                 onDragEnd={() => {
                                     this.setState({
-                                        x: this.x,
-                                        y: this.y,
+                                        x: this.value.transform.x,
+                                        y: this.value.transform.y,
                                     })
+
+                                    BI().afterChange()
                                 }}
                                 /* For resizable */
                                 resizable={moveable}
@@ -218,32 +224,45 @@ class Overlay extends React.Component {
                                     target.style.top =
                                         drag.beforeTranslate[1] + 'px'
 
-                                    this.x = drag.beforeTranslate[0] / ratio
-                                    this.y = drag.beforeTranslate[1] / ratio
+                                    this.value.transform.x =
+                                        drag.beforeTranslate[0] / ratio
+                                    this.value.transform.y =
+                                        drag.beforeTranslate[1] / ratio
+                                    this.value.transform.height = _height
+                                    this.value.transform.width = _width
 
-                                    this.setState({
-                                        height: _height,
-                                        width: _width,
-                                    })
+                                    BI().onChange()
                                 }}
                                 onResizeEnd={() => {
                                     this.setState({
-                                        x: this.x,
-                                        y: this.y,
+                                        height: this.value.transform.height,
+                                        width: this.value.transform.width,
+                                        x: this.value.transform.x,
+                                        y: this.value.transform.y,
                                     })
+
+                                    BI().afterChange()
                                 }}
                                 /* For rotatable */
                                 rotatable={moveable}
                                 throttleRotate={0}
                                 onRotate={({ target, transform }) => {
-                                    this.setState({
-                                        rotate: parseFloat(
+                                    this.value.transform.rotate =
+                                        parseFloat(
                                             transform
                                                 .replace('rotate(', '')
                                                 .replace('deg)', '')
-                                        ),
-                                    })
+                                        ) % 360
                                     target.style.transform = transform
+
+                                    BI().onChange()
+                                }}
+                                onRotateEnd={() => {
+                                    this.setState({
+                                        rotate: this.value.transform.rotate,
+                                    })
+
+                                    BI().afterChange()
                                 }}
                                 /* For snappable */
                                 snappable={moveable}
@@ -271,5 +290,18 @@ class Overlay extends React.Component {
                 }}
             </OVERLAY_PROPS.Consumer>
         )
+    }
+}
+
+class TextOverlay extends Overlay {
+    constructor() {
+        super()
+    }
+
+    componentDidMount() {
+        super.componentDidMount()
+
+        let value = this.props.value
+        this.children = <span>{value.params.text}</span>
     }
 }

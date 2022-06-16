@@ -9,8 +9,7 @@ export default class Connector {
     }
 
     static getInstance() {
-        if (Connector.instance) return Connector.instance
-        Connector.instance = new Connector()
+        if (!Connector.instance) Connector.instance = new Connector()
         return Connector.instance
     }
 

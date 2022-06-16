@@ -1,30 +1,48 @@
 import React from 'react'
-import {
-    Header,
-    Main,
-    Div,
-    Footer,
-    Article,
-    Ul,
-    CommonProps,
-    Li,
-    Nav,
-    Form,
-    P,
-    Button,
-    Dialog,
-} from '../components'
+import { Div, Ul, Li, Nav, Dialog } from '../../components'
+import BI from '../info'
+import PropertyDialog from './property'
+
+export const ItemlistType = {
+    SCENES: 'scenes',
+    TRANSITIONS: 'transitions',
+    OVERLAYS: 'overlays',
+}
+
+Object.freeze(ItemlistType)
 
 export default class Itemlist extends React.Component {
-    static SCENES = 0
-    static TRANSITIONS = 1
-    static OVERLAYS = 2
-
     constructor() {
         super()
 
+        this.state = {
+            list: [],
+        }
+
         this.contextMenuRef = React.createRef()
         this.propertyDialogRef = React.createRef()
+    }
+
+    componentDidMount() {
+        switch (this.props.mode) {
+            case ItemlistType.SCENES:
+                this.setState({
+                    list: BI().info.scene,
+                })
+                break
+            case ItemlistType.TRANSITIONS:
+                this.setState({
+                    list: BI().info.transition,
+                })
+                break
+            case ItemlistType.OVERLAYS:
+                this.setState({
+                    list: BI().currentScene().overlay,
+                })
+                break
+            default:
+                throw 'Invalid itemlist mode'
+        }
     }
 
     render() {
@@ -38,14 +56,16 @@ export default class Itemlist extends React.Component {
                     width='256'
                     border-right='normal'>
                     <Ul>
-                        {this.props.list.map((v, i) => (
-                            <Item
-                                menu={this.contextMenuRef}
-                                propertyDialog={this.propertyDialogRef}
-                                value={v}
-                                key={i}
-                            />
-                        ))}
+                        {this.state.list.map((v, i) => {
+                            return (
+                                <Item
+                                    menu={this.contextMenuRef}
+                                    propertyDialog={this.propertyDialogRef}
+                                    value={v}
+                                    key={i}
+                                />
+                            )
+                        })}
                         <Li
                             padding='8'
                             border-bottom='normal'
@@ -53,11 +73,11 @@ export default class Itemlist extends React.Component {
                             cursor='default'>
                             {(() => {
                                 switch (this.props.mode) {
-                                    case Itemlist.SCENES:
+                                    case ItemlistType.SCENES:
                                         return '장면 추가'
-                                    case Itemlist.TRANSITIONS:
+                                    case ItemlistType.TRANSITIONS:
                                         return '장면 전환 추가'
-                                    case Itemlist.OVERLAYS:
+                                    case ItemlistType.OVERLAYS:
                                         return '오버레이 추가'
                                     default:
                                         throw 'Invalid itemlist mode'
@@ -68,7 +88,7 @@ export default class Itemlist extends React.Component {
                     <Ul>
                         {(() => {
                             switch (this.props.mode) {
-                                case Itemlist.SCENES:
+                                case ItemlistType.SCENES:
                                     return (
                                         <Li
                                             padding='8'
@@ -78,7 +98,7 @@ export default class Itemlist extends React.Component {
                                             장면 전환 설정
                                         </Li>
                                     )
-                                case Itemlist.TRANSITIONS:
+                                case ItemlistType.TRANSITIONS:
                                     return (
                                         <Li
                                             padding='8'
@@ -88,7 +108,7 @@ export default class Itemlist extends React.Component {
                                             장면 설정
                                         </Li>
                                     )
-                                case Itemlist.OVERLAYS:
+                                case ItemlistType.OVERLAYS:
                                     return <></>
                                 default:
                                     throw 'Invalid itemlist mode'
@@ -132,6 +152,9 @@ class Item extends React.Component {
         }
     }
     render() {
+        // this.props.value.name = '와랄라'
+        // BI().onChange()
+
         return (
             <Li
                 padding='8'
@@ -210,124 +233,6 @@ class ContextMenu extends React.Component {
                     cursor='default'>
                     삭제
                 </Div>
-            </Dialog>
-        )
-    }
-}
-
-class PropertyDialog extends React.Component {
-    constructor() {
-        super()
-
-        this.state = {
-            top: 200,
-            left: 200,
-            target: null,
-            open: false,
-            value: null,
-        }
-
-        this.isFocusing = false
-
-        this.onClick = () => {
-            if (!this) return
-            if (!this.isFocusing) {
-                this.setState({
-                    open: false,
-                })
-            } else {
-                this.isFocusing = false
-            }
-        }
-
-        this.setFocus = () => {
-            this.isFocusing = true
-        }
-        this.setFocus = this.setFocus.bind(this)
-
-        this.leaveFocus = () => {
-            this.isFocusing = false
-            this.setState({
-                open: false,
-            })
-        }
-        this.leaveFocus = this.leaveFocus.bind(this)
-    }
-
-    componentDidMount() {
-        window.addEventListener('click', this.onClick)
-    }
-
-    componentWillUnmount() {
-        window.removeEventListener('click', this.onClick)
-    }
-
-    show(target, value, top, left) {
-        this.setState({
-            top: top - 8,
-            left: left + 8,
-            target: target,
-            open: true,
-            value: value,
-        })
-    }
-
-    render() {
-        return (
-            <Dialog
-                position='fixed'
-                top={this.state.top}
-                left={this.state.left}
-                border='normal'
-                background='white'
-                open={this.state.open}
-                z-index={10}
-                onClick={this.setFocus}>
-                <Div
-                    display='inline-block'
-                    height='0'
-                    width='0'
-                    arrow='right'
-                    position='absolute'
-                    top='-1'
-                    left='-16'
-                    z-index='-1'
-                />
-                <Form>
-                    <Div padding='8'>
-                        <P>
-                            이름:{' '}
-                            <input
-                                type='text'
-                                defaultValue={
-                                    this.state.value
-                                        ? this.state.value.name
-                                        : ''
-                                }
-                            />
-                        </P>
-                        <P padding-top='8'>
-                            종류:{' '}
-                            <select>
-                                <option>이미지</option>
-                                <option>웹 뷰 (URL)</option>
-                            </select>
-                        </P>
-                    </Div>
-                    <Div padding='8' border-top='normal' border-bottom='normal'>
-                        <P>
-                            파일: <input type='file' />
-                        </P>
-                    </Div>
-                    <Div>
-                        <Button width='50%' onClick={this.leaveFocus}>
-                            저장
-                        </Button>
-                        <Button width='50%' onClick={this.leaveFocus}>
-                            취소
-                        </Button>
-                    </Div>
-                </Form>
             </Dialog>
         )
     }
