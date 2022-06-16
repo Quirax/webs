@@ -135,38 +135,73 @@ function ParamList(props) {
         <>
             <Details title='공통'>
                 <Params>
-                    <Arg name='가로로 넘치는 부분을' /* [숨김] */ />
-                    <Arg name='세로로 넘치는 부분을' /* [숨김] */ />
-                    <Arg name='배경색' /* [#00000000] */ />
-                    <Arg name='현재 비율 유지' /* [-] */ />
-                    <Arg name='모서리 곡률 반경' /* [0] */ unit='px' />
+                    <Arg
+                        name='가로로 넘치는 부분을'
+                        type={ArgTypes.COMBOBOX} /* [숨김] */
+                    />
+                    <Arg
+                        name='세로로 넘치는 부분을'
+                        type={ArgTypes.COMBOBOX} /* [숨김] */
+                    />
+                    <Arg name='배경색' type={ArgTypes.COLOR} />
+                    <Arg
+                        name='현재 비율 유지'
+                        type={ArgTypes.CHECKBOX}
+                        default={false}
+                    />
+                    <Arg
+                        name='모서리 곡률 반경'
+                        type={ArgTypes.NUMBER}
+                        unit='px'
+                    />
                 </Params>
             </Details>
             <Details title='테두리'>
                 <Params>
-                    <Arg name='색' /* [#00000000] */ />
-                    <Arg name='두께' /* [0] */ unit='px' />
-                    <Arg name='형태' /* [직선] */ />
+                    <Arg name='색' type={ArgTypes.COLOR} />
+                    <Arg name='두께' type={ArgTypes.NUMBER} unit='px' />
+                    <Arg name='형태' type={ArgTypes.COMBOBOX} /* [직선] */ />
                 </Params>
             </Details>
             <Details title='여백'>
                 <Params>
-                    <Arg name='테두리 바깥쪽' /* [0] */ unit='px' />
-                    <Arg name='테두리 안쪽' /* [0] */ unit='px' />
+                    <Arg
+                        name='테두리 바깥쪽'
+                        type={ArgTypes.NUMBER}
+                        unit='px'
+                    />
+                    <Arg name='테두리 안쪽' type={ArgTypes.NUMBER} unit='px' />
                 </Params>
             </Details>
             <Details title='글꼴'>
                 <Params>
-                    <Arg name='글꼴' /* [굴림] */ />
-                    <Arg name='크기' /* [12] */ unit='pt' />
-                    <Arg /* [B][I][U][S] */ />
+                    <Arg name='글꼴' type={ArgTypes.COMBOBOX} /* [굴림] */ />
+                    <Arg
+                        name='크기'
+                        type={ArgTypes.NUMBER}
+                        default={12}
+                        unit='pt'
+                    />
+                    <Arg type={ArgTypes.BUTTONS} /* [B][I][U][S] */ />
                 </Params>
             </Details>
             <Details title='문단'>
                 <Params>
-                    <Arg name='가로 정렬' /* [L][C][R][J] */ />
-                    <Arg name='세로 정렬' /* [T][M][B] */ />
-                    <Arg name='줄 높이' prefix='텍스트의' /* [0] */ unit='배' />
+                    <Arg
+                        name='가로 정렬'
+                        type={ArgTypes.BUTTONS} /* [L][C][R][J] */
+                    />
+                    <Arg
+                        name='세로 정렬'
+                        type={ArgTypes.BUTTONS} /* [T][M][B] */
+                    />
+                    <Arg
+                        name='줄 높이'
+                        prefix='텍스트의'
+                        type={ArgTypes.NUMBER}
+                        default={1.0}
+                        unit='배'
+                    />
                 </Params>
             </Details>
         </>
@@ -211,9 +246,38 @@ function Arg(props) {
         <tr>
             {props.name ? <td>{props.name}</td> : <></>}
             <td colSpan={props.name ? null : 2}>
-                {props.prefix ? props.prefix + ' ' : ''}[]
+                {props.prefix ? props.prefix + ' ' : ''}
+                {(() => {
+                    switch (props.type) {
+                        case ArgTypes.BUTTONS:
+                            return '[][][][]'
+                        case ArgTypes.CHECKBOX:
+                            return (
+                                <input
+                                    type='checkbox'
+                                    defaultChecked={props.default}
+                                />
+                            )
+                        case ArgTypes.COLOR:
+                            return '[#00000000]'
+                        case ArgTypes.COMBOBOX:
+                            return '[]'
+                        case ArgTypes.NUMBER:
+                            return '[0]'
+                    }
+                })()}
                 {props.unit ? ' ' + props.unit : ''}
             </td>
         </tr>
     )
 }
+
+const ArgTypes = {
+    COMBOBOX: 'combobox',
+    COLOR: 'color',
+    CHECKBOX: 'checkbox',
+    NUMBER: 'number',
+    BUTTONS: 'buttons',
+}
+
+Object.freeze(ArgTypes)
