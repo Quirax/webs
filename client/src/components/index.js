@@ -1,5 +1,6 @@
 import React from 'react'
 import classNames from 'classnames'
+import TextareaAutosize from 'react-textarea-autosize'
 
 const COMMON_PROPS = React.createContext()
 
@@ -7,6 +8,10 @@ export default class Component extends React.Component {
     constructor() {
         super()
         this.component = ''
+
+        this.state = {
+            noMaxHeight: false,
+        }
 
         this.getStyle = () => {
             function concatPx(value) {
@@ -49,35 +54,37 @@ export default class Component extends React.Component {
 
             this.args = args
 
-            return {
-                zIndex,
-                paddingLeft: concatPx(paddingLeft || padding),
-                paddingRight: concatPx(paddingRight || padding),
-                paddingTop: concatPx(paddingTop || padding),
-                paddingBottom: concatPx(paddingBottom || padding),
-                marginLeft: concatPx(marginLeft || margin),
-                marginRight: concatPx(marginRight || margin),
-                marginTop: concatPx(marginTop || margin),
-                marginBottom: concatPx(marginBottom || margin),
-                borderRadius: concatPx(borderRadius),
-                height: concatPx(height),
-                width: concatPx(width),
-                top: concatPx(top),
-                bottom: concatPx(bottom),
-                left: concatPx(left),
-                right: concatPx(right),
-                aspectRatio,
-                maxHeight,
-                maxWidth,
-                textDecoration,
-                justifyContent,
-                alignItems,
-                flexDirection,
-                float,
-                position,
-                cursor,
-                ...style,
-            }
+            return Object.assign(
+                {
+                    zIndex,
+                    paddingLeft: concatPx(paddingLeft || padding),
+                    paddingRight: concatPx(paddingRight || padding),
+                    paddingTop: concatPx(paddingTop || padding),
+                    paddingBottom: concatPx(paddingBottom || padding),
+                    marginLeft: concatPx(marginLeft || margin),
+                    marginRight: concatPx(marginRight || margin),
+                    marginTop: concatPx(marginTop || margin),
+                    marginBottom: concatPx(marginBottom || margin),
+                    borderRadius: concatPx(borderRadius),
+                    height: concatPx(height),
+                    width: concatPx(width),
+                    top: concatPx(top),
+                    bottom: concatPx(bottom),
+                    left: concatPx(left),
+                    right: concatPx(right),
+                    aspectRatio,
+                    maxWidth,
+                    textDecoration,
+                    justifyContent,
+                    alignItems,
+                    flexDirection,
+                    float,
+                    position,
+                    cursor,
+                    ...style,
+                },
+                this.state.noMaxHeight ? null : { maxHeight: maxHeight }
+            )
         }
 
         this.getClassName = () => {
@@ -134,17 +141,15 @@ export default class Component extends React.Component {
         return (
             <COMMON_PROPS.Consumer>
                 {(value) => {
+                    let Cpnt = this.state.component || this.component
+
                     this.args = { ...this.args, ...this.props, ...value }
                     let { referrer, ...args } = this.args
                     this.args = args
                     return (
-                        <this.component
-                            ref={referrer}
-                            className={this.getClassName()}
-                            style={this.getStyle()}
-                            {...this.args}>
+                        <Cpnt ref={referrer} className={this.getClassName()} style={this.getStyle()} {...this.args}>
                             {this.props.children}
-                        </this.component>
+                        </Cpnt>
                     )
                 }}
             </COMMON_PROPS.Consumer>
@@ -153,9 +158,7 @@ export default class Component extends React.Component {
 }
 
 export function CommonProps({ children, ...props }) {
-    return (
-        <COMMON_PROPS.Provider value={props}>{children}</COMMON_PROPS.Provider>
-    )
+    return <COMMON_PROPS.Provider value={props}>{children}</COMMON_PROPS.Provider>
 }
 
 export class Header extends Component {
@@ -299,5 +302,56 @@ export class Summary extends Component {
     constructor() {
         super()
         this.component = 'summary'
+    }
+}
+
+export class TD extends Component {
+    constructor() {
+        super()
+        this.component = 'td'
+    }
+}
+
+export class TR extends Component {
+    constructor() {
+        super()
+        this.component = 'tr'
+    }
+}
+
+export class Input extends Component {
+    constructor() {
+        super()
+        this.component = 'input'
+    }
+}
+
+export class Label extends Component {
+    constructor() {
+        super()
+        this.component = 'label'
+    }
+}
+
+export class Textarea extends Component {
+    constructor() {
+        super()
+        this.component = 'textarea'
+    }
+
+    componentDidMount() {
+        if (this.props.autoresize) {
+            this.setState({
+                component: (props) => <TextareaAutosize maxRows={props.maxrows} minRows={props.minrows} {...props} />,
+                noMaxHeight: true,
+            })
+        }
+    }
+}
+
+export class Table extends Component {
+    constructor() {
+        super()
+        this.component = 'table'
     }
 }

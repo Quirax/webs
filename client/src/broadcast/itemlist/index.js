@@ -41,7 +41,7 @@ export default class Itemlist extends React.Component {
                 })
                 break
             default:
-                throw 'Invalid itemlist mode'
+                throw new Error('Invalid itemlist mode')
         }
     }
 
@@ -63,14 +63,15 @@ export default class Itemlist extends React.Component {
                                     propertyDialog={this.propertyDialogRef}
                                     value={v}
                                     key={i}
+                                    onChange={(val) => {
+                                        v = val
+
+                                        BI().onChange()
+                                    }}
                                 />
                             )
                         })}
-                        <Li
-                            padding='8'
-                            border-bottom='normal'
-                            align='center'
-                            cursor='default'>
+                        <Li padding='8' border-bottom='normal' align='center' cursor='default'>
                             {(() => {
                                 switch (this.props.mode) {
                                     case ItemlistType.SCENES:
@@ -80,7 +81,7 @@ export default class Itemlist extends React.Component {
                                     case ItemlistType.OVERLAYS:
                                         return '오버레이 추가'
                                     default:
-                                        throw 'Invalid itemlist mode'
+                                        throw new Error('Invalid itemlist mode')
                                 }
                             })()}
                         </Li>
@@ -90,28 +91,20 @@ export default class Itemlist extends React.Component {
                             switch (this.props.mode) {
                                 case ItemlistType.SCENES:
                                     return (
-                                        <Li
-                                            padding='8'
-                                            border-top='normal'
-                                            align='center'
-                                            cursor='default'>
+                                        <Li padding='8' border-top='normal' align='center' cursor='default'>
                                             장면 전환 설정
                                         </Li>
                                     )
                                 case ItemlistType.TRANSITIONS:
                                     return (
-                                        <Li
-                                            padding='8'
-                                            border-top='normal'
-                                            align='center'
-                                            cursor='default'>
+                                        <Li padding='8' border-top='normal' align='center' cursor='default'>
                                             장면 설정
                                         </Li>
                                     )
                                 case ItemlistType.OVERLAYS:
                                     return <></>
                                 default:
-                                    throw 'Invalid itemlist mode'
+                                    throw new Error('Invalid itemlist mode')
                             }
                         })()}
                     </Ul>
@@ -137,7 +130,9 @@ class Item extends React.Component {
             let top = e.clientY
             let left = e.clientX
 
-            dialog.show(this, this.props.value, top, left)
+            dialog.show(this, this.props.value, top, left, (val) => {
+                this.props.onChange && this.props.onChange(val)
+            })
         }
     }
 
@@ -152,9 +147,6 @@ class Item extends React.Component {
         }
     }
     render() {
-        // this.props.value.name = '와랄라'
-        // BI().onChange()
-
         return (
             <Li
                 padding='8'
@@ -219,18 +211,10 @@ class ContextMenu extends React.Component {
                 <Div padding='8' hover='hover' cursor='default'>
                     복제
                 </Div>
-                <Div
-                    padding='8'
-                    border-top='normal'
-                    hover='hover'
-                    cursor='default'>
+                <Div padding='8' border-top='normal' hover='hover' cursor='default'>
                     수정
                 </Div>
-                <Div
-                    padding='8'
-                    border-top='normal'
-                    hover='hover'
-                    cursor='default'>
+                <Div padding='8' border-top='normal' hover='hover' cursor='default'>
                     삭제
                 </Div>
             </Dialog>

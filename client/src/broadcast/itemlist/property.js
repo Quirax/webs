@@ -1,18 +1,22 @@
 import React from 'react'
 import {
     Div,
-    Ul,
-    Li,
-    Nav,
     Form,
     P,
     Button,
     Dialog,
     Details as DetailsView,
     Summary,
+    TR,
+    TD,
+    Input,
+    Label,
+    Textarea,
+    Table,
 } from '../../components'
 import BI from '../info'
-import { OverlayType } from '../overlay'
+import { OverlayParam, OverlayType } from '../overlay'
+import { cloneDeep } from 'lodash'
 
 export default class PropertyDialog extends React.Component {
     constructor() {
@@ -24,6 +28,7 @@ export default class PropertyDialog extends React.Component {
             target: null,
             open: false,
             value: null,
+            onChange: () => {},
         }
 
         this.isFocusing = false
@@ -31,6 +36,10 @@ export default class PropertyDialog extends React.Component {
         this.onClick = () => {
             if (!this) return
             if (!this.isFocusing) {
+                if (this.state.open) {
+                    this.state.onChange(this.state.originalValue)
+                    BI().afterChange()
+                }
                 this.setState({
                     open: false,
                 })
@@ -54,20 +63,22 @@ export default class PropertyDialog extends React.Component {
     }
 
     componentDidMount() {
-        window.addEventListener('click', this.onClick)
+        window.addEventListener('mousedown', this.onClick)
     }
 
     componentWillUnmount() {
-        window.removeEventListener('click', this.onClick)
+        window.removeEventListener('mousedown', this.onClick)
     }
 
-    show(target, value, top, left) {
+    show(target, value, top, left, onChange) {
         this.setState({
             top: top - 8,
             left: left + 8,
             target: target,
             open: true,
             value: value,
+            originalValue: cloneDeep(value),
+            onChange: onChange,
         })
     }
 
@@ -81,7 +92,7 @@ export default class PropertyDialog extends React.Component {
                 background='white'
                 open={this.state.open}
                 z-index={10}
-                onClick={this.setFocus}>
+                onMouseDown={this.setFocus}>
                 <Div
                     display='inline-block'
                     height='0'
@@ -95,15 +106,7 @@ export default class PropertyDialog extends React.Component {
                 <Form>
                     <Div padding='8'>
                         <P>
-                            이름:{' '}
-                            <input
-                                type='text'
-                                defaultValue={
-                                    this.state.value
-                                        ? this.state.value.name
-                                        : ''
-                                }
-                            />
+                            이름: <input type='text' defaultValue={this.state.value ? this.state.value.name : ''} />
                         </P>
                         <P padding-top='8'>
                             종류:{' '}
@@ -114,13 +117,31 @@ export default class PropertyDialog extends React.Component {
                         </P>
                     </Div>
                     <Div padding='8' border-top='normal' border-bottom='normal'>
-                        <ParamList />
+                        <ParamList
+                            value={this.state.value}
+                            onChange={(val) => {
+                                this.state.onChange(val)
+                            }}
+                        />
                     </Div>
                     <Div>
-                        <Button width='50%' onClick={this.leaveFocus}>
+                        <Button
+                            width='50%'
+                            onClick={(e) => {
+                                this.state.onChange(this.state.value)
+                                BI().afterChange()
+                                this.leaveFocus(e)
+                            }}>
                             저장
                         </Button>
-                        <Button width='50%' onClick={this.leaveFocus}>
+                        <Button
+                            width='50%'
+                            onClick={(e) => {
+                                // TODO: Cancel update
+                                this.state.onChange(this.state.originalValue)
+                                BI().afterChange()
+                                this.leaveFocus(e)
+                            }}>
                             취소
                         </Button>
                     </Div>
@@ -133,34 +154,137 @@ export default class PropertyDialog extends React.Component {
 function ParamList(props) {
     return (
         <>
+            <Params>
+                <Arg
+                    type={ArgTypes.TEXTAREA}
+                    default={props.value?.params.text}
+                    placeholder='표시할 내용을 입력하십시오.'
+                    onChange={(val) => {
+                        props.value && (props.value.params.text = val)
+                        props.onChange && props.onChange(props.value)
+                    }}
+                />
+            </Params>
             <Details title='공통'>
                 <Params>
                     <Arg
-                        name='가로로 넘치는 부분을'
-                        type={ArgTypes.COMBOBOX} /* [숨김] */
+                        name='넘칠 때'
+                        type={ArgTypes.COMBOBOX}
+                        default={props.value?.params.overflow}
+                        onChange={(val) => {
+                            props.value && (props.value.params.overflow = val)
+                            props.onChange && props.onChange(props.value)
+                        }}>
+                        <option value={OverlayParam.overflow.HIDDEN}>숨김</option>
+                        <option value={OverlayParam.overflow.SHOW}>표시</option>
+                    </Arg>
+                    <Arg
+                        name='배경색'
+                        type={ArgTypes.COLOR}
+                        default={props.value?.params.background_color}
+                        onChange={(val) => {
+                            props.value && (props.value.params.background_color = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
                     />
                     <Arg
-                        name='세로로 넘치는 부분을'
-                        type={ArgTypes.COMBOBOX} /* [숨김] */
+                        name='배경 투명도'
+                        type={ArgTypes.SLIDER}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        default={props.value?.params.background_opacity}
+                        onChange={(val) => {
+                            props.value && (props.value.params.background_opacity = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
                     />
-                    <Arg name='배경색' type={ArgTypes.COLOR} />
+                    <Arg
+                        name='전체 투명도'
+                        type={ArgTypes.SLIDER}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        default={props.value?.params.opacity}
+                        onChange={(val) => {
+                            props.value && (props.value.params.opacity = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
+                    />
                     <Arg
                         name='현재 비율 유지'
                         type={ArgTypes.CHECKBOX}
-                        default={false}
+                        default={props.value?.params.aspect_ratio}
+                        onChange={(val) => {
+                            props.value && (props.value.params.aspect_ratio = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
                     />
                     <Arg
                         name='모서리 곡률 반경'
                         type={ArgTypes.NUMBER}
+                        min={0}
                         unit='px'
+                        default={props.value?.params.radius}
+                        onChange={(val) => {
+                            props.value && (props.value.params.radius = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
                     />
                 </Params>
             </Details>
             <Details title='테두리'>
                 <Params>
-                    <Arg name='색' type={ArgTypes.COLOR} />
-                    <Arg name='두께' type={ArgTypes.NUMBER} unit='px' />
-                    <Arg name='형태' type={ArgTypes.COMBOBOX} /* [직선] */ />
+                    <Arg
+                        name='형태'
+                        type={ArgTypes.COMBOBOX}
+                        default={props.value?.params.border_style}
+                        onChange={(val) => {
+                            props.value && (props.value.params.border_style = val)
+                            props.onChange && props.onChange(props.value)
+                        }}>
+                        <option value={OverlayParam.border_style.NONE}>없음</option>
+                        <option value={OverlayParam.border_style.SOLID}>직선 (-----)</option>
+                        <option value={OverlayParam.border_style.DOUBLE}>겹선 (=====)</option>
+                        <option value={OverlayParam.border_style.DOTTED}>점선 (&middot; &middot; &middot;)</option>
+                        <option value={OverlayParam.border_style.DASHED}>점선 (- - -)</option>
+                        <option value={OverlayParam.border_style.GROOVE}>파인 테두리</option>
+                        <option value={OverlayParam.border_style.RIDGE}>튀어나온 테두리</option>
+                        <option value={OverlayParam.border_style.INSET}>파인 경사</option>
+                        <option value={OverlayParam.border_style.OUTSET}>튀어나온 경사</option>
+                    </Arg>
+                    <Arg
+                        name='두께'
+                        type={ArgTypes.NUMBER}
+                        min={0}
+                        unit='px'
+                        default={props.value?.params.border_width}
+                        onChange={(val) => {
+                            props.value && (props.value.params.border_width = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
+                    />
+                    <Arg
+                        name='색'
+                        type={ArgTypes.COLOR}
+                        default={props.value?.params.border_color}
+                        onChange={(val) => {
+                            props.value && (props.value.params.border_color = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
+                    />
+                    <Arg
+                        name='투명도'
+                        type={ArgTypes.SLIDER}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        default={props.value?.params.border_opacity}
+                        onChange={(val) => {
+                            props.value && (props.value.params.border_opacity = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
+                    />
                 </Params>
             </Details>
             <Details title='여백'>
@@ -169,38 +293,124 @@ function ParamList(props) {
                         name='테두리 바깥쪽'
                         type={ArgTypes.NUMBER}
                         unit='px'
+                        min={0}
+                        default={props.value?.params.margin}
+                        onChange={(val) => {
+                            props.value && (props.value.params.margin = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
                     />
-                    <Arg name='테두리 안쪽' type={ArgTypes.NUMBER} unit='px' />
+                    <Arg
+                        name='테두리 안쪽'
+                        type={ArgTypes.NUMBER}
+                        min={0}
+                        unit='px'
+                        default={props.value?.params.padding}
+                        onChange={(val) => {
+                            props.value && (props.value.params.padding = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
+                    />
                 </Params>
             </Details>
             <Details title='글꼴'>
                 <Params>
-                    <Arg name='글꼴' type={ArgTypes.COMBOBOX} /* [굴림] */ />
+                    <Arg
+                        name='글꼴'
+                        type={ArgTypes.COMBOBOX}
+                        onChange={(val) => {
+                            // props.value && (props.value.params.overflow_y = val)
+                            // props.onChange && props.onChange(props.value)
+                        }}>
+                        {/* TODO: 글꼴 목록 반영 */}
+                        <option>굴림</option>
+                    </Arg>
                     <Arg
                         name='크기'
                         type={ArgTypes.NUMBER}
-                        default={12}
+                        default={props.value?.params.font_size}
+                        min={0}
                         unit='pt'
+                        onChange={(val) => {
+                            props.value && (props.value.params.font_size = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
                     />
-                    <Arg type={ArgTypes.BUTTONS} /* [B][I][U][S] */ />
+                    <Arg
+                        type={ArgTypes.BUTTONS}
+                        multiple
+                        default={props.value?.params.font_flags}
+                        onChange={(val) => {
+                            props.value && (props.value.params.font_flags = val)
+                            props.onChange && props.onChange(props.value)
+                        }}>
+                        <option value={OverlayParam.font_flags.BOLD}>B</option>
+                        <option value={OverlayParam.font_flags.ITALIC}>I</option>
+                        <option value={OverlayParam.font_flags.UNDERLINE}>U</option>
+                        <option value={OverlayParam.font_flags.STRIKE}>S</option>
+                    </Arg>
+                    <Arg
+                        name='색'
+                        type={ArgTypes.COLOR}
+                        default={props.value?.params.font_color}
+                        onChange={(val) => {
+                            props.value && (props.value.params.font_color = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
+                    />
+                    <Arg
+                        name='투명도'
+                        type={ArgTypes.SLIDER}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        default={props.value?.params.font_opacity}
+                        onChange={(val) => {
+                            props.value && (props.value.params.font_opacity = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
+                    />
                 </Params>
             </Details>
             <Details title='문단'>
                 <Params>
                     <Arg
                         name='가로 정렬'
-                        type={ArgTypes.BUTTONS} /* [L][C][R][J] */
-                    />
+                        type={ArgTypes.BUTTONS}
+                        default={props.value?.params.text_align_horizontal}
+                        onChange={(val) => {
+                            props.value && (props.value.params.text_align_horizontal = val)
+                            props.onChange && props.onChange(props.value)
+                        }}>
+                        <option value={OverlayParam.text_align_horizontal.LEFT}>L</option>
+                        <option value={OverlayParam.text_align_horizontal.CENTER}>C</option>
+                        <option value={OverlayParam.text_align_horizontal.RIGHT}>R</option>
+                        <option value={OverlayParam.text_align_horizontal.JUSTIFY}>J</option>
+                    </Arg>
                     <Arg
                         name='세로 정렬'
-                        type={ArgTypes.BUTTONS} /* [T][M][B] */
-                    />
+                        type={ArgTypes.BUTTONS}
+                        default={props.value?.params.text_align_vertical}
+                        onChange={(val) => {
+                            props.value && (props.value.params.text_align_vertical = val)
+                            props.onChange && props.onChange(props.value)
+                        }}>
+                        <option value={OverlayParam.text_align_vertical.TOP}>T</option>
+                        <option value={OverlayParam.text_align_vertical.MIDDLE}>M</option>
+                        <option value={OverlayParam.text_align_vertical.BOTTOM}>B</option>
+                    </Arg>
                     <Arg
                         name='줄 높이'
                         prefix='텍스트의'
                         type={ArgTypes.NUMBER}
-                        default={1.0}
+                        default={props.value?.params.text_line_height}
+                        step={0.25}
+                        min={1.0}
                         unit='배'
+                        onChange={(val) => {
+                            props.value && (props.value.params.text_line_height = val)
+                            props.onChange && props.onChange(props.value)
+                        }}
                     />
                 </Params>
             </Details>
@@ -235,41 +445,186 @@ function Details(props) {
 
 function Params(props) {
     return (
-        <table>
+        <Table width='100%'>
             <tbody>{props.children}</tbody>
-        </table>
+        </Table>
     )
 }
 
-function Arg(props) {
-    return (
-        <tr>
-            {props.name ? <td>{props.name}</td> : <></>}
-            <td colSpan={props.name ? null : 2}>
-                {props.prefix ? props.prefix + ' ' : ''}
-                {(() => {
-                    switch (props.type) {
-                        case ArgTypes.BUTTONS:
-                            return '[][][][]'
-                        case ArgTypes.CHECKBOX:
-                            return (
-                                <input
-                                    type='checkbox'
-                                    defaultChecked={props.default}
-                                />
-                            )
-                        case ArgTypes.COLOR:
-                            return '[#00000000]'
-                        case ArgTypes.COMBOBOX:
-                            return '[]'
-                        case ArgTypes.NUMBER:
-                            return '[0]'
-                    }
-                })()}
-                {props.unit ? ' ' + props.unit : ''}
-            </td>
-        </tr>
-    )
+class Arg extends React.Component {
+    constructor() {
+        super()
+
+        this.state = {
+            value: null,
+        }
+    }
+
+    render() {
+        let value = this.state.value === null ? this.props.default : this.state.value
+
+        return (
+            <TR>
+                {this.props.name ? (
+                    <TD padding='8' align='right'>
+                        {this.props.name}
+                    </TD>
+                ) : (
+                    <></>
+                )}
+                <TD padding='8' align={this.props.name ? 'left' : 'center'} colSpan={this.props.name ? null : 2}>
+                    {this.props.prefix ? this.props.prefix + ' ' : ''}
+                    {(() => {
+                        switch (this.props.type) {
+                            case ArgTypes.BUTTONS:
+                                const radioName = Math.random().toString(36).substring(2, 11)
+                                return (
+                                    <>
+                                        {this.props.children?.map((v, i) => {
+                                            let onchange = (value) => {
+                                                let val = this.state.value || this.props.default
+                                                if (this.props.multiple) {
+                                                    val && (val[v.props.value] = value)
+                                                } else val = value
+                                                this.setState({
+                                                    value: val,
+                                                })
+
+                                                this.props.onChange && this.props.onChange(val)
+                                            }
+
+                                            onchange.bind(this)
+
+                                            return (
+                                                <ArgButton
+                                                    key={i}
+                                                    radioName={radioName}
+                                                    value={v.props.value}
+                                                    label={v.props.children}
+                                                    multiple={this.props.multiple}
+                                                    checked={
+                                                        value && this.props.multiple
+                                                            ? value[v.props.value]
+                                                            : value === v.props.value
+                                                    }
+                                                    onChange={onchange}
+                                                />
+                                            )
+                                        }, this)}
+                                    </>
+                                )
+                            case ArgTypes.CHECKBOX:
+                                return (
+                                    <input
+                                        type='checkbox'
+                                        checked={value || false}
+                                        onChange={(e) => {
+                                            this.setState({
+                                                value: e.target.checked,
+                                            })
+
+                                            this.props.onChange && this.props.onChange(e.target.checked)
+                                        }}
+                                    />
+                                )
+                            case ArgTypes.COLOR:
+                                return (
+                                    <input
+                                        type='color'
+                                        value={value || '#000000'}
+                                        onChange={(e) => {
+                                            this.setState({
+                                                value: e.target.value,
+                                            })
+
+                                            this.props.onChange && this.props.onChange(e.target.value)
+                                        }}
+                                    />
+                                )
+                            case ArgTypes.COMBOBOX:
+                                return (
+                                    <select
+                                        value={value}
+                                        onChange={(e) => {
+                                            this.setState({
+                                                value: e.target.value,
+                                            })
+
+                                            this.props.onChange && this.props.onChange(e.target.value)
+                                        }}>
+                                        {this.props.children}
+                                    </select>
+                                )
+                            case ArgTypes.NUMBER:
+                                return (
+                                    <Input
+                                        type='number'
+                                        value={value || 0}
+                                        step={this.props.step}
+                                        min={this.props.min}
+                                        max={this.props.max}
+                                        width='56'
+                                        align='right'
+                                        onChange={(e) => {
+                                            this.setState({
+                                                value: e.target.value,
+                                            })
+
+                                            this.props.onChange && this.props.onChange(e.target.value)
+                                        }}
+                                    />
+                                )
+                            case ArgTypes.SLIDER:
+                                return (
+                                    <>
+                                        <input
+                                            type='range'
+                                            value={value || 0}
+                                            step={this.props.step}
+                                            min={this.props.min}
+                                            max={this.props.max}
+                                            onInput={(e) => {
+                                                e.target.nextElementSibling.value = e.target.value
+                                            }}
+                                            onChange={(e) => {
+                                                this.setState({
+                                                    value: e.target.value,
+                                                })
+
+                                                this.props.onChange && this.props.onChange(e.target.value)
+                                            }}
+                                        />
+                                        <output>{value || 0}</output>
+                                    </>
+                                )
+                            case ArgTypes.TEXTAREA:
+                                return (
+                                    <Textarea
+                                        value={value || ''}
+                                        width='100%'
+                                        autoresize
+                                        style={{
+                                            resize: 'none',
+                                        }}
+                                        minrows={3}
+                                        onChange={(e) => {
+                                            this.setState({
+                                                value: e.target.value,
+                                            })
+
+                                            this.props.onChange && this.props.onChange(e.target.value)
+                                        }}
+                                    />
+                                )
+                            default:
+                                return <></>
+                        }
+                    })()}
+                    {this.props.unit ? ' ' + this.props.unit : ''}
+                </TD>
+            </TR>
+        )
+    }
 }
 
 const ArgTypes = {
@@ -278,6 +633,40 @@ const ArgTypes = {
     CHECKBOX: 'checkbox',
     NUMBER: 'number',
     BUTTONS: 'buttons',
+    SLIDER: 'slider',
+    TEXTAREA: 'textarea',
 }
 
 Object.freeze(ArgTypes)
+
+function ArgButton(props) {
+    const radioID = Math.random().toString(36).substring(2, 11)
+
+    return (
+        <>
+            <Input
+                type={props.multiple ? 'checkbox' : 'radio'}
+                name={props.radioName}
+                id={radioID}
+                value={props.value}
+                checked={props.checked}
+                onChange={(e) => {
+                    props.onChange(props.multiple ? e.target.checked : props.value)
+                }}
+                display='none'
+            />
+            <Label
+                htmlFor={radioID}
+                name={props.radioName}
+                padding='8'
+                border='normal'
+                margin-right='-1'
+                display='inline-block'
+                width='32'
+                align='center'
+                background={props.checked ? 'black' : ''}>
+                {props.label || ''}
+            </Label>
+        </>
+    )
+}
