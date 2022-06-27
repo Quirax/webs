@@ -1,5 +1,5 @@
 import React from 'react'
-import { Ol, Div, Textarea, Span } from '../components'
+import { Ol, Div, Span } from '../components'
 import Moveable from 'react-moveable'
 import BI from './info'
 

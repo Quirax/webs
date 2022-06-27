@@ -602,7 +602,7 @@ class Arg extends React.Component {
                                     <Textarea
                                         value={value || ''}
                                         width='100%'
-                                        autoresize
+                                        autoresize='true'
                                         style={{
                                             resize: 'none',
                                         }}
