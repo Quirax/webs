@@ -3,6 +3,7 @@ class BroadcastInfo {
 
     constructor() {
         this.container = <></>
+        this.list = <></>
 
         // this.info = Connector.getBroadcastInfo()
         this.info = {
@@ -77,12 +78,14 @@ class BroadcastInfo {
         // Connector.syncBroadcastInfo(this.bi)
         console.log('onChange', this.info, update ? 'update' : 'no')
         update && this.container.forceUpdate()
+        this.list.forceUpdate()
     }
 
     afterChange() {
         // Connector.saveBroadcastInfo(this.bi)
         console.log('afterChange', this.info)
         this.container.forceUpdate()
+        this.list.forceUpdate()
     }
 
     currentScene() {
@@ -92,6 +95,11 @@ class BroadcastInfo {
     assignContainer(container) {
         this.container = container
         console.log(this.container)
+    }
+
+    assignList(list) {
+        this.list = list
+        console.log(this.list)
     }
 
     selectScene(idx) {

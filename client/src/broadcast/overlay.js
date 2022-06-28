@@ -51,6 +51,59 @@ export const OverlayParam = {
 
 Object.freeze(OverlayParam)
 
+export const OverlayGenerator = (name, type) => {
+    let obj = {
+        name,
+        type,
+        params: {
+            overflow: OverlayParam.overflow.SHOW,
+            background_color: '#000000',
+            background_opacity: 0,
+            opacity: 1,
+            aspect_ratio: false,
+            radius: 0,
+            border_color: '#000000',
+            border_opacity: 1,
+            border_width: 0,
+            border_style: OverlayParam.border_style.SOLID,
+            margin: 0,
+            padding: 0,
+        },
+        transform: {
+            x: 0,
+            y: 0,
+            height: 100,
+            width: 100,
+            rotate: 0,
+        },
+    }
+
+    switch (type) {
+        case OverlayType.TEXT:
+            Object.assign(obj.params, {
+                text: '',
+                // font_family: 'aaa',
+                font_size: 12,
+                font_flags: {
+                    bold: false,
+                    italic: false,
+                    underline: false,
+                    strike: false,
+                },
+                font_color: '#000000',
+                font_opacity: 1,
+                text_align_horizontal: OverlayParam.text_align_horizontal.LEFT,
+                text_align_vertical: OverlayParam.text_align_vertical.TOP,
+                text_line_height: 1.5,
+            })
+            break
+        default:
+            throw new Error('Invalid overlay type')
+    }
+
+    return obj
+}
+
 export default class OverlayContainer extends React.Component {
     constructor() {
         super()
@@ -164,6 +217,7 @@ class Overlay extends React.Component {
 
         this.contentRef = React.createRef()
         this.childrenRef = React.createRef()
+        this.moveableRef = React.createRef()
 
         this.value = {}
 
@@ -181,6 +235,12 @@ class Overlay extends React.Component {
             rotate: parseFloat(this.value.transform.rotate),
             params: this.props.value.params,
         })
+    }
+
+    componentDidUpdate() {
+        this.value = this.props.value
+
+        this.moveableRef.current && this.moveableRef.current.moveable.checkUpdateRect()
     }
 
     sizeBias() {
@@ -204,12 +264,12 @@ class Overlay extends React.Component {
                                 display='inline-block'
                                 position='absolute'
                                 referrer={this.contentRef}
-                                height={(this.state.height + this.sizeBias()) * ratio}
-                                width={(this.state.width + this.sizeBias()) * ratio}
-                                top={this.state.y * ratio}
-                                left={this.state.x * ratio}
+                                height={(this.props.value.transform.height + this.sizeBias()) * ratio}
+                                width={(this.props.value.transform.width + this.sizeBias()) * ratio}
+                                top={this.props.value.transform.y * ratio}
+                                left={this.props.value.transform.x * ratio}
                                 style={{
-                                    transform: `rotate(${this.state.rotate}deg)`,
+                                    transform: `rotate(${this.props.value.transform.rotate}deg)`,
                                 }}
                                 onMouseDown={(e) => {
                                     e.preventDefault()
@@ -225,12 +285,13 @@ class Overlay extends React.Component {
                                 }}>
                                 <this.children
                                     referrer={this.childrenRef}
-                                    height={this.state.height}
-                                    width={this.state.width}
+                                    height={this.props.value.transform.height}
+                                    width={this.props.value.transform.width}
                                     ratio={ratio}
                                 />
                             </Div>
                             <Moveable
+                                ref={this.moveableRef}
                                 hideDefaultLines={!moveable}
                                 target={this.contentRef.current}
                                 origin={false}
@@ -249,11 +310,6 @@ class Overlay extends React.Component {
                                     BI().onChange(false)
                                 }}
                                 onDragEnd={() => {
-                                    this.setState({
-                                        x: this.value.transform.x,
-                                        y: this.value.transform.y,
-                                    })
-
                                     BI().afterChange()
                                 }}
                                 /* For resizable */
@@ -282,13 +338,6 @@ class Overlay extends React.Component {
                                     BI().onChange(false)
                                 }}
                                 onResizeEnd={() => {
-                                    this.setState({
-                                        height: this.value.transform.height,
-                                        width: this.value.transform.width,
-                                        x: this.value.transform.x,
-                                        y: this.value.transform.y,
-                                    })
-
                                     BI().afterChange()
                                 }}
                                 /* For rotatable */
@@ -302,10 +351,6 @@ class Overlay extends React.Component {
                                     BI().onChange(false)
                                 }}
                                 onRotateEnd={() => {
-                                    this.setState({
-                                        rotate: this.value.transform.rotate,
-                                    })
-
                                     BI().afterChange()
                                 }}
                                 /* For snappable */
@@ -409,7 +454,7 @@ class TextOverlay extends Overlay {
                     <Span
                         style={{
                             // TODO: fontFamily: params.font_family,
-                            fontSize: `${params.font_size * props.ratio}pt`,
+                            fontSize: `${params.font_size * props.ratio}pt`, // TODO: 화면 크기가 작을 때 폰트 크기가 너무 작으면 제대로 렌더링되지 않는 문제 해결
                             fontWeight: params.font_flags?.bold ? 'bold' : 'normal',
                             fontStyle: params.font_flags?.italic ? 'italic' : 'normal',
                             textDecoration: [

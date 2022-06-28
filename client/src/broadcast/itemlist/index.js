@@ -1,6 +1,8 @@
+import { cloneDeep } from 'lodash'
 import React from 'react'
 import { Div, Ul, Li, Nav, Dialog } from '../../components'
 import BI from '../info'
+import { OverlayGenerator, OverlayType } from '../overlay'
 import PropertyDialog from './property'
 
 export const ItemlistType = {
@@ -15,52 +17,82 @@ export default class Itemlist extends React.Component {
     constructor() {
         super()
 
-        this.state = {
-            list: [],
-        }
-
         this.contextMenuRef = React.createRef()
         this.propertyDialogRef = React.createRef()
     }
 
     componentDidMount() {
+        BI().assignList(this)
+    }
+
+    componentDidUpdate() {
+        console.log('updated!')
+    }
+
+    render() {
+        let state = {
+            list: [],
+            onAdd: (e) => {
+                console.log(e, this)
+            },
+            addLabel: '',
+            bottomItem: <></>,
+        }
+
         switch (this.props.mode) {
             case ItemlistType.SCENES:
-                this.setState({
+                Object.assign(state, {
                     list: BI().info.scene,
+                    addLabel: '장면 추가',
+                    bottomItem: (
+                        <Li padding='8' border-top='normal' align='center' cursor='default'>
+                            장면 전환 설정
+                        </Li>
+                    ),
                 })
                 break
             case ItemlistType.TRANSITIONS:
-                this.setState({
+                Object.assign(state, {
                     list: BI().info.transition,
+                    addLabel: '장면 전환 추가',
+                    bottomItem: (
+                        <Li padding='8' border-top='normal' align='center' cursor='default'>
+                            장면 설정
+                        </Li>
+                    ),
                 })
                 break
             case ItemlistType.OVERLAYS:
-                this.setState({
+                Object.assign(state, {
                     list: BI().currentScene().overlay,
+                    onAdd: (e) => {
+                        BI().currentScene().overlay.push(OverlayGenerator('새 텍스트 오버레이', OverlayType.TEXT))
+                        BI().afterChange()
+                    },
+                    addLabel: '오버레이 추가',
                 })
                 break
             default:
                 throw new Error('Invalid itemlist mode')
         }
-    }
 
-    render() {
         return (
-            <>
+            <Div flex>
                 <Nav
                     flex
                     flex-direction='column'
                     flex-justify='space-between'
                     fixsize
                     width='256'
-                    border-right='normal'>
+                    border-right='normal'
+                    style={{ overflowY: 'auto' }}>
                     <Ul>
-                        {this.state.list.map((v, i) => {
+                        {state.list.map((v, i) => {
                             return (
                                 <Item
                                     menu={this.contextMenuRef}
                                     propertyDialog={this.propertyDialogRef}
+                                    mode={this.props.mode}
                                     value={v}
                                     key={i}
                                     onChange={(val) => {
@@ -71,47 +103,20 @@ export default class Itemlist extends React.Component {
                                 />
                             )
                         })}
-                        <Li padding='8' border-bottom='normal' align='center' cursor='default'>
-                            {(() => {
-                                switch (this.props.mode) {
-                                    case ItemlistType.SCENES:
-                                        return '장면 추가'
-                                    case ItemlistType.TRANSITIONS:
-                                        return '장면 전환 추가'
-                                    case ItemlistType.OVERLAYS:
-                                        return '오버레이 추가'
-                                    default:
-                                        throw new Error('Invalid itemlist mode')
-                                }
-                            })()}
+                        <Li
+                            padding='8'
+                            border-bottom='normal'
+                            align='center'
+                            cursor='default'
+                            onClick={state.onAdd.bind(this)}>
+                            {state.addLabel}
                         </Li>
                     </Ul>
-                    <Ul>
-                        {(() => {
-                            switch (this.props.mode) {
-                                case ItemlistType.SCENES:
-                                    return (
-                                        <Li padding='8' border-top='normal' align='center' cursor='default'>
-                                            장면 전환 설정
-                                        </Li>
-                                    )
-                                case ItemlistType.TRANSITIONS:
-                                    return (
-                                        <Li padding='8' border-top='normal' align='center' cursor='default'>
-                                            장면 설정
-                                        </Li>
-                                    )
-                                case ItemlistType.OVERLAYS:
-                                    return <></>
-                                default:
-                                    throw new Error('Invalid itemlist mode')
-                            }
-                        })()}
-                    </Ul>
+                    <Ul>{state.bottomItem}</Ul>
                 </Nav>
                 <PropertyDialog ref={this.propertyDialogRef} />
                 <ContextMenu ref={this.contextMenuRef} />
-            </>
+            </Div>
         )
     }
 }
@@ -143,7 +148,16 @@ class Item extends React.Component {
             let top = e.clientY
             let left = e.clientX
 
-            menu.show(this, top, left)
+            menu.show(
+                this,
+                this.props.mode,
+                this.props.value,
+                () => {
+                    this.onDblClick(e)
+                },
+                top,
+                left
+            )
         }
     }
     render() {
@@ -170,6 +184,9 @@ class ContextMenu extends React.Component {
             left: 100,
             target: null,
             open: false,
+            value: {},
+            list: [],
+            dialogOpener: () => {},
         }
 
         this.onClick = () => {
@@ -181,6 +198,22 @@ class ContextMenu extends React.Component {
         }
     }
 
+    onCopy(e) {
+        let newValue = cloneDeep(this.state.value)
+        newValue.name += ' (복제)'
+        this.state.list.push(newValue)
+        BI().afterChange()
+    }
+
+    onUpdate(e) {
+        this.state.dialogOpener()
+    }
+
+    onDelete(e) {
+        this.state.list.splice(this.state.list.indexOf(this.state.value), 1)
+        BI().afterChange()
+    }
+
     componentDidMount() {
         window.addEventListener('click', this.onClick)
     }
@@ -189,12 +222,29 @@ class ContextMenu extends React.Component {
         window.removeEventListener('click', this.onClick)
     }
 
-    show(target, top, left) {
+    show(target, mode, value, dialogOpener, top, left) {
+        let list = []
+        switch (mode) {
+            case ItemlistType.SCENES:
+                list = BI().info.scene
+                break
+            case ItemlistType.TRANSITIONS:
+                list = BI().info.transition
+                break
+            case ItemlistType.OVERLAYS:
+                list = BI().currentScene().overlay
+                break
+            default:
+                throw new Error('Invalid itemlist mode')
+        }
         this.setState({
             top: top,
             left: left,
             target: target,
+            value: value,
             open: true,
+            list: list,
+            dialogOpener: dialogOpener,
         })
     }
 
@@ -202,19 +252,22 @@ class ContextMenu extends React.Component {
         return (
             <Dialog
                 position='fixed'
-                top={this.state.top}
+                {...(() => {
+                    if (this.state.top < document.body.clientHeight * (3 / 4)) return { top: this.state.top }
+                    else return { bottom: document.body.clientHeight - this.state.top }
+                })()}
                 left={this.state.left}
                 border='normal'
                 background='white'
                 open={this.state.open}
                 z-index={10}>
-                <Div padding='8' hover='hover' cursor='default'>
+                <Div onClick={this.onCopy.bind(this)} padding='8' hover='hover' cursor='default'>
                     복제
                 </Div>
-                <Div padding='8' border-top='normal' hover='hover' cursor='default'>
+                <Div onClick={this.onUpdate.bind(this)} padding='8' border-top='normal' hover='hover' cursor='default'>
                     수정
                 </Div>
-                <Div padding='8' border-top='normal' hover='hover' cursor='default'>
+                <Div onClick={this.onDelete.bind(this)} padding='8' border-top='normal' hover='hover' cursor='default'>
                     삭제
                 </Div>
             </Dialog>

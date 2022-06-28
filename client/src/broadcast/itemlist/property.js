@@ -71,8 +71,9 @@ export default class PropertyDialog extends React.Component {
     }
 
     show(target, value, top, left, onChange) {
+        console.log(target, value)
         this.setState({
-            top: top - 8,
+            top: top,
             left: left + 8,
             target: target,
             open: true,
@@ -86,34 +87,30 @@ export default class PropertyDialog extends React.Component {
         return (
             <Dialog
                 position='fixed'
-                top={this.state.top}
-                left={this.state.left}
+                top={64}
+                left={256}
                 border='normal'
                 background='white'
                 open={this.state.open}
                 z-index={10}
-                onMouseDown={this.setFocus}>
-                <Div
-                    display='inline-block'
-                    height='0'
-                    width='0'
-                    arrow='right'
-                    position='absolute'
-                    top='-1'
-                    left='-16'
-                    z-index='-1'
-                />
+                onMouseDown={this.setFocus}
+                style={{
+                    overflowY: 'auto',
+                }}
+                height={document.body.clientHeight - 64}>
                 <Form>
                     <Div padding='8'>
                         <P>
-                            이름: <input type='text' defaultValue={this.state.value ? this.state.value.name : ''} />
-                        </P>
-                        <P padding-top='8'>
-                            종류:{' '}
-                            <select defaultValue={this.state.value?.type}>
-                                <option value={OverlayType.TEXT}>텍스트</option>
-                                <option>기타</option>
-                            </select>
+                            이름:{' '}
+                            <input
+                                type='text'
+                                value={this.state.value ? this.state.value.name : ''}
+                                onChange={(e) => {
+                                    let v = this.state.value
+                                    v.name = e.target.value
+                                    this.state.onChange(v)
+                                }}
+                            />
                         </P>
                     </Div>
                     <Div padding='8' border-top='normal' border-bottom='normal'>
@@ -454,14 +451,10 @@ function Params(props) {
 class Arg extends React.Component {
     constructor() {
         super()
-
-        this.state = {
-            value: null,
-        }
     }
 
     render() {
-        let value = this.state.value === null ? this.props.default : this.state.value
+        let value = this.props.default
 
         return (
             <TR>
@@ -482,13 +475,10 @@ class Arg extends React.Component {
                                     <>
                                         {this.props.children?.map((v, i) => {
                                             let onchange = (value) => {
-                                                let val = this.state.value || this.props.default
+                                                let val = this.props.default
                                                 if (this.props.multiple) {
                                                     val && (val[v.props.value] = value)
                                                 } else val = value
-                                                this.setState({
-                                                    value: val,
-                                                })
 
                                                 this.props.onChange && this.props.onChange(val)
                                             }
@@ -519,10 +509,6 @@ class Arg extends React.Component {
                                         type='checkbox'
                                         checked={value || false}
                                         onChange={(e) => {
-                                            this.setState({
-                                                value: e.target.checked,
-                                            })
-
                                             this.props.onChange && this.props.onChange(e.target.checked)
                                         }}
                                     />
@@ -533,10 +519,6 @@ class Arg extends React.Component {
                                         type='color'
                                         value={value || '#000000'}
                                         onChange={(e) => {
-                                            this.setState({
-                                                value: e.target.value,
-                                            })
-
                                             this.props.onChange && this.props.onChange(e.target.value)
                                         }}
                                     />
@@ -546,10 +528,6 @@ class Arg extends React.Component {
                                     <select
                                         value={value}
                                         onChange={(e) => {
-                                            this.setState({
-                                                value: e.target.value,
-                                            })
-
                                             this.props.onChange && this.props.onChange(e.target.value)
                                         }}>
                                         {this.props.children}
@@ -566,10 +544,6 @@ class Arg extends React.Component {
                                         width='56'
                                         align='right'
                                         onChange={(e) => {
-                                            this.setState({
-                                                value: e.target.value,
-                                            })
-
                                             this.props.onChange && this.props.onChange(e.target.value)
                                         }}
                                     />
@@ -587,10 +561,6 @@ class Arg extends React.Component {
                                                 e.target.nextElementSibling.value = e.target.value
                                             }}
                                             onChange={(e) => {
-                                                this.setState({
-                                                    value: e.target.value,
-                                                })
-
                                                 this.props.onChange && this.props.onChange(e.target.value)
                                             }}
                                         />
@@ -608,10 +578,6 @@ class Arg extends React.Component {
                                         }}
                                         minrows={3}
                                         onChange={(e) => {
-                                            this.setState({
-                                                value: e.target.value,
-                                            })
-
                                             this.props.onChange && this.props.onChange(e.target.value)
                                         }}
                                     />
