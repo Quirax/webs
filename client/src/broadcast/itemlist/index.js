@@ -66,8 +66,18 @@ export default class Itemlist extends React.Component {
                 Object.assign(state, {
                     list: BI().currentScene().overlay,
                     onAdd: (e) => {
-                        BI().currentScene().overlay.push(OverlayGenerator('새 텍스트 오버레이', OverlayType.TEXT))
-                        BI().afterChange()
+                        if (this.propertyDialogRef) {
+                            let dialog = this.propertyDialogRef.current
+                            let top = e.clientY
+                            let left = e.clientX
+
+                            console.log(dialog)
+
+                            dialog.show(this, null, top, left, (val) => {
+                                BI().currentScene().overlay.push(val)
+                                BI().afterChange()
+                            })
+                        }
                     },
                     addLabel: '오버레이 추가',
                 })

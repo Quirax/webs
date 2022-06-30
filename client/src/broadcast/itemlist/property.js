@@ -15,8 +15,20 @@ import {
     Table,
 } from '../../components'
 import BI from '../info'
-import { OverlayParam, OverlayType } from '../overlay'
+import { OverlayGenerator, OverlayParam, OverlayType } from '../overlay'
 import { cloneDeep } from 'lodash'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import {
+    faAlignLeft,
+    faAlignCenter,
+    faAlignRight,
+    faAlignJustify,
+    faBold,
+    faItalic,
+    faStrikethrough,
+    faUnderline,
+    faFont,
+} from '@fortawesome/free-solid-svg-icons'
 
 export default class PropertyDialog extends React.Component {
     constructor() {
@@ -84,20 +96,26 @@ export default class PropertyDialog extends React.Component {
     }
 
     render() {
-        return (
-            <Dialog
-                position='fixed'
-                top={64}
-                left={256}
-                border='normal'
-                background='white'
-                open={this.state.open}
-                z-index={10}
-                onMouseDown={this.setFocus}
-                style={{
-                    overflowY: 'auto',
-                }}
-                height={document.body.clientHeight - 64}>
+        let formContent = <></>
+
+        if (this.state.value === null) {
+            formContent = (
+                <Form>
+                    <Div padding='8'>어떤 오버레이를 만드시겠습니까?</Div>
+                    <Div padding='8'>
+                        <Button
+                            width='100%'
+                            onClick={(e) => {
+                                this.state.onChange(OverlayGenerator('새 텍스트 오버레이', OverlayType.TEXT))
+                                this.leaveFocus(e)
+                            }}>
+                            <FontAwesomeIcon icon={faFont} /> 텍스트
+                        </Button>
+                    </Div>
+                </Form>
+            )
+        } else {
+            formContent = (
                 <Form>
                     <Div padding='8'>
                         <P>
@@ -143,25 +161,32 @@ export default class PropertyDialog extends React.Component {
                         </Button>
                     </Div>
                 </Form>
+            )
+        }
+
+        return (
+            <Dialog
+                position='fixed'
+                top={64}
+                left={256}
+                border='normal'
+                background='white'
+                open={this.state.open}
+                z-index={10}
+                onMouseDown={this.setFocus}
+                style={{
+                    overflowY: 'auto',
+                }}
+                height={document.body.clientHeight - 64}>
+                {formContent}
             </Dialog>
         )
     }
 }
 
 function ParamList(props) {
-    return (
+    const commonParams = (
         <>
-            <Params>
-                <Arg
-                    type={ArgTypes.TEXTAREA}
-                    default={props.value?.params.text}
-                    placeholder='표시할 내용을 입력하십시오.'
-                    onChange={(val) => {
-                        props.value && (props.value.params.text = val)
-                        props.onChange && props.onChange(props.value)
-                    }}
-                />
-            </Params>
             <Details title='공통'>
                 <Params>
                     <Arg
@@ -310,107 +335,157 @@ function ParamList(props) {
                     />
                 </Params>
             </Details>
-            <Details title='글꼴'>
+        </>
+    )
+
+    let preCommonParams = <></>
+    let postCommonParams = <></>
+
+    switch (props.value?.type) {
+        case OverlayType.TEXT:
+            preCommonParams = (
                 <Params>
                     <Arg
-                        name='글꼴'
-                        type={ArgTypes.COMBOBOX}
+                        type={ArgTypes.TEXTAREA}
+                        default={props.value?.params.text}
+                        placeholder='표시할 내용을 입력하십시오.'
                         onChange={(val) => {
-                            // props.value && (props.value.params.overflow_y = val)
-                            // props.onChange && props.onChange(props.value)
-                        }}>
-                        {/* TODO: 글꼴 목록 반영 */}
-                        <option>굴림</option>
-                    </Arg>
-                    <Arg
-                        name='크기'
-                        type={ArgTypes.NUMBER}
-                        default={props.value?.params.font_size}
-                        min={0}
-                        unit='pt'
-                        onChange={(val) => {
-                            props.value && (props.value.params.font_size = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        type={ArgTypes.BUTTONS}
-                        multiple
-                        default={props.value?.params.font_flags}
-                        onChange={(val) => {
-                            props.value && (props.value.params.font_flags = val)
-                            props.onChange && props.onChange(props.value)
-                        }}>
-                        <option value={OverlayParam.font_flags.BOLD}>B</option>
-                        <option value={OverlayParam.font_flags.ITALIC}>I</option>
-                        <option value={OverlayParam.font_flags.UNDERLINE}>U</option>
-                        <option value={OverlayParam.font_flags.STRIKE}>S</option>
-                    </Arg>
-                    <Arg
-                        name='색'
-                        type={ArgTypes.COLOR}
-                        default={props.value?.params.font_color}
-                        onChange={(val) => {
-                            props.value && (props.value.params.font_color = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        name='투명도'
-                        type={ArgTypes.SLIDER}
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        default={props.value?.params.font_opacity}
-                        onChange={(val) => {
-                            props.value && (props.value.params.font_opacity = val)
+                            props.value && (props.value.params.text = val)
                             props.onChange && props.onChange(props.value)
                         }}
                     />
                 </Params>
-            </Details>
-            <Details title='문단'>
-                <Params>
-                    <Arg
-                        name='가로 정렬'
-                        type={ArgTypes.BUTTONS}
-                        default={props.value?.params.text_align_horizontal}
-                        onChange={(val) => {
-                            props.value && (props.value.params.text_align_horizontal = val)
-                            props.onChange && props.onChange(props.value)
-                        }}>
-                        <option value={OverlayParam.text_align_horizontal.LEFT}>L</option>
-                        <option value={OverlayParam.text_align_horizontal.CENTER}>C</option>
-                        <option value={OverlayParam.text_align_horizontal.RIGHT}>R</option>
-                        <option value={OverlayParam.text_align_horizontal.JUSTIFY}>J</option>
-                    </Arg>
-                    <Arg
-                        name='세로 정렬'
-                        type={ArgTypes.BUTTONS}
-                        default={props.value?.params.text_align_vertical}
-                        onChange={(val) => {
-                            props.value && (props.value.params.text_align_vertical = val)
-                            props.onChange && props.onChange(props.value)
-                        }}>
-                        <option value={OverlayParam.text_align_vertical.TOP}>T</option>
-                        <option value={OverlayParam.text_align_vertical.MIDDLE}>M</option>
-                        <option value={OverlayParam.text_align_vertical.BOTTOM}>B</option>
-                    </Arg>
-                    <Arg
-                        name='줄 높이'
-                        prefix='텍스트의'
-                        type={ArgTypes.NUMBER}
-                        default={props.value?.params.text_line_height}
-                        step={0.25}
-                        min={1.0}
-                        unit='배'
-                        onChange={(val) => {
-                            props.value && (props.value.params.text_line_height = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                </Params>
-            </Details>
+            )
+            postCommonParams = (
+                <>
+                    <Details title='글꼴'>
+                        <Params>
+                            <Arg
+                                name='글꼴'
+                                type={ArgTypes.COMBOBOX}
+                                onChange={(val) => {
+                                    // props.value && (props.value.params.overflow_y = val)
+                                    // props.onChange && props.onChange(props.value)
+                                }}>
+                                {/* TODO: 글꼴 목록 반영 */}
+                                <option>굴림</option>
+                            </Arg>
+                            <Arg
+                                name='크기'
+                                type={ArgTypes.NUMBER}
+                                default={props.value?.params.font_size}
+                                min={0}
+                                unit='pt'
+                                onChange={(val) => {
+                                    props.value && (props.value.params.font_size = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                            <Arg
+                                type={ArgTypes.BUTTONS}
+                                multiple
+                                default={props.value?.params.font_flags}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.font_flags = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}>
+                                <option value={OverlayParam.font_flags.BOLD}>
+                                    <FontAwesomeIcon icon={faBold} />
+                                </option>
+                                <option value={OverlayParam.font_flags.ITALIC}>
+                                    <FontAwesomeIcon icon={faItalic} />
+                                </option>
+                                <option value={OverlayParam.font_flags.UNDERLINE}>
+                                    <FontAwesomeIcon icon={faUnderline} />
+                                </option>
+                                <option value={OverlayParam.font_flags.STRIKE}>
+                                    <FontAwesomeIcon icon={faStrikethrough} />
+                                </option>
+                            </Arg>
+                            <Arg
+                                name='색'
+                                type={ArgTypes.COLOR}
+                                default={props.value?.params.font_color}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.font_color = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                            <Arg
+                                name='투명도'
+                                type={ArgTypes.SLIDER}
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                default={props.value?.params.font_opacity}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.font_opacity = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                        </Params>
+                    </Details>
+                    <Details title='문단'>
+                        <Params>
+                            <Arg
+                                name='가로 정렬'
+                                type={ArgTypes.BUTTONS}
+                                default={props.value?.params.text_align_horizontal}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.text_align_horizontal = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}>
+                                <option value={OverlayParam.text_align_horizontal.LEFT}>
+                                    <FontAwesomeIcon icon={faAlignLeft} />
+                                </option>
+                                <option value={OverlayParam.text_align_horizontal.CENTER}>
+                                    <FontAwesomeIcon icon={faAlignCenter} />
+                                </option>
+                                <option value={OverlayParam.text_align_horizontal.RIGHT}>
+                                    <FontAwesomeIcon icon={faAlignRight} />
+                                </option>
+                                <option value={OverlayParam.text_align_horizontal.JUSTIFY}>
+                                    <FontAwesomeIcon icon={faAlignJustify} />
+                                </option>
+                            </Arg>
+                            <Arg
+                                name='세로 정렬'
+                                type={ArgTypes.COMBOBOX}
+                                default={props.value?.params.text_align_vertical}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.text_align_vertical = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}>
+                                <option value={OverlayParam.text_align_vertical.TOP}>T</option>
+                                <option value={OverlayParam.text_align_vertical.MIDDLE}>M</option>
+                                <option value={OverlayParam.text_align_vertical.BOTTOM}>B</option>
+                            </Arg>
+                            <Arg
+                                name='줄 높이'
+                                prefix='텍스트의'
+                                type={ArgTypes.NUMBER}
+                                default={props.value?.params.text_line_height}
+                                step={0.25}
+                                min={1.0}
+                                unit='배'
+                                onChange={(val) => {
+                                    props.value && (props.value.params.text_line_height = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                        </Params>
+                    </Details>
+                </>
+            )
+            break
+        default:
+    }
+
+    return (
+        <>
+            {preCommonParams}
+            {commonParams}
+            {postCommonParams}
         </>
     )
 }
