@@ -7,6 +7,7 @@ const OVERLAY_PROPS = React.createContext()
 
 export const OverlayType = {
     TEXT: 'text',
+    SHAPE: 'shape',
 }
 
 Object.freeze(OverlayType)
@@ -47,6 +48,11 @@ export const OverlayParam = {
         INSET: 'inset',
         OUTSET: 'outset',
     }),
+    shape_type: Object.freeze({
+        RECTANGLE: 'rectangle',
+        ELLIPSE: 'ellipse',
+        TRIANGLE: 'triangle',
+    }),
 }
 
 Object.freeze(OverlayParam)
@@ -56,7 +62,6 @@ export const OverlayGenerator = (name, type) => {
         name,
         type,
         params: {
-            overflow: OverlayParam.overflow.SHOW,
             background_color: '#000000',
             background_opacity: 0,
             opacity: 1,
@@ -78,9 +83,12 @@ export const OverlayGenerator = (name, type) => {
         },
     }
 
+    // TODO : 오버레이 추가
+
     switch (type) {
         case OverlayType.TEXT:
             Object.assign(obj.params, {
+                overflow: OverlayParam.overflow.SHOW,
                 text: '',
                 // font_family: 'aaa',
                 font_size: 12,
@@ -95,6 +103,11 @@ export const OverlayGenerator = (name, type) => {
                 text_align_horizontal: OverlayParam.text_align_horizontal.LEFT,
                 text_align_vertical: OverlayParam.text_align_vertical.TOP,
                 text_line_height: 1.5,
+            })
+            break
+        case OverlayType.SHAPE:
+            Object.assign(obj.params, {
+                shape_type: OverlayParam.shape_type.RECTANGLE,
             })
             break
         default:
@@ -114,11 +127,13 @@ export default class OverlayContainer extends React.Component {
     }
 
     componentDidMount() {
-        BI().assignContainer(this)
-
         this.setState({
             overlay: BI().currentScene().overlay,
         })
+    }
+
+    componentDidUpdate() {
+        BI().assignContainer(this)
     }
 
     render() {
@@ -148,9 +163,13 @@ export default class OverlayContainer extends React.Component {
                     referrer={this.props.referrer}>
                     <Ol>
                         {this.state.overlay.map((v, i) => {
+                            // TODO : 오버레이 추가
+
                             switch (v.type) {
                                 case OverlayType.TEXT:
                                     return <TextOverlay key={i} value={v} />
+                                case OverlayType.SHAPE:
+                                    return <ShapeOverlay key={i} value={v} />
                                 default:
                             }
                             return <></>
@@ -479,6 +498,69 @@ class TextOverlay extends Overlay {
                         })}
                     </Span>
                 </Div>
+            )
+        }
+    }
+}
+
+class ShapeOverlay extends Overlay {
+    constructor() {
+        super()
+
+        this.children = (props) => {
+            let params = this.props.value.params
+
+            let bgc = HexToRGB(params.background_color || '#000000')
+            let bc = HexToRGB(params.border_color || '#000000')
+            let bgcs = `rgba(${bgc.r}, ${bgc.g}, ${bgc.b}, ${params.background_opacity})`
+
+            let br = '0px'
+
+            switch (params.shape_type) {
+                case OverlayParam.shape_type.RECTANGLE:
+                    br = `${params.radius * props.ratio}px`
+                    break
+                case OverlayParam.shape_type.ELLIPSE:
+                    br = '100%'
+                    break
+                case OverlayParam.shape_type.TRIANGLE:
+                    br = '0px'
+                    break
+                default:
+            }
+
+            return (
+                <Div
+                    referrer={props.referrer}
+                    border='none'
+                    height={props.height * props.ratio}
+                    width={props.width * props.ratio}
+                    style={{
+                        backgroundColor: params.shape_type !== OverlayParam.shape_type.TRIANGLE && bgcs,
+                        backgroundImage:
+                            params.shape_type === OverlayParam.shape_type.TRIANGLE &&
+                            `linear-gradient(to bottom right, transparent 50%, ${bgcs} 0), linear-gradient(to top right, ${bgcs} 50%, transparent 0)`,
+                        backgroundSize:
+                            params.shape_type === OverlayParam.shape_type.TRIANGLE &&
+                            `${params.triangle_position}% 100%, ${100 - params.triangle_position}% 100%`,
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'left, right',
+                        opacity: params.opacity,
+                        // TODO: params.aspect_ratio,
+                        borderRadius: br,
+                        borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
+                        borderWidth:
+                            params.shape_type === OverlayParam.shape_type.TRIANGLE
+                                ? '0px'
+                                : `${params.border_width * props.ratio}px`,
+                        borderStyle: params.border_style,
+                        margin: `${
+                            (params.margin +
+                                (params.shape_type === OverlayParam.shape_type.TRIANGLE ? params.border_width : 0)) *
+                            props.ratio
+                        }px`,
+                        padding: `${params.padding * props.ratio}px`,
+                    }}></Div>
             )
         }
     }

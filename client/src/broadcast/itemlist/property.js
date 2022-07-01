@@ -28,6 +28,10 @@ import {
     faStrikethrough,
     faUnderline,
     faFont,
+    faShapes,
+    faSquare,
+    faCircle,
+    faCaretUp,
 } from '@fortawesome/free-solid-svg-icons'
 
 export default class PropertyDialog extends React.Component {
@@ -48,7 +52,7 @@ export default class PropertyDialog extends React.Component {
         this.onClick = () => {
             if (!this) return
             if (!this.isFocusing) {
-                if (this.state.open) {
+                if (this.state.open && this.state.value !== null) {
                     this.state.onChange(this.state.originalValue)
                     BI().afterChange()
                 }
@@ -99,6 +103,8 @@ export default class PropertyDialog extends React.Component {
         let formContent = <></>
 
         if (this.state.value === null) {
+            // TODO : 오버레이 추가
+
             formContent = (
                 <Form>
                     <Div padding='8'>어떤 오버레이를 만드시겠습니까?</Div>
@@ -110,6 +116,14 @@ export default class PropertyDialog extends React.Component {
                                 this.leaveFocus(e)
                             }}>
                             <FontAwesomeIcon icon={faFont} /> 텍스트
+                        </Button>
+                        <Button
+                            width='100%'
+                            onClick={(e) => {
+                                this.state.onChange(OverlayGenerator('새 도형 오버레이', OverlayType.SHAPE))
+                                this.leaveFocus(e)
+                            }}>
+                            <FontAwesomeIcon icon={faShapes} /> 도형
                         </Button>
                     </Div>
                 </Form>
@@ -190,16 +204,17 @@ function ParamList(props) {
             <Details title='공통'>
                 <Params>
                     <Arg
-                        name='넘칠 때'
-                        type={ArgTypes.COMBOBOX}
-                        default={props.value?.params.overflow}
+                        name='전체 투명도'
+                        type={ArgTypes.SLIDER}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        default={props.value?.params.opacity}
                         onChange={(val) => {
-                            props.value && (props.value.params.overflow = val)
+                            props.value && (props.value.params.opacity = val)
                             props.onChange && props.onChange(props.value)
-                        }}>
-                        <option value={OverlayParam.overflow.HIDDEN}>숨김</option>
-                        <option value={OverlayParam.overflow.SHOW}>표시</option>
-                    </Arg>
+                        }}
+                    />
                     <Arg
                         name='배경색'
                         type={ArgTypes.COLOR}
@@ -222,18 +237,6 @@ function ParamList(props) {
                         }}
                     />
                     <Arg
-                        name='전체 투명도'
-                        type={ArgTypes.SLIDER}
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        default={props.value?.params.opacity}
-                        onChange={(val) => {
-                            props.value && (props.value.params.opacity = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
                         name='현재 비율 유지'
                         type={ArgTypes.CHECKBOX}
                         default={props.value?.params.aspect_ratio}
@@ -245,6 +248,11 @@ function ParamList(props) {
                     <Arg
                         name='모서리 곡률 반경'
                         type={ArgTypes.NUMBER}
+                        disabled={
+                            props.value &&
+                            props.value.type === OverlayType.SHAPE &&
+                            props.value.params.shape_type !== OverlayParam.shape_type.RECTANGLE
+                        }
                         min={0}
                         unit='px'
                         default={props.value?.params.radius}
@@ -260,6 +268,11 @@ function ParamList(props) {
                     <Arg
                         name='형태'
                         type={ArgTypes.COMBOBOX}
+                        disabled={
+                            props.value &&
+                            props.value.type === OverlayType.SHAPE &&
+                            props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                        }
                         default={props.value?.params.border_style}
                         onChange={(val) => {
                             props.value && (props.value.params.border_style = val)
@@ -278,6 +291,11 @@ function ParamList(props) {
                     <Arg
                         name='두께'
                         type={ArgTypes.NUMBER}
+                        disabled={
+                            props.value &&
+                            props.value.type === OverlayType.SHAPE &&
+                            props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                        }
                         min={0}
                         unit='px'
                         default={props.value?.params.border_width}
@@ -289,6 +307,11 @@ function ParamList(props) {
                     <Arg
                         name='색'
                         type={ArgTypes.COLOR}
+                        disabled={
+                            props.value &&
+                            props.value.type === OverlayType.SHAPE &&
+                            props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                        }
                         default={props.value?.params.border_color}
                         onChange={(val) => {
                             props.value && (props.value.params.border_color = val)
@@ -302,6 +325,11 @@ function ParamList(props) {
                         max={1}
                         step={0.01}
                         default={props.value?.params.border_opacity}
+                        disabled={
+                            props.value &&
+                            props.value.type === OverlayType.SHAPE &&
+                            props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                        }
                         onChange={(val) => {
                             props.value && (props.value.params.border_opacity = val)
                             props.onChange && props.onChange(props.value)
@@ -340,6 +368,8 @@ function ParamList(props) {
 
     let preCommonParams = <></>
     let postCommonParams = <></>
+
+    // TODO : 오버레이 추가
 
     switch (props.value?.type) {
         case OverlayType.TEXT:
@@ -428,6 +458,17 @@ function ParamList(props) {
                     <Details title='문단'>
                         <Params>
                             <Arg
+                                name='넘칠 때'
+                                type={ArgTypes.COMBOBOX}
+                                default={props.value?.params.overflow}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.overflow = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}>
+                                <option value={OverlayParam.overflow.HIDDEN}>숨김</option>
+                                <option value={OverlayParam.overflow.SHOW}>표시</option>
+                            </Arg>
+                            <Arg
                                 name='가로 정렬'
                                 type={ArgTypes.BUTTONS}
                                 default={props.value?.params.text_align_horizontal}
@@ -478,6 +519,45 @@ function ParamList(props) {
                 </>
             )
             break
+        case OverlayType.SHAPE:
+            let triangleOption = (
+                <Arg
+                    name='꼭짓점 위치'
+                    type={ArgTypes.SLIDER}
+                    min={0}
+                    max={100}
+                    step={0.1}
+                    default={props.value?.params.triangle_position}
+                    unit='%'
+                    onChange={(val) => {
+                        props.value && (props.value.params.triangle_position = val)
+                        props.onChange && props.onChange(props.value)
+                    }}
+                />
+            )
+            preCommonParams = (
+                <Params>
+                    <Arg
+                        type={ArgTypes.BUTTONS}
+                        default={props.value?.params.shape_type}
+                        onChange={(val) => {
+                            props.value && (props.value.params.shape_type = val)
+                            props.onChange && props.onChange(props.value)
+                        }}>
+                        <option value={OverlayParam.shape_type.RECTANGLE}>
+                            <FontAwesomeIcon icon={faSquare} />
+                        </option>
+                        <option value={OverlayParam.shape_type.ELLIPSE}>
+                            <FontAwesomeIcon icon={faCircle} />
+                        </option>
+                        <option value={OverlayParam.shape_type.TRIANGLE}>
+                            <FontAwesomeIcon icon={faCaretUp} />
+                        </option>
+                    </Arg>
+                    {props.value?.params.shape_type === OverlayParam.shape_type.TRIANGLE ? triangleOption : null}
+                </Params>
+            )
+            break
         default:
     }
 
@@ -524,10 +604,6 @@ function Params(props) {
 }
 
 class Arg extends React.Component {
-    constructor() {
-        super()
-    }
-
     render() {
         let value = this.props.default
 
@@ -566,6 +642,7 @@ class Arg extends React.Component {
                                                     radioName={radioName}
                                                     value={v.props.value}
                                                     label={v.props.children}
+                                                    // TODO : disabled
                                                     multiple={this.props.multiple}
                                                     checked={
                                                         value && this.props.multiple
@@ -583,6 +660,7 @@ class Arg extends React.Component {
                                     <input
                                         type='checkbox'
                                         checked={value || false}
+                                        disabled={this.props.disabled}
                                         onChange={(e) => {
                                             this.props.onChange && this.props.onChange(e.target.checked)
                                         }}
@@ -593,6 +671,7 @@ class Arg extends React.Component {
                                     <input
                                         type='color'
                                         value={value || '#000000'}
+                                        disabled={this.props.disabled}
                                         onChange={(e) => {
                                             this.props.onChange && this.props.onChange(e.target.value)
                                         }}
@@ -602,6 +681,7 @@ class Arg extends React.Component {
                                 return (
                                     <select
                                         value={value}
+                                        disabled={this.props.disabled}
                                         onChange={(e) => {
                                             this.props.onChange && this.props.onChange(e.target.value)
                                         }}>
@@ -618,6 +698,7 @@ class Arg extends React.Component {
                                         max={this.props.max}
                                         width='56'
                                         align='right'
+                                        disabled={this.props.disabled}
                                         onChange={(e) => {
                                             this.props.onChange && this.props.onChange(e.target.value)
                                         }}
@@ -632,6 +713,7 @@ class Arg extends React.Component {
                                             step={this.props.step}
                                             min={this.props.min}
                                             max={this.props.max}
+                                            disabled={this.props.disabled}
                                             onInput={(e) => {
                                                 e.target.nextElementSibling.value = e.target.value
                                             }}
@@ -652,6 +734,7 @@ class Arg extends React.Component {
                                             resize: 'none',
                                         }}
                                         minrows={3}
+                                        disabled={this.props.disabled}
                                         onChange={(e) => {
                                             this.props.onChange && this.props.onChange(e.target.value)
                                         }}

@@ -1,3 +1,5 @@
+import { OverlayParam, OverlayType } from './overlay'
+
 class BroadcastInfo {
     static instance
 
@@ -18,11 +20,9 @@ class BroadcastInfo {
                     defaultCategory: 'Just Chatting',
                     overlay: [
                         {
-                            name: '테스트 텍스트 1',
-                            type: 'text',
+                            name: '테스트 도형 1',
+                            type: OverlayType.SHAPE,
                             params: {
-                                text: 'Lorem Ipsum 로렘 입수움',
-                                overflow: 'show',
                                 background_color: '#ff0000',
                                 background_opacity: 1,
                                 opacity: 1,
@@ -31,22 +31,11 @@ class BroadcastInfo {
                                 border_color: '#000000',
                                 border_opacity: 1,
                                 border_width: 0,
-                                border_style: 'solid',
+                                border_style: OverlayParam.border_style.SOLID,
                                 margin: 0,
                                 padding: 0,
-                                // font_family: 'aaa',
-                                font_size: 12,
-                                font_flags: {
-                                    bold: false,
-                                    italic: false,
-                                    underline: false,
-                                    strike: false,
-                                },
-                                font_color: '#000000',
-                                font_opacity: 1,
-                                text_align_horizontal: 'left',
-                                text_align_vertical: 'top',
-                                text_line_height: 1.5,
+                                shape_type: OverlayParam.shape_type.TRIANGLE,
+                                triangle_position: 45,
                             },
                             transform: {
                                 x: 0,
