@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash'
 import React from 'react'
 import { Div, Ul, Li, Nav, Dialog } from '../../components'
-import BI from '../info'
+import BI, { assignList } from '../info'
 import PropertyDialog from './property'
 
 export const ItemlistType = {
@@ -18,14 +18,10 @@ export default class Itemlist extends React.Component {
 
         this.contextMenuRef = React.createRef()
         this.propertyDialogRef = React.createRef()
-    }
 
-    componentDidMount() {
-        BI().assignList(this)
-    }
-
-    componentDidUpdate() {
-        console.log('updated!')
+        assignList(() => {
+            this.forceUpdate()
+        })
     }
 
     render() {

@@ -355,3 +355,17 @@ export class Table extends Component {
         this.component = 'table'
     }
 }
+
+export class Img extends Component {
+    constructor() {
+        super()
+        this.component = 'img'
+    }
+}
+
+export class Video extends Component {
+    constructor() {
+        super()
+        this.component = 'video'
+    }
+}
