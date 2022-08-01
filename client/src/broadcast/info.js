@@ -1,12 +1,11 @@
+import Itemlist from './itemlist'
 import { OverlayParam, OverlayType } from './overlay'
 
+let updateContainer = () => {}
+let updateList = () => {}
+
 class BroadcastInfo {
-    static instance
-
     constructor() {
-        this.container = <></>
-        this.list = <></>
-
         // this.info = Connector.getBroadcastInfo()
         this.info = {
             uid: 0,
@@ -19,9 +18,10 @@ class BroadcastInfo {
                     name: '저챗',
                     defaultCategory: 'Just Chatting',
                     overlay: [
+                        // TODO: overlay sample
                         {
-                            name: '테스트 도형 1',
-                            type: OverlayType.SHAPE,
+                            name: '샘플 웹캠 오버레이',
+                            type: OverlayType.WEBCAM,
                             params: {
                                 background_color: '#ff0000',
                                 background_opacity: 1,
@@ -34,8 +34,10 @@ class BroadcastInfo {
                                 border_style: OverlayParam.border_style.SOLID,
                                 margin: 0,
                                 padding: 0,
-                                shape_type: OverlayParam.shape_type.TRIANGLE,
-                                triangle_position: 45,
+
+                                // Specific params
+                                src_type: OverlayParam.src_type.URL,
+                                src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
                             },
                             transform: {
                                 x: 0,
@@ -56,39 +58,30 @@ class BroadcastInfo {
                 },
             ],
         }
+
+        this.onChange = (update = true) => {
+            console.log('onChange', this.info, update ? 'update' : 'no')
+            console.log(updateList, updateContainer)
+            updateList()
+            update && updateContainer()
+        }
+
+        this.afterChange = () => {
+            console.log('afterChange', this.info)
+            updateContainer()
+            updateList()
+        }
     }
 
     static getInstance() {
-        if (!BroadcastInfo.instance) BroadcastInfo.instance = new BroadcastInfo()
-        return BroadcastInfo.instance
-    }
-
-    onChange(update = true) {
-        // Connector.syncBroadcastInfo(this.bi)
-        console.log('onChange', this.info, update ? 'update' : 'no')
-        update && this.container.forceUpdate()
-        this.list.forceUpdate()
-    }
-
-    afterChange() {
-        // Connector.saveBroadcastInfo(this.bi)
-        console.log('afterChange', this.info)
-        this.container.forceUpdate()
-        this.list.forceUpdate()
+        if (!this.instance) {
+            this.instance = new BroadcastInfo()
+        }
+        return this.instance
     }
 
     currentScene() {
         return this.info.scene[this.info.currentScene]
-    }
-
-    assignContainer(container) {
-        this.container = container
-        console.log(this.container)
-    }
-
-    assignList(list) {
-        this.list = list
-        console.log(this.list)
     }
 
     selectScene(idx) {
@@ -107,4 +100,12 @@ class BroadcastInfo {
 export default function BI() {
     let bi = BroadcastInfo.getInstance()
     return bi
+}
+
+export function assignContainer(c) {
+    updateContainer = c
+}
+
+export function assignList(l) {
+    updateList = l
 }

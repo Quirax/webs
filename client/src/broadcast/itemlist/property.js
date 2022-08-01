@@ -32,6 +32,11 @@ import {
     faSquare,
     faCircle,
     faCaretUp,
+    faImage,
+    faFilm,
+    faFileImport,
+    faLink,
+    faVideoCamera,
 } from '@fortawesome/free-solid-svg-icons'
 
 export default class PropertyDialog extends React.Component {
@@ -124,6 +129,30 @@ export default class PropertyDialog extends React.Component {
                                 this.leaveFocus(e)
                             }}>
                             <FontAwesomeIcon icon={faShapes} /> 도형
+                        </Button>
+                        <Button
+                            width='100%'
+                            onClick={(e) => {
+                                this.state.onChange(OverlayGenerator('새 이미지 오버레이', OverlayType.IMAGE))
+                                this.leaveFocus(e)
+                            }}>
+                            <FontAwesomeIcon icon={faImage} /> 이미지
+                        </Button>
+                        <Button
+                            width='100%'
+                            onClick={(e) => {
+                                this.state.onChange(OverlayGenerator('새 동영상 오버레이', OverlayType.VIDEO))
+                                this.leaveFocus(e)
+                            }}>
+                            <FontAwesomeIcon icon={faFilm} /> 동영상
+                        </Button>
+                        <Button
+                            width='100%'
+                            onClick={(e) => {
+                                this.state.onChange(OverlayGenerator('새 웹캠 오버레이', OverlayType.WEBCAM))
+                                this.leaveFocus(e)
+                            }}>
+                            <FontAwesomeIcon icon={faVideoCamera} /> 웹캠
                         </Button>
                     </Div>
                 </Form>
@@ -218,6 +247,10 @@ function ParamList(props) {
                     <Arg
                         name='배경색'
                         type={ArgTypes.COLOR}
+                        disabled={
+                            props.value &&
+                            (props.value.type === OverlayType.IMAGE || props.value.type === OverlayType.VIDEO)
+                        }
                         default={props.value?.params.background_color}
                         onChange={(val) => {
                             props.value && (props.value.params.background_color = val)
@@ -227,6 +260,10 @@ function ParamList(props) {
                     <Arg
                         name='배경 투명도'
                         type={ArgTypes.SLIDER}
+                        disabled={
+                            props.value &&
+                            (props.value.type === OverlayType.IMAGE || props.value.type === OverlayType.VIDEO)
+                        }
                         min={0}
                         max={1}
                         step={0.01}
@@ -558,6 +595,40 @@ function ParamList(props) {
                 </Params>
             )
             break
+        case OverlayType.VIDEO:
+        case OverlayType.IMAGE:
+            let uploadOption = '[ 업로드 ]'
+            let urlOption = (
+                <Arg
+                    name='URL'
+                    type={ArgTypes.TEXT}
+                    default={props.value?.params.src}
+                    onChange={(val) => {
+                        props.value && (props.value.params.src = val)
+                        props.onChange && props.onChange(props.value)
+                    }}
+                />
+            )
+            preCommonParams = (
+                <Params>
+                    <Arg
+                        type={ArgTypes.BUTTONS}
+                        default={props.value?.params.src_type}
+                        onChange={(val) => {
+                            props.value && (props.value.params.src_type = val)
+                            props.onChange && props.onChange(props.value)
+                        }}>
+                        <option value={OverlayParam.src_type.UPLOAD}>
+                            <FontAwesomeIcon icon={faFileImport} />
+                        </option>
+                        <option value={OverlayParam.src_type.URL}>
+                            <FontAwesomeIcon icon={faLink} />
+                        </option>
+                    </Arg>
+                    {props.value?.params.src_type === OverlayParam.src_type.UPLOAD ? uploadOption : urlOption}
+                </Params>
+            )
+            break
         default:
     }
 
@@ -677,6 +748,17 @@ class Arg extends React.Component {
                                         }}
                                     />
                                 )
+                            case ArgTypes.TEXT:
+                                return (
+                                    <input
+                                        type='text'
+                                        value={value || ''}
+                                        disabled={this.props.disabled}
+                                        onChange={(e) => {
+                                            this.props.onChange && this.props.onChange(e.target.value)
+                                        }}
+                                    />
+                                )
                             case ArgTypes.COMBOBOX:
                                 return (
                                     <select
@@ -759,6 +841,7 @@ const ArgTypes = {
     BUTTONS: 'buttons',
     SLIDER: 'slider',
     TEXTAREA: 'textarea',
+    TEXT: 'text',
 }
 
 Object.freeze(ArgTypes)

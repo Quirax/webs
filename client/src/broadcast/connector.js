@@ -1,4 +1,6 @@
+import { isString } from 'lodash'
 import { io } from 'socket.io-client'
+import { OverlayType } from './overlay'
 
 export default class Connector {
     static instance
@@ -46,12 +48,10 @@ export default class Connector {
 
         let my = this
 
-        navigator.mediaDevices
-            .getDisplayMedia({ audio: true, video: true })
-            .then(function (stream) {
-                bootstrap(my.socket, stream)
-                my.isBroadcasting = true
-            })
+        navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(function (stream) {
+            bootstrap(my.socket, stream)
+            my.isBroadcasting = true
+        })
     }
 
     stop() {
@@ -62,6 +62,18 @@ export default class Connector {
             })
         }
         this.isBroadcasting = false
+    }
+
+    registerElement(type, id) {
+        if (!isString(type) || Object.values(OverlayType).indexOf(type) === -1)
+            console.log(isString(type), Object.values(OverlayType).indexOf(type))
+        console.log('register', type, id)
+    }
+
+    unregisterElement(type, id) {
+        if (!isString(type) || Object.values(OverlayType).indexOf(type) === -1)
+            console.log(isString(type), Object.values(OverlayType).indexOf(type))
+        console.log('unregister', type, id)
     }
 
     disconnect() {

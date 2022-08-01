@@ -1,13 +1,21 @@
 import React from 'react'
-import { Ol, Div, Span } from '../components'
+import { Ol, Div, Span, Img, Video } from '../components'
 import Moveable from 'react-moveable'
-import BI from './info'
+import BI, { assignContainer } from './info'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowsUpDownLeftRight } from '@fortawesome/free-solid-svg-icons'
+import Connector from './connector'
 
 const OVERLAY_PROPS = React.createContext()
+
+// TODO : 오버레이 추가
 
 export const OverlayType = {
     TEXT: 'text',
     SHAPE: 'shape',
+    IMAGE: 'image',
+    VIDEO: 'video',
+    WEBCAM: 'webcam',
 }
 
 Object.freeze(OverlayType)
@@ -52,6 +60,10 @@ export const OverlayParam = {
         RECTANGLE: 'rectangle',
         ELLIPSE: 'ellipse',
         TRIANGLE: 'triangle',
+    }),
+    src_type: Object.freeze({
+        UPLOAD: 'upload',
+        URL: 'url',
     }),
 }
 
@@ -110,6 +122,21 @@ export const OverlayGenerator = (name, type) => {
                 shape_type: OverlayParam.shape_type.RECTANGLE,
             })
             break
+        case OverlayType.IMAGE:
+            Object.assign(obj.params, {
+                src_type: OverlayParam.src_type.URL,
+                src: '',
+            })
+            break
+        case OverlayType.VIDEO:
+            Object.assign(obj.params, {
+                src_type: OverlayParam.src_type.URL,
+                src: '',
+            })
+            break
+        case OverlayType.WEBCAM:
+            Object.assign(obj.params, {})
+            break
         default:
             throw new Error('Invalid overlay type')
     }
@@ -122,18 +149,21 @@ export default class OverlayContainer extends React.Component {
         super()
 
         this.state = {
-            overlay: [],
-        }
-    }
-
-    componentDidMount() {
-        this.setState({
             overlay: BI().currentScene().overlay,
+        }
+
+        // this.onResize = (e) => {
+        //     this.forceUpdate()
+        // }
+        // this.onResize = this.onResize.bind(this)
+
+        assignContainer(() => {
+            this.forceUpdate()
         })
     }
 
-    componentDidUpdate() {
-        BI().assignContainer(this)
+    componentDidMount() {
+        // window.addEventListener('resize', this.onResize)
     }
 
     render() {
@@ -148,7 +178,7 @@ export default class OverlayContainer extends React.Component {
                     background='white'
                     position='absolute'
                     width={this.props.preview ? 1920 : '100%'}
-                    max-height={this.props.preview ? null : '100%'}
+                    // max-height={this.props.preview ? null : '100%'}
                     display='inline-block'
                     aspect-ratio='16/9'
                     top={this.props.preview ? 0 : '50%'}
@@ -170,51 +200,24 @@ export default class OverlayContainer extends React.Component {
                                     return <TextOverlay key={i} value={v} />
                                 case OverlayType.SHAPE:
                                     return <ShapeOverlay key={i} value={v} />
+                                case OverlayType.IMAGE:
+                                    return <ImageOverlay key={i} value={v} />
+                                case OverlayType.VIDEO:
+                                    return <VideoOverlay key={i} value={v} />
+                                case OverlayType.WEBCAM:
+                                    return <WebcamOverlay key={i} value={v} />
                                 default:
                             }
                             return <></>
                         })}
-                        {/* <Overlay
-                            top='100'
-                            left='100'
-                            height='332'
-                            width='332'
-                            rotate='0'>
-                            <img
-                                alt=''
-                                src='https://interactive-examples.mdn.mozilla.net/media/cc0-images/grapefruit-slice-332-332.jpg'
-                                height='100%'
-                                width='100%'
-                            />
-                        </Overlay>
-                        <Overlay
-                            top='200'
-                            left='200'
-                            height='180'
-                            width='320'
-                            rotate='0'>
-                            <video
-                                src='https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm'
-                                height='100%'
-                                width='100%'
-                                autoPlay
-                                loop
-                            />
-                        </Overlay> */}
-                        {/* <Overlay
-                            top='300'
-                            left='300'
-                            height='100'
-                            width='180'
-                            rotate='0'>
-                            <audio
-                                src='https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3'
-                                height='100%'
-                                width='100%'
-                            />
-                        </Overlay> */}
                     </Ol>
                 </Div>
+                <iframe
+                    title='slience'
+                    src='silence.mp3'
+                    allow='autoplay'
+                    id='audio'
+                    style={{ display: 'none' }}></iframe>
             </OVERLAY_PROPS.Provider>
         )
     }
@@ -241,6 +244,8 @@ class Overlay extends React.Component {
         this.value = {}
 
         this.children = <></>
+
+        this.isResizing = false
     }
 
     componentDidMount() {
@@ -319,6 +324,9 @@ class Overlay extends React.Component {
                                 /* For draggable */
                                 draggable={moveable}
                                 throttleDrag={0}
+                                onDragStart={({ target }) => {
+                                    target.style.pointerEvents = 'none'
+                                }}
                                 onDrag={({ target, left, top }) => {
                                     target.style.left = left + 'px'
                                     target.style.top = top + 'px'
@@ -328,40 +336,49 @@ class Overlay extends React.Component {
 
                                     BI().onChange(false)
                                 }}
-                                onDragEnd={() => {
+                                onDragEnd={({ target }) => {
+                                    target.style.pointerEvents = 'auto'
                                     BI().afterChange()
                                 }}
                                 /* For resizable */
                                 resizable={moveable}
                                 keepRatio={false}
                                 throttleResize={1}
-                                onResizeStart={({ dragStart }) => {
-                                    dragStart && dragStart.set([this.state.x * ratio, this.state.y * ratio])
+                                onResizeStart={({ target }) => {
+                                    target.style.pointerEvents = 'none'
+                                    this.isResizing = true
                                 }}
                                 onResize={({ target, width, height, drag }) => {
                                     let _height = height / ratio
                                     let _width = width / ratio
 
+                                    let _left = drag.left
+                                    let _top = drag.top
+
                                     target.style.height = height + 'px'
                                     target.style.width = width + 'px'
                                     childrenRef.style.height = `${(_height - this.sizeBias()) * ratio}px`
                                     childrenRef.style.width = `${(_width - this.sizeBias()) * ratio}px`
-                                    target.style.left = drag.beforeTranslate[0] + 'px'
-                                    target.style.top = drag.beforeTranslate[1] + 'px'
+                                    target.style.left = _left + 'px'
+                                    target.style.top = _top + 'px'
 
-                                    this.value.transform.x = drag.beforeTranslate[0] / ratio
-                                    this.value.transform.y = drag.beforeTranslate[1] / ratio
+                                    this.value.transform.x = _left / ratio
+                                    this.value.transform.y = _top / ratio
                                     this.value.transform.height = _height - this.sizeBias()
                                     this.value.transform.width = _width - this.sizeBias()
 
                                     BI().onChange(false)
                                 }}
-                                onResizeEnd={() => {
+                                onResizeEnd={({ target }) => {
+                                    target.style.pointerEvents = 'auto'
                                     BI().afterChange()
                                 }}
                                 /* For rotatable */
                                 rotatable={moveable}
                                 throttleRotate={0}
+                                onRotateStart={({ target }) => {
+                                    target.style.pointerEvents = 'none'
+                                }}
                                 onRotate={({ target, transform }) => {
                                     this.value.transform.rotate =
                                         parseFloat(transform.replace('rotate(', '').replace('deg)', '')) % 360
@@ -369,7 +386,8 @@ class Overlay extends React.Component {
 
                                     BI().onChange(false)
                                 }}
-                                onRotateEnd={() => {
+                                onRotateEnd={({ target }) => {
+                                    target.style.pointerEvents = 'auto'
                                     BI().afterChange()
                                 }}
                                 /* For snappable */
@@ -411,6 +429,8 @@ function HexToRGB(hex) {
           }
         : null
 }
+
+// TODO : 오버레이 추가
 
 class TextOverlay extends Overlay {
     constructor() {
@@ -563,5 +583,306 @@ class ShapeOverlay extends Overlay {
                     }}></Div>
             )
         }
+    }
+}
+
+class ImageOverlay extends Overlay {
+    constructor() {
+        super()
+
+        this.children = (props) => {
+            let params = this.props.value.params
+
+            let bc = HexToRGB(params.border_color || '#000000')
+
+            let src = params.src
+            switch (params.src_type) {
+                case OverlayParam.src_type.UPLOAD:
+                    // TODO: upload file url
+                    break
+                case OverlayParam.src_type.URL:
+                    break
+                default:
+            }
+
+            return (
+                <Img
+                    alt=''
+                    src={src}
+                    referrer={props.referrer}
+                    border='none'
+                    height={props.height * props.ratio}
+                    width={props.width * props.ratio}
+                    style={{
+                        opacity: params.opacity,
+                        // TODO: params.aspect_ratio,
+                        borderRadius: `${params.radius * props.ratio}px`,
+                        borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
+                        borderWidth: `${params.border_width * props.ratio}px`,
+                        borderStyle: params.border_style,
+                        margin: `${params.margin * props.ratio}px`,
+                        padding: `${params.padding * props.ratio}px`,
+                    }}
+                />
+            )
+        }
+    }
+}
+
+class VideoOverlay extends Overlay {
+    constructor() {
+        super()
+
+        const handleRef = React.createRef()
+
+        this.onMouseUp = (e) => {
+            handleRef.current && (handleRef.current.dataset.move = 'false')
+            console.log('mouseup', handleRef.current.dataset.move)
+        }
+
+        this.children = (props) => {
+            let params = this.props.value.params
+
+            let bc = HexToRGB(params.border_color || '#000000')
+
+            let src = params.src
+
+            let video = (
+                <Video
+                    width='100%'
+                    height='100%'
+                    alt=''
+                    src={src}
+                    autoPlay
+                    loop
+                    muted
+                    controls
+                    data-muted={true}
+                    onClick={(e) => {
+                        if (e.target.dataset.muted !== 'true') return
+                        e.target.muted = false
+                    }}
+                    onPause={(e) => {
+                        if (e.target.dataset.muted !== 'true') return
+                        e.target.dataset.muted = false
+                        e.target.play()
+                    }}
+                />
+            )
+
+            let onClick = null
+
+            switch (params.src_type) {
+                case OverlayParam.src_type.UPLOAD:
+                    // TODO: upload file url
+                    break
+                case OverlayParam.src_type.URL:
+                    let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|\?v=)([^#&?]*).*/
+                    let match = src.match(regExp)
+
+                    if (match && match[2].length === 11) {
+                        src = `https://www.youtube-nocookie.com/embed/${match[2]}`
+                        src += `?autoplay=1&mute=1`
+                        src += `&loop=1&playlist=${match[2]}`
+                        src += `&controls=1&fs=0&iv_load_policy=3`
+                        src += `&enablejsapi=1`
+
+                        video = (
+                            <iframe
+                                title={`youtube_${match[2]}`}
+                                src={src}
+                                width='100%'
+                                height='100%'
+                                allow='autoplay'
+                                frameBorder='0'
+                                // style={{ pointerEvents: 'none' }}
+                            ></iframe>
+                        )
+
+                        onClick = (e) => {
+                            console.log(props.referrer.current)
+                            if (!props.referrer.current) return
+                            // props.referrer.current.contentWindow.click = () => {}
+                            props.referrer.current.contentWindow.postMessage(
+                                JSON.stringify({
+                                    event: 'command',
+                                    func: 'unMute',
+                                    args: Array.prototype.slice.call([]),
+                                }),
+                                src
+                            )
+                        }
+                    }
+                    break
+                default:
+            }
+
+            return (
+                <Div
+                    style={{
+                        opacity: params.opacity,
+                        // TODO: force to keep ratio of video source
+                        borderRadius: `${params.radius * props.ratio}px`,
+                        borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
+                        borderWidth: `${params.border_width * props.ratio}px`,
+                        borderStyle: params.border_style,
+                        margin: `${params.margin * props.ratio}px`,
+                        padding: `${params.padding * props.ratio}px`,
+                    }}
+                    width={props.width * props.ratio}
+                    height={props.height * props.ratio}
+                    referrer={props.referrer}
+                    onClick={onClick}
+                    onMouseEnter={(e) => {
+                        handleRef.current.style.display = 'inline-block'
+                    }}
+                    onMouseLeave={(e) => {
+                        handleRef.current.dataset.handle === 'false' && (handleRef.current.style.display = 'none')
+                    }}>
+                    {video}
+                    <Div
+                        referrer={handleRef}
+                        position='absolute'
+                        top='16'
+                        left='16'
+                        display='none'
+                        background='white'
+                        padding='16'
+                        border-radius='8'
+                        border='normal'
+                        data-handle='false'
+                        data-move='false'
+                        onMouseEnter={(e) => {
+                            handleRef.current.dataset.handle = 'true'
+                        }}
+                        onMouseDown={(e) => {
+                            handleRef.current.dataset.move = 'true'
+                            console.log('mousedown', handleRef.current.dataset.move)
+                        }}
+                        onMouseLeave={(e) => {
+                            handleRef.current.dataset.move === 'false' && (handleRef.current.dataset.handle = 'false')
+                        }}>
+                        <FontAwesomeIcon icon={faArrowsUpDownLeftRight} />
+                    </Div>
+                </Div>
+            )
+        }
+    }
+
+    componentDidMount() {
+        super.componentDidMount()
+
+        window.addEventListener('mouseup', this.onMouseUp)
+        let conn = Connector.getInstance()
+        conn.registerElement(OverlayType.VIDEO, this.props.value.id)
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('mouseup', this.onMouseUp)
+        let conn = Connector.getInstance()
+        conn.unregisterElement(OverlayType.VIDEO, this.props.value.id)
+    }
+}
+
+class WebcamOverlay extends Overlay {
+    constructor() {
+        super()
+
+        const handleRef = React.createRef()
+
+        this.onMouseUp = (e) => {
+            handleRef.current && (handleRef.current.dataset.move = 'false')
+            console.log('mouseup', handleRef.current.dataset.move)
+        }
+
+        this.children = (props) => {
+            let params = this.props.value.params
+
+            let bc = HexToRGB(params.border_color || '#000000')
+
+            let src = params.src
+
+            return (
+                <Div
+                    style={{
+                        opacity: params.opacity,
+                        // TODO: force to keep ratio of video source
+                        borderRadius: `${params.radius * props.ratio}px`,
+                        borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
+                        borderWidth: `${params.border_width * props.ratio}px`,
+                        borderStyle: params.border_style,
+                        margin: `${params.margin * props.ratio}px`,
+                        padding: `${params.padding * props.ratio}px`,
+                    }}
+                    width={props.width * props.ratio}
+                    height={props.height * props.ratio}
+                    referrer={props.referrer}
+                    onMouseEnter={(e) => {
+                        handleRef.current.style.display = 'inline-block'
+                    }}
+                    onMouseLeave={(e) => {
+                        handleRef.current.dataset.handle === 'false' && (handleRef.current.style.display = 'none')
+                    }}>
+                    <Video
+                        width='100%'
+                        height='100%'
+                        alt=''
+                        src={src}
+                        autoPlay
+                        loop
+                        muted
+                        controls
+                        data-muted={true}
+                        onClick={(e) => {
+                            if (e.target.dataset.muted !== 'true') return
+                            e.target.muted = false
+                        }}
+                        onPause={(e) => {
+                            if (e.target.dataset.muted !== 'true') return
+                            e.target.dataset.muted = false
+                            e.target.play()
+                        }}
+                    />
+                    <Div
+                        referrer={handleRef}
+                        position='absolute'
+                        top='16'
+                        left='16'
+                        display='none'
+                        background='white'
+                        padding='16'
+                        border-radius='8'
+                        border='normal'
+                        data-handle='false'
+                        data-move='false'
+                        onMouseEnter={(e) => {
+                            handleRef.current.dataset.handle = 'true'
+                        }}
+                        onMouseDown={(e) => {
+                            handleRef.current.dataset.move = 'true'
+                            console.log('mousedown', handleRef.current.dataset.move)
+                        }}
+                        onMouseLeave={(e) => {
+                            handleRef.current.dataset.move === 'false' && (handleRef.current.dataset.handle = 'false')
+                        }}>
+                        <FontAwesomeIcon icon={faArrowsUpDownLeftRight} />
+                    </Div>
+                </Div>
+            )
+        }
+    }
+
+    componentDidMount() {
+        super.componentDidMount()
+
+        window.addEventListener('mouseup', this.onMouseUp)
+        let conn = Connector.getInstance()
+        conn.registerElement(OverlayType.VIDEO, this.props.value.id)
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('mouseup', this.onMouseUp)
+        let conn = Connector.getInstance()
+        conn.unregisterElement(OverlayType.VIDEO, this.props.value.id)
     }
 }
