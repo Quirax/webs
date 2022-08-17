@@ -8,7 +8,7 @@ import Connector from './connector'
 
 const OVERLAY_PROPS = React.createContext()
 
-// TODO : 오버레이 추가
+// HACK : 오버레이 추가
 
 export const OverlayType = {
     TEXT: 'text',
@@ -16,6 +16,7 @@ export const OverlayType = {
     IMAGE: 'image',
     VIDEO: 'video',
     WEBCAM: 'webcam',
+    DISPLAY: 'display',
 }
 
 Object.freeze(OverlayType)
@@ -43,7 +44,7 @@ export const OverlayParam = {
         BOTTOM: 'bottom',
     }),
     font_family: Object.freeze({
-        /* TODO: 글꼴 목록 반영 */
+        /* FIXME: 글꼴 목록 반영 */
     }),
     border_style: Object.freeze({
         NONE: 'none',
@@ -95,7 +96,9 @@ export const OverlayGenerator = (name, type) => {
         },
     }
 
-    // TODO : 오버레이 추가
+    // HACK : 오버레이 추가
+
+    const id = Math.random().toString(36).substring(2, 11)
 
     switch (type) {
         case OverlayType.TEXT:
@@ -123,19 +126,28 @@ export const OverlayGenerator = (name, type) => {
             })
             break
         case OverlayType.IMAGE:
+            Object.assign(obj, {
+                id: id,
+            })
             Object.assign(obj.params, {
                 src_type: OverlayParam.src_type.URL,
                 src: '',
             })
             break
         case OverlayType.VIDEO:
+            Object.assign(obj, {
+                id: id,
+            })
             Object.assign(obj.params, {
                 src_type: OverlayParam.src_type.URL,
                 src: '',
             })
             break
         case OverlayType.WEBCAM:
-            Object.assign(obj.params, {})
+        case OverlayType.DISPLAY:
+            Object.assign(obj, {
+                id: id,
+            })
             break
         default:
             throw new Error('Invalid overlay type')
@@ -192,35 +204,41 @@ export default class OverlayContainer extends React.Component {
                     }
                     referrer={this.props.referrer}>
                     <Ol>
-                        {this.state.overlay.map((v, i) => {
-                            // TODO : 오버레이 추가
-
-                            switch (v.type) {
-                                case OverlayType.TEXT:
-                                    return <TextOverlay key={i} value={v} />
-                                case OverlayType.SHAPE:
-                                    return <ShapeOverlay key={i} value={v} />
-                                case OverlayType.IMAGE:
-                                    return <ImageOverlay key={i} value={v} />
-                                case OverlayType.VIDEO:
-                                    return <VideoOverlay key={i} value={v} />
-                                case OverlayType.WEBCAM:
-                                    return <WebcamOverlay key={i} value={v} />
-                                default:
-                            }
-                            return <></>
-                        })}
+                        <OverlayElems overlay={this.state.overlay} />
                     </Ol>
                 </Div>
-                <iframe
-                    title='slience'
-                    src='silence.mp3'
-                    allow='autoplay'
-                    id='audio'
-                    style={{ display: 'none' }}></iframe>
             </OVERLAY_PROPS.Provider>
         )
     }
+}
+
+function OverlayElems(props) {
+    return (
+        <>
+            {props.overlay.map((v, i) => {
+                // HACK : 오버레이 추가
+
+                console.log(v)
+
+                switch (v.type) {
+                    case OverlayType.TEXT:
+                        return <TextOverlay key={i} value={v} />
+                    case OverlayType.SHAPE:
+                        return <ShapeOverlay key={i} value={v} />
+                    case OverlayType.IMAGE:
+                        return <ImageOverlay key={i} value={v} />
+                    case OverlayType.VIDEO:
+                        return <VideoOverlay key={i} value={v} />
+                    case OverlayType.WEBCAM:
+                        return <WebcamOverlay key={i} value={v} />
+                    case OverlayType.DISPLAY:
+                        return <DisplayOverlay key={i} value={v} />
+                    default:
+                }
+                return <></>
+            })}
+        </>
+    )
 }
 
 class Overlay extends React.Component {
@@ -430,7 +448,7 @@ function HexToRGB(hex) {
         : null
 }
 
-// TODO : 오버레이 추가
+// HACK : 오버레이 추가
 
 class TextOverlay extends Overlay {
     constructor() {
@@ -789,6 +807,9 @@ class WebcamOverlay extends Overlay {
         super()
 
         const handleRef = React.createRef()
+        const videoRef = React.createRef()
+        this.videoRef = videoRef
+        this.id = null
 
         this.onMouseUp = (e) => {
             handleRef.current && (handleRef.current.dataset.move = 'false')
@@ -800,7 +821,7 @@ class WebcamOverlay extends Overlay {
 
             let bc = HexToRGB(params.border_color || '#000000')
 
-            let src = params.src
+            // let src = params.src
 
             return (
                 <Div
@@ -827,7 +848,8 @@ class WebcamOverlay extends Overlay {
                         width='100%'
                         height='100%'
                         alt=''
-                        src={src}
+                        // srcObject={this.state.stream}
+                        referrer={videoRef}
                         autoPlay
                         loop
                         muted
@@ -870,6 +892,14 @@ class WebcamOverlay extends Overlay {
                 </Div>
             )
         }
+
+        this.attach = (stream) => {
+            this.videoRef.current && (this.videoRef.current.srcObject = stream)
+        }
+
+        this.attach = this.attach.bind(this)
+
+        this.overlayType = OverlayType.WEBCAM
     }
 
     componentDidMount() {
@@ -877,12 +907,52 @@ class WebcamOverlay extends Overlay {
 
         window.addEventListener('mouseup', this.onMouseUp)
         let conn = Connector.getInstance()
-        conn.registerElement(OverlayType.VIDEO, this.props.value.id)
+        conn.registerElement(this.overlayType, this.props.value.id)
+
+        this.attachStream()
     }
 
     componentWillUnmount() {
         window.removeEventListener('mouseup', this.onMouseUp)
+
         let conn = Connector.getInstance()
-        conn.unregisterElement(OverlayType.VIDEO, this.props.value.id)
+        conn.unregisterElement(this.overlayType, this.props.value.id)
+    }
+
+    componentDidUpdate() {
+        super.componentDidUpdate()
+
+        if (this.id !== this.props.value.id) {
+            this.attachStream()
+            this.id = this.props.value.id
+        }
+    }
+
+    attachStream() {
+        let conn = Connector.getInstance()
+        conn.attachCameraStream(this.props.value.id, this.attach)
+    }
+
+    detachStream() {
+        let conn = Connector.getInstance()
+        conn.detachCameraStream(this.props.value.id)
+    }
+}
+
+class DisplayOverlay extends WebcamOverlay {
+    constructor() {
+        super()
+
+        this.overlayType = OverlayType.WEBCAM
+    }
+
+    attachStream() {
+        let conn = Connector.getInstance()
+        conn.attachDisplayStream(this.props.value.id, this.attach)
+    }
+
+    detachStream() {
+        let conn = Connector.getInstance()
+        conn.detachDisplayStream(this.props.value.id)
     }
 }

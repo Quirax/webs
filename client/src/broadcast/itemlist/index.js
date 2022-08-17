@@ -1,7 +1,9 @@
 import { cloneDeep } from 'lodash'
 import React from 'react'
 import { Div, Ul, Li, Nav, Dialog } from '../../components'
+import Connector from '../connector'
 import BI, { assignList } from '../info'
+import { OverlayType } from '../overlay'
 import PropertyDialog from './property'
 
 export const ItemlistType = {
@@ -101,7 +103,7 @@ export default class Itemlist extends React.Component {
                                     value={v}
                                     key={i}
                                     onChange={(val) => {
-                                        v = val
+                                        Object.assign(v, val)
 
                                         BI().onChange()
                                     }}
@@ -215,6 +217,11 @@ class ContextMenu extends React.Component {
     }
 
     onDelete(e) {
+        if (this.state.value.type === OverlayType.WEBCAM) {
+            let conn = Connector.getInstance()
+
+            conn.detachDisplayStream(this.state.value.id)
+        }
         this.state.list.splice(this.state.list.indexOf(this.state.value), 1)
         BI().afterChange()
     }

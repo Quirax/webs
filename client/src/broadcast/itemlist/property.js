@@ -37,7 +37,9 @@ import {
     faFileImport,
     faLink,
     faVideoCamera,
+    faDisplay,
 } from '@fortawesome/free-solid-svg-icons'
+import Connector from '../connector'
 
 export default class PropertyDialog extends React.Component {
     constructor() {
@@ -93,13 +95,14 @@ export default class PropertyDialog extends React.Component {
 
     show(target, value, top, left, onChange) {
         console.log(target, value)
+        let ov = cloneDeep(value)
         this.setState({
             top: top,
             left: left + 8,
             target: target,
             open: true,
             value: value,
-            originalValue: cloneDeep(value),
+            originalValue: ov,
             onChange: onChange,
         })
     }
@@ -108,7 +111,7 @@ export default class PropertyDialog extends React.Component {
         let formContent = <></>
 
         if (this.state.value === null) {
-            // TODO : 오버레이 추가
+            // HACK : 오버레이 추가
 
             formContent = (
                 <Form>
@@ -154,6 +157,14 @@ export default class PropertyDialog extends React.Component {
                             }}>
                             <FontAwesomeIcon icon={faVideoCamera} /> 웹캠
                         </Button>
+                        <Button
+                            width='100%'
+                            onClick={(e) => {
+                                this.state.onChange(OverlayGenerator('새 화면공유 오버레이', OverlayType.DISPLAY))
+                                this.leaveFocus(e)
+                            }}>
+                            <FontAwesomeIcon icon={faDisplay} /> 화면공유
+                        </Button>
                     </Div>
                 </Form>
             )
@@ -195,7 +206,7 @@ export default class PropertyDialog extends React.Component {
                         <Button
                             width='50%'
                             onClick={(e) => {
-                                // TODO: Cancel update
+                                console.log(this.state.originalValue)
                                 this.state.onChange(this.state.originalValue)
                                 BI().afterChange()
                                 this.leaveFocus(e)
@@ -406,7 +417,7 @@ function ParamList(props) {
     let preCommonParams = <></>
     let postCommonParams = <></>
 
-    // TODO : 오버레이 추가
+    // HACK : 오버레이 추가
 
     switch (props.value?.type) {
         case OverlayType.TEXT:
@@ -434,7 +445,7 @@ function ParamList(props) {
                                     // props.value && (props.value.params.overflow_y = val)
                                     // props.onChange && props.onChange(props.value)
                                 }}>
-                                {/* TODO: 글꼴 목록 반영 */}
+                                {/* FIXME: 글꼴 목록 반영 */}
                                 <option>굴림</option>
                             </Arg>
                             <Arg
@@ -629,6 +640,38 @@ function ParamList(props) {
                 </Params>
             )
             break
+        case OverlayType.WEBCAM:
+            preCommonParams = (
+                <Params>
+                    <Arg
+                        type={ArgTypes.BUTTON}
+                        multiple
+                        default={{}}
+                        onChange={() => {
+                            let conn = Connector.getInstance()
+                            conn.attachCameraStream(props.value.id, null, true)
+                        }}>
+                        <FontAwesomeIcon icon={faVideoCamera} /> 카메라 재설정
+                    </Arg>
+                </Params>
+            )
+            break
+        case OverlayType.DISPLAY:
+            preCommonParams = (
+                <Params>
+                    <Arg
+                        type={ArgTypes.BUTTON}
+                        multiple
+                        default={{}}
+                        onChange={() => {
+                            let conn = Connector.getInstance()
+                            conn.attachDisplayStream(props.value.id, null, true)
+                        }}>
+                        <FontAwesomeIcon icon={faDisplay} /> 화면 재설정
+                    </Arg>
+                </Params>
+            )
+            break
         default:
     }
 
@@ -713,7 +756,7 @@ class Arg extends React.Component {
                                                     radioName={radioName}
                                                     value={v.props.value}
                                                     label={v.props.children}
-                                                    // TODO : disabled
+                                                    // FIXME : disabled
                                                     multiple={this.props.multiple}
                                                     checked={
                                                         value && this.props.multiple
@@ -822,6 +865,17 @@ class Arg extends React.Component {
                                         }}
                                     />
                                 )
+                            case ArgTypes.BUTTON:
+                                return (
+                                    <Button
+                                        width='100%'
+                                        disabled={this.props.disabled}
+                                        onClick={(e) => {
+                                            this.props.onChange && this.props.onChange()
+                                        }}>
+                                        {this.props.children}
+                                    </Button>
+                                )
                             default:
                                 return <></>
                         }
@@ -842,6 +896,7 @@ const ArgTypes = {
     SLIDER: 'slider',
     TEXTAREA: 'textarea',
     TEXT: 'text',
+    BUTTON: 'button',
 }
 
 Object.freeze(ArgTypes)

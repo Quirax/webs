@@ -1,4 +1,3 @@
-import Itemlist from './itemlist'
 import { OverlayParam, OverlayType } from './overlay'
 
 let updateContainer = () => {}
@@ -18,10 +17,11 @@ class BroadcastInfo {
                     name: '저챗',
                     defaultCategory: 'Just Chatting',
                     overlay: [
-                        // TODO: overlay sample
+                        // HACK: overlay sample
                         {
                             name: '샘플 웹캠 오버레이',
                             type: OverlayType.WEBCAM,
+                            id: 'asdf',
                             params: {
                                 background_color: '#ff0000',
                                 background_opacity: 1,
@@ -60,14 +60,11 @@ class BroadcastInfo {
         }
 
         this.onChange = (update = true) => {
-            console.log('onChange', this.info, update ? 'update' : 'no')
-            console.log(updateList, updateContainer)
             updateList()
             update && updateContainer()
         }
 
         this.afterChange = () => {
-            console.log('afterChange', this.info)
             updateContainer()
             updateList()
         }
