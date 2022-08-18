@@ -51,7 +51,7 @@ export class VideoOverlay extends Overlay {
 
             switch (params.src_type) {
                 case OverlayParam.src_type.UPLOAD:
-                    // TODO: upload file url
+                    // FIXME: upload file url
                     break
                 case OverlayParam.src_type.URL:
                     let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|\?v=)([^#&?]*).*/
@@ -98,7 +98,7 @@ export class VideoOverlay extends Overlay {
                 <Div
                     style={{
                         opacity: params.opacity,
-                        // TODO: force to keep ratio of video source
+                        // FIXME: force to keep ratio of video source
                         borderRadius: `${params.radius * props.ratio}px`,
                         borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
                         borderWidth: `${params.border_width * props.ratio}px`,

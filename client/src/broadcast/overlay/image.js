@@ -15,7 +15,7 @@ export class ImageOverlay extends Overlay {
             let src = params.src
             switch (params.src_type) {
                 case OverlayParam.src_type.UPLOAD:
-                    // TODO: upload file url
+                    // FIXME: upload file url
                     break
                 case OverlayParam.src_type.URL:
                     break
@@ -32,7 +32,6 @@ export class ImageOverlay extends Overlay {
                     width={props.width * props.ratio}
                     style={{
                         opacity: params.opacity,
-                        // TODO: params.aspect_ratio,
                         borderRadius: `${params.radius * props.ratio}px`,
                         borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
                         borderWidth: `${params.border_width * props.ratio}px`,

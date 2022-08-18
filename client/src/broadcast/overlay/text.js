@@ -53,7 +53,6 @@ export class TextOverlay extends Overlay {
                     style={{
                         backgroundColor: `rgba(${bgc.r}, ${bgc.g}, ${bgc.b}, ${params.background_opacity})`,
                         opacity: params.opacity,
-                        // TODO: params.aspect_ratio,
                         borderRadius: `${params.radius * props.ratio}px`,
                         borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
                         borderWidth: `${params.border_width * props.ratio}px`,
@@ -63,7 +62,7 @@ export class TextOverlay extends Overlay {
                     }}>
                     <Span
                         style={{
-                            // TODO: fontFamily: params.font_family,
+                            // FIXME: fontFamily: params.font_family,
                             fontSize: `${params.font_size * props.ratio}pt`, // TODO: 화면 크기가 작을 때 폰트 크기가 너무 작으면 제대로 렌더링되지 않는 문제 해결
                             fontWeight: params.font_flags?.bold ? 'bold' : 'normal',
                             fontStyle: params.font_flags?.italic ? 'italic' : 'normal',

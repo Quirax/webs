@@ -46,7 +46,6 @@ export class ShapeOverlay extends Overlay {
                         backgroundRepeat: 'no-repeat',
                         backgroundPosition: 'left, right',
                         opacity: params.opacity,
-                        // TODO: params.aspect_ratio,
                         borderRadius: br,
                         borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
                         borderWidth:

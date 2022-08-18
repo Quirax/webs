@@ -27,6 +27,22 @@ export class Overlay extends React.Component {
         this.children = <></>
 
         this.isResizing = false
+
+        this.onShift = (e) => {
+            if (e.shiftKey) {
+                this.setState({
+                    aspect_ratio: true,
+                })
+            }
+        }
+        this.onShift = this.onShift.bind(this)
+
+        this.offShift = () => {
+            this.setState({
+                aspect_ratio: false,
+            })
+        }
+        this.offShift = this.offShift.bind(this)
     }
 
     componentDidMount() {
@@ -39,13 +55,22 @@ export class Overlay extends React.Component {
             width: parseFloat(this.value.transform.width),
             rotate: parseFloat(this.value.transform.rotate),
             params: this.props.value.params,
+            aspect_ratio: false,
         })
+
+        window.addEventListener('keydown', this.onShift)
+        window.addEventListener('keyup', this.offShift)
     }
 
     componentDidUpdate() {
         this.value = this.props.value
 
         this.moveableRef.current && this.moveableRef.current.moveable.checkUpdateRect()
+    }
+
+    componentWillUnmount() {
+        window.removeEventListener('keydown', this.onShift)
+        window.removeEventListener('keyup', this.offShift)
     }
 
     sizeBias() {
@@ -125,7 +150,7 @@ export class Overlay extends React.Component {
                                 }}
                                 /* For resizable */
                                 resizable={moveable}
-                                keepRatio={false}
+                                keepRatio={this.state.aspect_ratio || this.props.value.params.aspect_ratio || false}
                                 throttleResize={1}
                                 onResizeStart={({ target }) => {
                                     target.style.pointerEvents = 'none'

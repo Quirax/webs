@@ -31,7 +31,7 @@ export class WebcamOverlay extends Overlay {
                 <Div
                     style={{
                         opacity: params.opacity,
-                        // TODO: force to keep ratio of video source
+                        // FIXME: force to keep ratio of video source
                         borderRadius: `${params.radius * props.ratio}px`,
                         borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,
                         borderWidth: `${params.border_width * props.ratio}px`,
