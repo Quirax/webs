@@ -59,13 +59,14 @@ export default class PropertyDialog extends React.Component {
         this.onClick = () => {
             if (!this) return
             if (!this.isFocusing) {
-                if (this.state.open && this.state.value !== null) {
-                    this.state.onChange(this.state.originalValue)
-                    BI().afterChange()
-                }
-                this.setState({
-                    open: false,
-                })
+                // if (this.state.open && this.state.value !== null) {
+                //     this.state.onChange(this.state.originalValue)
+                //     BI().afterChange()
+                // }
+                // this.setState({
+                //     open: false,
+                // })
+                return
             } else {
                 this.isFocusing = false
             }
@@ -418,6 +419,7 @@ function ParamList(props) {
     let postCommonParams = <></>
 
     // HACK : 오버레이 추가
+    // FIXME : 크로마키 지원
 
     switch (props.value?.type) {
         case OverlayType.TEXT:

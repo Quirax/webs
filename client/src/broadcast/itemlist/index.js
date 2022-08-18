@@ -83,6 +83,8 @@ export default class Itemlist extends React.Component {
                 throw new Error('Invalid itemlist mode')
         }
 
+        // TODO : 드래그 시 블록 잡기 차단
+
         return (
             <Div flex>
                 <Nav
@@ -95,6 +97,7 @@ export default class Itemlist extends React.Component {
                     style={{ overflowY: 'auto' }}>
                     <Ul>
                         {state.list.map((v, i) => {
+                            // TODO : 드래그 시 순서 변경
                             return (
                                 <Item
                                     menu={this.contextMenuRef}
