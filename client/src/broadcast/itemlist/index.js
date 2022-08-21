@@ -36,29 +36,61 @@ export default class Itemlist extends React.Component {
             },
             addLabel: '',
             bottomItem: <></>,
+            onDblClickGenerator: () => () => {},
+            isSelected: () => false,
         }
+
+        let onClickBottomItem
 
         switch (this.props.mode) {
             case ItemlistType.SCENES:
+                // TODO : addScene
+                // TODO : select scene on click
+
+                onClickBottomItem = () => {
+                    this.props.changeMode(ItemlistType.TRANSITIONS)
+                }
+
                 Object.assign(state, {
                     list: BI().info.scene,
                     addLabel: '장면 추가',
                     bottomItem: (
-                        <Li padding='8' border-top='normal' align='center' cursor='default'>
+                        <Li
+                            padding='8'
+                            border-top='normal'
+                            align='center'
+                            cursor='default'
+                            onClick={onClickBottomItem.bind(this)}>
                             장면 전환 설정
                         </Li>
                     ),
+                    onDblClickGenerator: (item, value, onChange) => (e) => {
+                        BI().selectScene(value.index)
+                        console.log('a', BI().currentScene())
+                        this.props.changeMode(ItemlistType.OVERLAYS)
+                    },
+                    isSelected: (idx) => BI().isCurrentScene(idx),
                 })
                 break
             case ItemlistType.TRANSITIONS:
+                onClickBottomItem = () => {
+                    this.props.changeMode(ItemlistType.SCENES)
+                }
+
                 Object.assign(state, {
                     list: BI().info.transition,
                     addLabel: '장면 전환 추가',
                     bottomItem: (
-                        <Li padding='8' border-top='normal' align='center' cursor='default'>
+                        <Li
+                            padding='8'
+                            border-top='normal'
+                            align='center'
+                            cursor='default'
+                            onClick={onClickBottomItem.bind(this)}>
                             장면 설정
                         </Li>
                     ),
+                    isSelected: (idx) => BI().isCurrentTransition(idx),
                 })
                 break
             case ItemlistType.OVERLAYS:
@@ -79,6 +111,17 @@ export default class Itemlist extends React.Component {
                         }
                     },
                     addLabel: '오버레이 추가',
+                    onDblClickGenerator: (item, value, onChange) => (e) => {
+                        if (this.propertyDialogRef) {
+                            let dialog = this.propertyDialogRef.current
+                            let top = e.clientY
+                            let left = e.clientX
+
+                            dialog.show(item, value, top, left, (val) => {
+                                onChange && onChange(val)
+                            })
+                        }
+                    },
                 })
                 break
             default:
@@ -102,10 +145,14 @@ export default class Itemlist extends React.Component {
                     <Ul>
                         <DndProvider backend={HTML5Backend}>
                             {state.list.map((v, i) => {
+                                let selected = state.isSelected(i)
+
+                                // TODO : onclick event support
+
                                 return (
                                     <Item
                                         menu={this.contextMenuRef}
-                                        propertyDialog={this.propertyDialogRef}
+                                        onDblClickGenerator={state.onDblClickGenerator}
                                         mode={this.props.mode}
                                         value={v}
                                         key={i}
@@ -114,6 +161,10 @@ export default class Itemlist extends React.Component {
                                             Object.assign(v, val)
                                             BI().onChange()
                                         }}
+                                        style={{
+                                            backgroundColor: selected === true ? 'blue' : null,
+                                        }}
+                                        onChangeMode={this.props.changeMode}
                                     />
                                 )
                             })}
@@ -136,7 +187,7 @@ export default class Itemlist extends React.Component {
     }
 }
 
-function Item({ propertyDialog, menu, value, onChange, mode, index }) {
+function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style }) {
     const ref = React.useRef(null)
     const [{ handlerId }, drop] = useDrop({
         accept: 'Item',
@@ -205,18 +256,12 @@ function Item({ propertyDialog, menu, value, onChange, mode, index }) {
 
     drag(drop(ref))
 
-    let onDblClick = (e) => {
-        if (propertyDialog) {
-            let dialog = propertyDialog.current
-            let top = e.clientY
-            let left = e.clientX
+    let onDblClick = null
 
-            dialog.show(this, value, top, left, (val) => {
-                onChange && onChange(val)
-            })
-        }
+    if (onDblClickGenerator != null) {
+        onDblClick = onDblClickGenerator(this, { ...value, index: index }, onChange)
+        // onDblClick = onDblClick.bind(this)
     }
-    onDblClick = onDblClick.bind(this)
 
     let onContextMenu = (e) => {
         e.preventDefault()
@@ -241,6 +286,8 @@ function Item({ propertyDialog, menu, value, onChange, mode, index }) {
 
     const opacity = draggingId === value.id ? 0 : 1
 
+    // TODO : onclick event support
+
     return (
         <Li
             referrer={ref}
@@ -250,6 +297,7 @@ function Item({ propertyDialog, menu, value, onChange, mode, index }) {
             selected={value.selected}
             onContextMenu={onContextMenu}
             style={{
+                ...style,
                 opacity,
             }}
             data-handler-id={handlerId}

@@ -6,6 +6,7 @@ import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
 import Connector from './connector'
 import OverlayContainer from './overlay'
 import Itemlist, { ItemlistType } from './itemlist'
+import BI from './info'
 
 export default class Broadcast extends React.Component {
     constructor() {
@@ -14,6 +15,7 @@ export default class Broadcast extends React.Component {
         this.state = {
             canvasRect: { height: 1080, width: 1920 },
             isBroadcasting: false,
+            mode: ItemlistType.OVERLAYS,
         }
 
         this.workplaceRef = React.createRef()
@@ -51,6 +53,19 @@ export default class Broadcast extends React.Component {
             })
         }
         this.toggleBroadcast = this.toggleBroadcast.bind(this)
+
+        this.changeMode = (mode) => {
+            BI().afterChange()
+            this.setState({
+                mode: mode,
+            })
+        }
+        this.changeMode = this.changeMode.bind(this)
+
+        this.saveScene = () => {
+            this.changeMode(ItemlistType.SCENES)
+        }
+        this.saveScene = this.saveScene.bind(this)
     }
 
     componentDidMount() {
@@ -74,26 +89,14 @@ export default class Broadcast extends React.Component {
         }
         return (
             <CommonProps>
-                <Header
-                    flex
-                    fixsize
-                    flex-justify='space-between'
-                    flex-align='center'
-                    border-bottom='normal'
-                    height='64'>
-                    <Div flex fixsize padding-left='8'>
-                        <input type='text' defaultValue='Just Chatting' />
-                        <button>수정</button>
-                        <button>삭제</button>
-                    </Div>
-                    <Div fixsize padding-right='8'>
-                        <button onClick={this.toggleBroadcast}>
-                            {this.state.isBroadcasting ? '방송 종료' : '방송 시작'}
-                        </button>
-                    </Div>
-                </Header>
+                <Toolbar
+                    saveScene={this.saveScene}
+                    toggleBroadcast={this.toggleBroadcast}
+                    isBroadcasting={this.state.isBroadcasting}
+                    mode={this.state.mode}
+                />
                 <Div flex height='calc(100% - 65px)' width='100%'>
-                    <Itemlist mode={ItemlistType.OVERLAYS} />
+                    <Itemlist mode={this.state.mode} changeMode={this.changeMode} />
                     <Main flex flex-direction='column' width='100%'>
                         <Article position='relative' align='center' background='black' height='calc(100% - 65px)'>
                             <OverlayContainer ratio={this.getCanvasRatio(1)} referrer={this.workplaceRef} />
@@ -119,4 +122,40 @@ export default class Broadcast extends React.Component {
             </CommonProps>
         )
     }
+}
+
+function Toolbar({ saveScene, toggleBroadcast, isBroadcasting, mode }) {
+    let currentScene = <></>
+
+    switch (mode) {
+        case ItemlistType.SCENES:
+            currentScene = <h1>{BI().currentScene().name}</h1>
+            break
+        case ItemlistType.TRANSITIONS:
+            currentScene = <h1>화면 전환</h1>
+            break
+        case ItemlistType.OVERLAYS:
+            // TODO : text box onChange
+            currentScene = (
+                <>
+                    <input type='text' defaultValue={BI().currentScene().name} />
+                    <button onClick={saveScene}>저장</button>
+                    <button>삭제</button>
+                </>
+            )
+            break
+        default:
+            throw new Error('Invalid itemlist mode')
+    }
+
+    return (
+        <Header flex fixsize flex-justify='space-between' flex-align='center' border-bottom='normal' height='64'>
+            <Div flex fixsize padding-left='8'>
+                {currentScene}
+            </Div>
+            <Div fixsize padding-right='8'>
+                <button onClick={toggleBroadcast}>{isBroadcasting ? '방송 종료' : '방송 시작'}</button>
+            </Div>
+        </Header>
+    )
 }

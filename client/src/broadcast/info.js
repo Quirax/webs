@@ -16,6 +16,7 @@ class BroadcastInfo {
                 {
                     name: '저챗',
                     defaultCategory: 'Just Chatting',
+                    id: 'argv',
                     overlay: [
                         // HACK: overlay sample
                         {
@@ -85,12 +86,20 @@ class BroadcastInfo {
         this.info.currentScene = idx
     }
 
+    isCurrentScene(idx) {
+        return this.info.currentScene === idx
+    }
+
     currentTransition() {
         return this.info.transition[this.info.currentTransition]
     }
 
     selectTransition(idx) {
         this.info.currentTransition = idx
+    }
+
+    isCurrentTransition(idx) {
+        return this.info.currentTransition === idx
     }
 }
 
