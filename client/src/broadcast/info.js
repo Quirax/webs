@@ -1,6 +1,9 @@
-class BroadcastInfo {
-    static instance
+import { OverlayParam, OverlayType } from './overlay'
 
+let updateContainer = () => {}
+let updateList = () => {}
+
+class BroadcastInfo {
     constructor() {
         // this.info = Connector.getBroadcastInfo()
         this.info = {
@@ -14,11 +17,27 @@ class BroadcastInfo {
                     name: '저챗',
                     defaultCategory: 'Just Chatting',
                     overlay: [
+                        // HACK: overlay sample
                         {
-                            name: '테스트 텍스트 1',
-                            type: 'text',
+                            name: '샘플 웹캠 오버레이',
+                            type: OverlayType.WEBCAM,
+                            id: 'asdf',
                             params: {
-                                text: 'Lorem Ipsum 로렘 입수움',
+                                background_color: '#ff0000',
+                                background_opacity: 1,
+                                opacity: 1,
+                                aspect_ratio: false,
+                                radius: 0,
+                                border_color: '#000000',
+                                border_opacity: 1,
+                                border_width: 0,
+                                border_style: OverlayParam.border_style.SOLID,
+                                margin: 0,
+                                padding: 0,
+
+                                // Specific params
+                                src_type: OverlayParam.src_type.URL,
+                                src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
                             },
                             transform: {
                                 x: 0,
@@ -39,22 +58,23 @@ class BroadcastInfo {
                 },
             ],
         }
+
+        this.onChange = (update = true) => {
+            updateList()
+            update && updateContainer()
+        }
+
+        this.afterChange = () => {
+            updateContainer()
+            updateList()
+        }
     }
 
     static getInstance() {
-        if (!BroadcastInfo.instance)
-            BroadcastInfo.instance = new BroadcastInfo()
-        return BroadcastInfo.instance
-    }
-
-    onChange() {
-        // Connector.syncBroadcastInfo(this.bi)
-        // console.log('onChange', this.info)
-    }
-
-    afterChange() {
-        // Connector.saveBroadcastInfo(this.bi)
-        console.log('afterChange', this.info)
+        if (!this.instance) {
+            this.instance = new BroadcastInfo()
+        }
+        return this.instance
     }
 
     currentScene() {
@@ -77,4 +97,12 @@ class BroadcastInfo {
 export default function BI() {
     let bi = BroadcastInfo.getInstance()
     return bi
+}
+
+export function assignContainer(c) {
+    updateContainer = c
+}
+
+export function assignList(l) {
+    updateList = l
 }

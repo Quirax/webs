@@ -20,6 +20,14 @@ export default class Broadcast extends React.Component {
 
         this.getRects = () => {
             const wp = this.workplaceRef.current
+            if (wp.clientWidth > wp.parentElement.clientWidth) {
+                wp.style.width = '100%'
+                wp.style.height = null
+            }
+            if (wp.clientHeight > wp.parentElement.clientHeight) {
+                wp.style.height = '100%'
+                wp.style.width = null
+            }
 
             this.setState({
                 canvasRect: {
@@ -29,8 +37,7 @@ export default class Broadcast extends React.Component {
             })
         }
 
-        this.getCanvasRatio = (size) =>
-            (this.state.canvasRect.width / 1920) * size
+        this.getCanvasRatio = (size) => (this.state.canvasRect.width / 1920) * size
 
         this.toggleBroadcast = () => {
             let connector = Connector.getInstance()
@@ -61,11 +68,7 @@ export default class Broadcast extends React.Component {
         if (this.props.preview) {
             return (
                 <CommonProps>
-                    <OverlayContainer
-                        ratio={this.getCanvasRatio(1)}
-                        referrer={this.workplaceRef}
-                        preview
-                    />
+                    <OverlayContainer ratio={this.getCanvasRatio(1)} referrer={this.workplaceRef} preview />
                 </CommonProps>
             )
         }
@@ -85,36 +88,18 @@ export default class Broadcast extends React.Component {
                     </Div>
                     <Div fixsize padding-right='8'>
                         <button onClick={this.toggleBroadcast}>
-                            {this.state.isBroadcasting
-                                ? '방송 종료'
-                                : '방송 시작'}
+                            {this.state.isBroadcasting ? '방송 종료' : '방송 시작'}
                         </button>
                     </Div>
                 </Header>
                 <Div flex height='calc(100% - 65px)' width='100%'>
                     <Itemlist mode={ItemlistType.OVERLAYS} />
                     <Main flex flex-direction='column' width='100%'>
-                        <Article
-                            position='relative'
-                            align='center'
-                            background='black'
-                            height='calc(100% - 65px)'>
-                            <OverlayContainer
-                                ratio={this.getCanvasRatio(1)}
-                                referrer={this.workplaceRef}
-                            />
+                        <Article position='relative' align='center' background='black' height='calc(100% - 65px)'>
+                            <OverlayContainer ratio={this.getCanvasRatio(1)} referrer={this.workplaceRef} />
                         </Article>
-                        <Footer
-                            flex
-                            fixsize
-                            flex-justify='space-between'
-                            height='64'
-                            border-top='normal'>
-                            <Div
-                                flex
-                                flex-direction='column'
-                                flex-justify='center'
-                                padding-left='8'>
+                        <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
+                            <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
                                 <input type='text' defaultValue='방송제목' />
                                 <select>
                                     <option>Just Chatting</option>
@@ -122,12 +107,7 @@ export default class Broadcast extends React.Component {
                                     <option>ASMR</option>
                                 </select>
                             </Div>
-                            <Div
-                                flex
-                                flex-direction='column'
-                                flex-justify='center'
-                                padding-right='8'
-                                align='right'>
+                            <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
                                 <div>
                                     <FontAwesomeIcon icon={faUserAlt} /> 123
                                 </div>
