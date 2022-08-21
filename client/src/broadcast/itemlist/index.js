@@ -5,6 +5,8 @@ import Connector from '../connector'
 import BI, { assignList } from '../info'
 import { OverlayType } from '../overlay'
 import PropertyDialog from './property'
+import { DndProvider, useDrag, useDrop } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 
 export const ItemlistType = {
     SCENES: 'scenes',
@@ -83,10 +85,12 @@ export default class Itemlist extends React.Component {
                 throw new Error('Invalid itemlist mode')
         }
 
-        // TODO : 드래그 시 블록 잡기 차단
-
         return (
-            <Div flex>
+            <Div
+                flex
+                onMouseMove={(e) => {
+                    getSelection().empty()
+                }}>
                 <Nav
                     flex
                     flex-direction='column'
@@ -96,23 +100,24 @@ export default class Itemlist extends React.Component {
                     border-right='normal'
                     style={{ overflowY: 'auto' }}>
                     <Ul>
-                        {state.list.map((v, i) => {
-                            // TODO : 드래그 시 순서 변경
-                            return (
-                                <Item
-                                    menu={this.contextMenuRef}
-                                    propertyDialog={this.propertyDialogRef}
-                                    mode={this.props.mode}
-                                    value={v}
-                                    key={i}
-                                    onChange={(val) => {
-                                        Object.assign(v, val)
-
-                                        BI().onChange()
-                                    }}
-                                />
-                            )
-                        })}
+                        <DndProvider backend={HTML5Backend}>
+                            {state.list.map((v, i) => {
+                                return (
+                                    <Item
+                                        menu={this.contextMenuRef}
+                                        propertyDialog={this.propertyDialogRef}
+                                        mode={this.props.mode}
+                                        value={v}
+                                        key={i}
+                                        index={i}
+                                        onChange={(val) => {
+                                            Object.assign(v, val)
+                                            BI().onChange()
+                                        }}
+                                    />
+                                )
+                            })}
+                        </DndProvider>
                         <Li
                             padding='8'
                             border-bottom='normal'
@@ -131,58 +136,127 @@ export default class Itemlist extends React.Component {
     }
 }
 
-class Item extends React.Component {
-    constructor() {
-        super()
+function Item({ propertyDialog, menu, value, onChange, mode, index }) {
+    const ref = React.useRef(null)
+    const [{ handlerId }, drop] = useDrop({
+        accept: 'Item',
+        collect(monitor) {
+            return {
+                handlerId: monitor.getHandlerId(),
+            }
+        },
+        hover(item, monitor) {
+            if (!ref.current) return
 
-        this.onContextMenu = this.onContextMenu.bind(this)
-        this.onDblClick = this.onDblClick.bind(this)
-    }
+            const dragIndex = item.index
+            const hoverIndex = index
 
-    onDblClick(e) {
-        if (this.props.propertyDialog) {
-            let dialog = this.props.propertyDialog.current
+            if (dragIndex === hoverIndex) return
+
+            const hoverBoundingRect = ref.current?.getBoundingClientRect()
+            const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2
+            const clientOffset = monitor.getClientOffset()
+            const hoverClientY = clientOffset.y - hoverBoundingRect.top
+
+            if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return
+            if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return
+
+            console.log(dragIndex, '->', hoverIndex)
+
+            let list = []
+
+            switch (mode) {
+                case ItemlistType.SCENES:
+                    list = BI().info.scene
+                    break
+                case ItemlistType.TRANSITIONS:
+                    list = BI().info.transition
+                    break
+                case ItemlistType.OVERLAYS:
+                    list = BI().currentScene().overlay
+                    break
+                default:
+                    throw new Error('Invalid itemlist mode')
+            }
+
+            console.log('before move', list)
+
+            let is = list.splice(dragIndex, 1)
+            list.splice(hoverIndex, 0, is[0])
+
+            console.log('after move', list)
+
+            item.index = hoverIndex
+
+            BI().onChange(false)
+        },
+    })
+
+    const [{ draggingId }, drag] = useDrag({
+        type: 'Item',
+        item: () => ({ id: value.id, index: index }),
+        collect: (monitor) => ({
+            draggingId: monitor.getItem()?.id,
+        }),
+        end: (item, monitor) => {
+            BI().afterChange()
+        },
+    })
+
+    drag(drop(ref))
+
+    let onDblClick = (e) => {
+        if (propertyDialog) {
+            let dialog = propertyDialog.current
             let top = e.clientY
             let left = e.clientX
 
-            dialog.show(this, this.props.value, top, left, (val) => {
-                this.props.onChange && this.props.onChange(val)
+            dialog.show(this, value, top, left, (val) => {
+                onChange && onChange(val)
             })
         }
     }
+    onDblClick = onDblClick.bind(this)
 
-    onContextMenu(e) {
+    let onContextMenu = (e) => {
         e.preventDefault()
-        if (this.props.menu) {
-            let menu = this.props.menu.current
+        if (menu) {
+            let mnu = menu.current
             let top = e.clientY
             let left = e.clientX
 
-            menu.show(
+            mnu.show(
                 this,
-                this.props.mode,
-                this.props.value,
+                mode,
+                value,
                 () => {
-                    this.onDblClick(e)
+                    onDblClick(e)
                 },
                 top,
                 left
             )
         }
     }
-    render() {
-        return (
-            <Li
-                padding='8'
-                border-bottom='normal'
-                cursor='default'
-                selected={this.props.value.selected}
-                onContextMenu={this.onContextMenu}
-                onDoubleClick={this.onDblClick}>
-                {this.props.value.name}
-            </Li>
-        )
-    }
+    onContextMenu = onContextMenu.bind(this)
+
+    const opacity = draggingId === value.id ? 0 : 1
+
+    return (
+        <Li
+            referrer={ref}
+            padding='8'
+            border-bottom='normal'
+            cursor='default'
+            selected={value.selected}
+            onContextMenu={onContextMenu}
+            style={{
+                opacity,
+            }}
+            data-handler-id={handlerId}
+            onDoubleClick={onDblClick}>
+            {value.name}
+        </Li>
+    )
 }
 
 class ContextMenu extends React.Component {

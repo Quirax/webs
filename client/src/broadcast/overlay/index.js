@@ -77,6 +77,7 @@ export const OverlayGenerator = (name, type) => {
     let obj = {
         name,
         type,
+        id: Math.random().toString(36).substring(2, 11),
         params: {
             background_color: '#000000',
             background_opacity: 0,
@@ -100,8 +101,6 @@ export const OverlayGenerator = (name, type) => {
     }
 
     // HACK : 오버레이 추가
-
-    const id = Math.random().toString(36).substring(2, 11)
 
     switch (type) {
         case OverlayType.TEXT:
@@ -129,18 +128,12 @@ export const OverlayGenerator = (name, type) => {
             })
             break
         case OverlayType.IMAGE:
-            Object.assign(obj, {
-                id: id,
-            })
             Object.assign(obj.params, {
                 src_type: OverlayParam.src_type.URL,
                 src: '',
             })
             break
         case OverlayType.VIDEO:
-            Object.assign(obj, {
-                id: id,
-            })
             Object.assign(obj.params, {
                 src_type: OverlayParam.src_type.URL,
                 src: '',
@@ -148,9 +141,6 @@ export const OverlayGenerator = (name, type) => {
             break
         case OverlayType.WEBCAM:
         case OverlayType.DISPLAY:
-            Object.assign(obj, {
-                id: id,
-            })
             break
         default:
             throw new Error('Invalid overlay type')

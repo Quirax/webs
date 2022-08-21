@@ -167,6 +167,15 @@ export default class PropertyDialog extends React.Component {
                             <FontAwesomeIcon icon={faDisplay} /> 화면공유
                         </Button>
                     </Div>
+                    <Div padding='8'>
+                        <Button
+                            width='100%'
+                            onClick={(e) => {
+                                this.leaveFocus(e)
+                            }}>
+                            취소
+                        </Button>
+                    </Div>
                 </Form>
             )
         } else {
