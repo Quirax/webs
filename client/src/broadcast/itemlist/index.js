@@ -45,9 +45,6 @@ export default class Itemlist extends React.Component {
 
         switch (this.props.mode) {
             case ItemlistType.SCENES:
-                // TODO : addScene
-                // TODO : select scene on click
-
                 onClickBottomItem = () => {
                     this.props.changeMode(ItemlistType.TRANSITIONS)
                 }
@@ -72,7 +69,7 @@ export default class Itemlist extends React.Component {
                     isSelected: (idx) => BI().isCurrentScene(idx),
                     onClickItemGenerator: (item, value) => () => {
                         BI().selectScene(value.index)
-                        BI().afterChange()
+                        // BI().afterChange()
                     },
                     onAdd: () => {
                         BI().info.scene.push({
@@ -162,8 +159,6 @@ export default class Itemlist extends React.Component {
                         <DndProvider backend={HTML5Backend}>
                             {state.list.map((v, i) => {
                                 let selected = state.isSelected(i)
-
-                                // TODO : onclick event support
 
                                 return (
                                     <Item
@@ -309,8 +304,6 @@ function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style, 
 
     const opacity = draggingId === value.id ? 0 : 1
 
-    // TODO : onclick event support
-
     return (
         <Li
             referrer={ref}
@@ -366,6 +359,8 @@ class ContextMenu extends React.Component {
     }
 
     onDelete(e) {
+        // TODO : 삭제 기능 대응
+
         if (this.state.value.type === OverlayType.WEBCAM) {
             let conn = Connector.getInstance()
 

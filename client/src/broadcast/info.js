@@ -2,6 +2,7 @@ import { OverlayParam, OverlayType } from './overlay'
 
 let updateContainer = () => {}
 let updateList = () => {}
+let updateTitle = () => {}
 
 class BroadcastInfo {
     constructor() {
@@ -84,6 +85,9 @@ class BroadcastInfo {
 
     selectScene(idx) {
         this.info.currentScene = idx
+        updateContainer()
+        updateList()
+        updateTitle()
     }
 
     isCurrentScene(idx) {
@@ -96,6 +100,9 @@ class BroadcastInfo {
 
     selectTransition(idx) {
         this.info.currentTransition = idx
+        updateContainer()
+        updateList()
+        updateTitle()
     }
 
     isCurrentTransition(idx) {
@@ -114,4 +121,8 @@ export function assignContainer(c) {
 
 export function assignList(l) {
     updateList = l
+}
+
+export function assignTitle(t) {
+    updateTitle = t
 }

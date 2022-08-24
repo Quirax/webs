@@ -6,7 +6,7 @@ import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
 import Connector from './connector'
 import OverlayContainer from './overlay'
 import Itemlist, { ItemlistType } from './itemlist'
-import BI from './info'
+import BI, { assignTitle } from './info'
 
 export default class Broadcast extends React.Component {
     constructor() {
@@ -15,7 +15,7 @@ export default class Broadcast extends React.Component {
         this.state = {
             canvasRect: { height: 1080, width: 1920 },
             isBroadcasting: false,
-            mode: ItemlistType.OVERLAYS,
+            mode: ItemlistType.SCENES,
         }
 
         this.workplaceRef = React.createRef()
@@ -124,39 +124,56 @@ export default class Broadcast extends React.Component {
     }
 }
 
-function Toolbar({ saveScene, toggleBroadcast, isBroadcasting, mode }) {
-    let currentScene = <></>
+class Toolbar extends React.Component {
+    constructor() {
+        super()
 
-    switch (mode) {
-        case ItemlistType.SCENES:
-            // TODO : current scene name change on selectScene
-            currentScene = <h1>{BI().currentScene().name}</h1>
-            break
-        case ItemlistType.TRANSITIONS:
-            currentScene = <h1>화면 전환</h1>
-            break
-        case ItemlistType.OVERLAYS:
-            // TODO : text box onChange
-            currentScene = (
-                <>
-                    <input type='text' defaultValue={BI().currentScene().name} />
-                    <button onClick={saveScene}>저장</button>
-                    <button>삭제</button>
-                </>
-            )
-            break
-        default:
-            throw new Error('Invalid itemlist mode')
+        assignTitle(() => {
+            this.forceUpdate()
+        })
     }
 
-    return (
-        <Header flex fixsize flex-justify='space-between' flex-align='center' border-bottom='normal' height='64'>
-            <Div flex fixsize padding-left='8'>
-                {currentScene}
-            </Div>
-            <Div fixsize padding-right='8'>
-                <button onClick={toggleBroadcast}>{isBroadcasting ? '방송 종료' : '방송 시작'}</button>
-            </Div>
-        </Header>
-    )
+    render() {
+        let currentScene = <></>
+
+        switch (this.props.mode) {
+            case ItemlistType.SCENES:
+                currentScene = <h1>{BI().currentScene().name}</h1>
+                break
+            case ItemlistType.TRANSITIONS:
+                currentScene = <h1>화면 전환</h1>
+                break
+            case ItemlistType.OVERLAYS:
+                // TODO : 삭제 버튼
+                currentScene = (
+                    <>
+                        <input
+                            type='text'
+                            defaultValue={BI().currentScene().name}
+                            onChange={(e) => {
+                                BI().currentScene().name = e.target.value
+                            }}
+                        />
+                        <button onClick={this.props.saveScene}>저장</button>
+                        <button>삭제</button>
+                    </>
+                )
+                break
+            default:
+                throw new Error('Invalid itemlist mode')
+        }
+
+        return (
+            <Header flex fixsize flex-justify='space-between' flex-align='center' border-bottom='normal' height='64'>
+                <Div flex fixsize padding-left='8'>
+                    {currentScene}
+                </Div>
+                <Div fixsize padding-right='8'>
+                    <button onClick={this.props.toggleBroadcast}>
+                        {this.props.isBroadcasting ? '방송 종료' : '방송 시작'}
+                    </button>
+                </Div>
+            </Header>
+        )
+    }
 }
