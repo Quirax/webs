@@ -129,6 +129,7 @@ function Toolbar({ saveScene, toggleBroadcast, isBroadcasting, mode }) {
 
     switch (mode) {
         case ItemlistType.SCENES:
+            // TODO : current scene name change on selectScene
             currentScene = <h1>{BI().currentScene().name}</h1>
             break
         case ItemlistType.TRANSITIONS:

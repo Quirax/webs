@@ -153,9 +153,9 @@ export default class OverlayContainer extends React.Component {
     constructor() {
         super()
 
-        this.state = {
-            overlay: BI().currentScene().overlay,
-        }
+        // this.state = {
+        //     overlay: BI().currentScene().overlay,
+        // }
 
         // this.onResize = (e) => {
         //     this.forceUpdate()
@@ -172,6 +172,8 @@ export default class OverlayContainer extends React.Component {
     }
 
     render() {
+        const overlayList = BI().currentScene().overlay
+
         return (
             <OVERLAY_PROPS.Provider
                 value={{
@@ -197,7 +199,7 @@ export default class OverlayContainer extends React.Component {
                     }
                     referrer={this.props.referrer}>
                     <Ol>
-                        <OverlayElems overlay={this.state.overlay} />
+                        <OverlayElems overlay={overlayList} />
                     </Ol>
                 </Div>
             </OVERLAY_PROPS.Provider>

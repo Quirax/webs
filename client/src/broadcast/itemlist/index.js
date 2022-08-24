@@ -38,6 +38,7 @@ export default class Itemlist extends React.Component {
             bottomItem: <></>,
             onDblClickGenerator: () => () => {},
             isSelected: () => false,
+            onClickItemGenerator: () => () => {},
         }
 
         let onClickBottomItem
@@ -66,10 +67,22 @@ export default class Itemlist extends React.Component {
                     ),
                     onDblClickGenerator: (item, value, onChange) => (e) => {
                         BI().selectScene(value.index)
-                        console.log('a', BI().currentScene())
                         this.props.changeMode(ItemlistType.OVERLAYS)
                     },
                     isSelected: (idx) => BI().isCurrentScene(idx),
+                    onClickItemGenerator: (item, value) => () => {
+                        BI().selectScene(value.index)
+                        BI().afterChange()
+                    },
+                    onAdd: () => {
+                        BI().info.scene.push({
+                            name: '새 장면',
+                            defaultCategory: 'Just Chatting',
+                            id: Math.random().toString(36).substring(2, 11),
+                            overlay: [],
+                        })
+                        BI().afterChange()
+                    },
                 })
                 break
             case ItemlistType.TRANSITIONS:
@@ -91,6 +104,9 @@ export default class Itemlist extends React.Component {
                         </Li>
                     ),
                     isSelected: (idx) => BI().isCurrentTransition(idx),
+                    onClickItemGenerator: (item, value) => () => {
+                        BI().selectTransition(value.index)
+                    },
                 })
                 break
             case ItemlistType.OVERLAYS:
@@ -153,6 +169,7 @@ export default class Itemlist extends React.Component {
                                     <Item
                                         menu={this.contextMenuRef}
                                         onDblClickGenerator={state.onDblClickGenerator}
+                                        onClickItemGenerator={state.onClickItemGenerator}
                                         mode={this.props.mode}
                                         value={v}
                                         key={i}
@@ -187,7 +204,7 @@ export default class Itemlist extends React.Component {
     }
 }
 
-function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style }) {
+function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style, onClickItemGenerator }) {
     const ref = React.useRef(null)
     const [{ handlerId }, drop] = useDrop({
         accept: 'Item',
@@ -256,11 +273,17 @@ function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style }
 
     drag(drop(ref))
 
-    let onDblClick = null
+    let onDblClick = null,
+        onClick = null
 
     if (onDblClickGenerator != null) {
         onDblClick = onDblClickGenerator(this, { ...value, index: index }, onChange)
         // onDblClick = onDblClick.bind(this)
+    }
+
+    if (onClickItemGenerator != null) {
+        onClick = onClickItemGenerator(this, { ...value, index: index }, onChange)
+        // onClick = onDblClick.bind(this)
     }
 
     let onContextMenu = (e) => {
@@ -301,7 +324,8 @@ function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style }
                 opacity,
             }}
             data-handler-id={handlerId}
-            onDoubleClick={onDblClick}>
+            onDoubleClick={onDblClick}
+            onClick={onClick}>
             {value.name}
         </Li>
     )
