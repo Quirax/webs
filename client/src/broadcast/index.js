@@ -144,7 +144,6 @@ class Toolbar extends React.Component {
                 currentScene = <h1>화면 전환</h1>
                 break
             case ItemlistType.OVERLAYS:
-                // TODO : 삭제 버튼
                 currentScene = (
                     <>
                         <input
@@ -155,7 +154,14 @@ class Toolbar extends React.Component {
                             }}
                         />
                         <button onClick={this.props.saveScene}>저장</button>
-                        <button>삭제</button>
+                        <button
+                            onClick={() => {
+                                if (BI().info.scene.length === 1) return alert('최소 1개 이상의 장면이 있어야 합니다.')
+                                BI().info.scene.splice(BI().info.scene.indexOf(BI().currentScene()), 1)
+                                BI().selectScene(0)
+                            }}>
+                            삭제
+                        </button>
                     </>
                 )
                 break
