@@ -6,7 +6,7 @@ import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
 import Connector from './connector'
 import OverlayContainer from './overlay'
 import Itemlist, { ItemlistType } from './itemlist'
-import BI, { assignTitle } from './info'
+import BI, { assignTitle, assignContainer } from './info'
 
 export default class Broadcast extends React.Component {
     constructor() {
@@ -19,16 +19,23 @@ export default class Broadcast extends React.Component {
         }
 
         this.workplaceRef = React.createRef()
+        this.tempWorkplaceRef = React.createRef()
 
         this.getRects = () => {
             const wp = this.workplaceRef.current
+            const twp = this.tempWorkplaceRef.current
+
             if (wp.clientWidth > wp.parentElement.clientWidth) {
                 wp.style.width = '100%'
                 wp.style.height = null
+                twp.style.width = '100%'
+                twp.style.height = null
             }
             if (wp.clientHeight > wp.parentElement.clientHeight) {
                 wp.style.height = '100%'
                 wp.style.width = null
+                twp.style.height = '100%'
+                twp.style.width = null
             }
 
             this.setState({
@@ -98,11 +105,15 @@ export default class Broadcast extends React.Component {
                 <Div flex height='calc(100% - 65px)' width='100%'>
                     <Itemlist mode={this.state.mode} changeMode={this.changeMode} />
                     <Main flex flex-direction='column' width='100%'>
-                        <Article position='relative' align='center' background='black' height='calc(100% - 65px)'>
-                            <OverlayContainer ratio={this.getCanvasRatio(1)} referrer={this.workplaceRef} />
-                        </Article>
+                        <Containers
+                            ratio={this.getCanvasRatio(1)}
+                            referrer={this.workplaceRef}
+                            tempReferrer={this.tempWorkplaceRef}
+                        />
                         <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
                             <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
+                                {/* FIXME: 방송 시 방송 세팅과 동기화 */}
+                                {/* TODO: 장면 수정 시 기본 방송 세팅과 동기화 */}
                                 <input type='text' defaultValue='방송제목' />
                                 <select>
                                     <option>Just Chatting</option>
@@ -111,6 +122,7 @@ export default class Broadcast extends React.Component {
                                 </select>
                             </Div>
                             <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
+                                {/* FIXME: 방송 시 방송 통계와 동기화 */}
                                 <div>
                                     <FontAwesomeIcon icon={faUserAlt} /> 123
                                 </div>
@@ -120,6 +132,30 @@ export default class Broadcast extends React.Component {
                     </Main>
                 </Div>
             </CommonProps>
+        )
+    }
+}
+
+class Containers extends React.Component {
+    constructor() {
+        super()
+
+        assignContainer(() => {
+            this.forceUpdate()
+        })
+    }
+
+    render() {
+        return (
+            <Article position='relative' align='center' background='black' height='calc(100% - 65px)'>
+                <OverlayContainer
+                    scene={BI().getTempScene()}
+                    ratio={this.props.ratio}
+                    referrer={this.props.tempReferrer}
+                    isTemp={true}
+                />
+                <OverlayContainer scene={BI().currentScene()} ratio={this.props.ratio} referrer={this.props.referrer} />
+            </Article>
         )
     }
 }

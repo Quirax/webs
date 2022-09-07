@@ -150,29 +150,8 @@ export const OverlayGenerator = (name, type) => {
 }
 
 export default class OverlayContainer extends React.Component {
-    constructor() {
-        super()
-
-        // this.state = {
-        //     overlay: BI().currentScene().overlay,
-        // }
-
-        // this.onResize = (e) => {
-        //     this.forceUpdate()
-        // }
-        // this.onResize = this.onResize.bind(this)
-
-        assignContainer(() => {
-            this.forceUpdate()
-        })
-    }
-
-    componentDidMount() {
-        // window.addEventListener('resize', this.onResize)
-    }
-
     render() {
-        const overlayList = BI().currentScene().overlay
+        const overlayList = this.props.scene.overlay
 
         return (
             <OVERLAY_PROPS.Provider
