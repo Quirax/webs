@@ -8,6 +8,8 @@ import OverlayContainer from './overlay'
 import Itemlist, { ItemlistType } from './itemlist'
 import BI, { assignTitle, assignContainer } from './info'
 
+export const CANVAS_RECT = React.createContext({ width: 1920, height: 1080 })
+
 export default class Broadcast extends React.Component {
     constructor() {
         super()
@@ -22,20 +24,23 @@ export default class Broadcast extends React.Component {
         this.tempWorkplaceRef = React.createRef()
 
         this.getRects = () => {
+            if (this.props.preview)
+                return this.setState({
+                    canvasRect: {
+                        height: 1080,
+                        width: 1920,
+                    },
+                })
+
             const wp = this.workplaceRef.current
-            const twp = this.tempWorkplaceRef.current
 
             if (wp.clientWidth > wp.parentElement.clientWidth) {
                 wp.style.width = '100%'
                 wp.style.height = null
-                twp.style.width = '100%'
-                twp.style.height = null
             }
             if (wp.clientHeight > wp.parentElement.clientHeight) {
                 wp.style.height = '100%'
                 wp.style.width = null
-                twp.style.height = '100%'
-                twp.style.width = null
             }
 
             this.setState({
@@ -90,7 +95,12 @@ export default class Broadcast extends React.Component {
         if (this.props.preview) {
             return (
                 <CommonProps>
-                    <OverlayContainer ratio={this.getCanvasRatio(1)} referrer={this.workplaceRef} preview />
+                    <Containers
+                        ratio={this.getCanvasRatio(1)}
+                        referrer={this.workplaceRef}
+                        tempReferrer={this.tempWorkplaceRef}
+                        preview
+                    />
                 </CommonProps>
             )
         }
@@ -105,11 +115,22 @@ export default class Broadcast extends React.Component {
                 <Div flex height='calc(100% - 65px)' width='100%'>
                     <Itemlist mode={this.state.mode} changeMode={this.changeMode} />
                     <Main flex flex-direction='column' width='100%'>
-                        <Containers
-                            ratio={this.getCanvasRatio(1)}
-                            referrer={this.workplaceRef}
-                            tempReferrer={this.tempWorkplaceRef}
-                        />
+                        <Article
+                            position='relative'
+                            align='center'
+                            height='calc(100% - 65px)'
+                            style={{
+                                overflow: 'hidden',
+                                backgroundColor: 'gray',
+                            }}>
+                            <CANVAS_RECT.Provider value={this.state.canvasRect}>
+                                <Containers
+                                    ratio={this.getCanvasRatio(1)}
+                                    referrer={this.workplaceRef}
+                                    preview={this.props.preview}
+                                />
+                            </CANVAS_RECT.Provider>
+                        </Article>
                         <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
                             <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
                                 {/* FIXME: 방송 시 방송 세팅과 동기화 */}
@@ -137,25 +158,52 @@ export default class Broadcast extends React.Component {
 }
 
 class Containers extends React.Component {
+    state = { isTransition: false }
+
     constructor() {
         super()
 
-        assignContainer(() => {
-            this.forceUpdate()
+        assignContainer((selectingScene) => {
+            this.setState({
+                isTransition: selectingScene === true,
+            })
         })
     }
 
     render() {
         return (
-            <Article position='relative' align='center' background='black' height='calc(100% - 65px)'>
-                <OverlayContainer
-                    scene={BI().getTempScene()}
-                    ratio={this.props.ratio}
-                    referrer={this.props.tempReferrer}
-                    isTemp={true}
-                />
-                <OverlayContainer scene={BI().currentScene()} ratio={this.props.ratio} referrer={this.props.referrer} />
-            </Article>
+            <CANVAS_RECT.Consumer>
+                {({ width }) => (
+                    <Div
+                        className='overlayContainer'
+                        background='black'
+                        position='absolute'
+                        width={width}
+                        display='inline-block'
+                        aspect-ratio='16/9'
+                        top={this.props.preview ? 0 : '50%'}
+                        left={this.props.preview ? 0 : '50%'}
+                        referrer={this.props.referrer}
+                        style={{
+                            overflow: 'hidden',
+                            transform: !this.props.preview && 'translate(-50%, -50%)',
+                        }}>
+                        <OverlayContainer
+                            scene={BI().getTempScene()}
+                            ratio={this.props.ratio}
+                            isTemp={true}
+                            preview={this.props.preview}
+                            isTransition={this.state.isTransition}
+                        />
+                        <OverlayContainer
+                            scene={BI().currentScene()}
+                            ratio={this.props.ratio}
+                            preview={this.props.preview}
+                            isTransition={this.state.isTransition}
+                        />
+                    </Div>
+                )}
+            </CANVAS_RECT.Consumer>
         )
     }
 }

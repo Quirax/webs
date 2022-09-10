@@ -1,4 +1,5 @@
 import { OverlayParam, OverlayType } from './overlay'
+import { TransitionType, TransitionParam } from './transition'
 
 let updateContainer = () => {}
 let updateList = () => {}
@@ -126,8 +127,12 @@ class BroadcastInfo {
             transition: [
                 {
                     name: '기본',
-                    type: 0,
-                    params: {},
+                    id: 'asdefault',
+                    type: TransitionType.SLIDE,
+                    params: {
+                        duration: 1000,
+                        slide_from: TransitionParam.slide_from.LEFT,
+                    },
                 },
             ],
         }
@@ -165,11 +170,13 @@ class BroadcastInfo {
 
         this.tempScene = this.info.currentScene
         this.info.currentScene = idx
-        console.log(this.tempScene, this.info.currentScene, updateContainer)
-        updateContainer()
+
+        updateContainer(true)
         updateList()
         updateTitle()
     }
+
+    // FIXME : add deleteScene(idx)
 
     isCurrentScene(idx) {
         return this.info.currentScene === idx
