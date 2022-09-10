@@ -13,12 +13,46 @@ export const TransitionParam = Object.freeze({
     }),
 })
 
-export default function getTransitionEffect(transition) {
+export const TransitionGenerator = (name, type) => {
+    let obj = {
+        name,
+        type,
+        id: Math.random().toString(36).substring(2, 11),
+        params: {},
+    }
+
+    // HACK : 장면 전환 추가
+
+    switch (type) {
+        case TransitionType.FADE:
+            Object.assign(obj.params, {
+                duration: 1000,
+            })
+            break
+        case TransitionType.SLIDE:
+            Object.assign(obj.params, {
+                duration: 1000,
+                slide_from: TransitionParam.slide_from.TOP,
+            })
+            break
+        case TransitionType.PLAIN:
+            break
+        default:
+            throw new Error('Invalid transition type')
+    }
+
+    return obj
+}
+
+export default function getTransitionEffect(transition, options) {
     if (!transition) return null
+
+    const defaultStyle = { opacity: 1, top: '0%', left: '0%' }
 
     const common = {
         config: { duration: transition.params.duration },
         reset: true,
+        ...options,
     }
 
     switch (transition.type) {
@@ -26,8 +60,14 @@ export default function getTransitionEffect(transition) {
             return {
                 main: {
                     ...common,
-                    from: { opacity: 0 },
-                    to: { opacity: 1 },
+                    from: {
+                        ...defaultStyle,
+                        opacity: 0,
+                    },
+                    to: {
+                        ...defaultStyle,
+                        opacity: 1,
+                    },
                     config: {
                         ...common.config,
                         duration: 0,
@@ -35,8 +75,14 @@ export default function getTransitionEffect(transition) {
                 },
                 temp: {
                     ...common,
-                    from: { opacity: 1 },
-                    to: { opacity: 0 },
+                    from: {
+                        ...defaultStyle,
+                        opacity: 1,
+                    },
+                    to: {
+                        ...defaultStyle,
+                        opacity: 0,
+                    },
                     config: {
                         ...common.config,
                         duration: 0,
@@ -49,52 +95,100 @@ export default function getTransitionEffect(transition) {
                     return {
                         main: {
                             ...common,
-                            from: { top: '-100%' },
-                            to: { top: '0%' },
+                            from: {
+                                ...defaultStyle,
+                                top: '-100%',
+                            },
+                            to: {
+                                ...defaultStyle,
+                                top: '0%',
+                            },
                         },
                         temp: {
                             ...common,
-                            from: { top: '0%' },
-                            to: { top: '100%' },
+                            from: {
+                                ...defaultStyle,
+                                top: '0%',
+                            },
+                            to: {
+                                ...defaultStyle,
+                                top: '100%',
+                            },
                         },
                     }
                 case TransitionParam.slide_from.BOTTOM:
                     return {
                         main: {
                             ...common,
-                            from: { bottom: '-100%' },
-                            to: { bottom: '0%' },
+                            from: {
+                                ...defaultStyle,
+                                top: '100%',
+                            },
+                            to: {
+                                ...defaultStyle,
+                                top: '0%',
+                            },
                         },
                         temp: {
                             ...common,
-                            from: { bottom: '0%' },
-                            to: { bottom: '100%' },
+                            from: {
+                                ...defaultStyle,
+                                top: '0%',
+                            },
+                            to: {
+                                ...defaultStyle,
+                                top: '-100%',
+                            },
                         },
                     }
                 case TransitionParam.slide_from.LEFT:
                     return {
                         main: {
                             ...common,
-                            from: { left: '-100%' },
-                            to: { left: '0%' },
+                            from: {
+                                ...defaultStyle,
+                                left: '-100%',
+                            },
+                            to: {
+                                ...defaultStyle,
+                                left: '0%',
+                            },
                         },
                         temp: {
                             ...common,
-                            from: { left: '0%' },
-                            to: { left: '100%' },
+                            from: {
+                                ...defaultStyle,
+                                left: '0%',
+                            },
+                            to: {
+                                ...defaultStyle,
+                                left: '100%',
+                            },
                         },
                     }
                 case TransitionParam.slide_from.RIGHT:
                     return {
                         main: {
                             ...common,
-                            from: { right: '-100%' },
-                            to: { right: '0%' },
+                            from: {
+                                ...defaultStyle,
+                                left: '100%',
+                            },
+                            to: {
+                                ...defaultStyle,
+                                left: '0%',
+                            },
                         },
                         temp: {
                             ...common,
-                            from: { right: '0%' },
-                            to: { right: '100%' },
+                            from: {
+                                ...defaultStyle,
+                                left: '0%',
+                            },
+                            to: {
+                                ...defaultStyle,
+                                left: '-100%',
+                            },
                         },
                     }
                 default:
@@ -107,13 +201,25 @@ export default function getTransitionEffect(transition) {
             return {
                 main: {
                     ...common,
-                    from: { opacity: 0 },
-                    to: { opacity: 1 },
+                    from: {
+                        ...defaultStyle,
+                        opacity: 0,
+                    },
+                    to: {
+                        ...defaultStyle,
+                        opacity: 1,
+                    },
                 },
                 temp: {
                     ...common,
-                    from: { opacity: 1 },
-                    to: { opacity: 0 },
+                    from: {
+                        ...defaultStyle,
+                        opacity: 1,
+                    },
+                    to: {
+                        ...defaultStyle,
+                        opacity: 0,
+                    },
                 },
             }
         default:

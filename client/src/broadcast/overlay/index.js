@@ -154,17 +154,20 @@ export const OverlayGenerator = (name, type) => {
 
 export default function OverlayContainer(props) {
     const styles = useSpring(
-        Object.assign(
-            props.isTemp === true
-                ? getTransitionEffect(BI().currentTransition()).temp
-                : getTransitionEffect(BI().currentTransition()).main,
-            {
-                immediate: !props.isTransition,
-            }
-        )
+        props.isTemp === true
+            ? getTransitionEffect(BI().currentTransition(), {
+                  immediate: !props.isTransition,
+              }).temp
+            : getTransitionEffect(BI().currentTransition(), {
+                  immediate: !props.isTransition,
+              }).main
     )
 
+    console.log(styles)
+
     const overlayList = props.scene.overlay
+
+    console.log(getTransitionEffect(BI().currentTransition()))
 
     return (
         <OVERLAY_PROPS.Provider

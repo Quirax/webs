@@ -89,6 +89,20 @@ export default class Itemlist extends React.Component {
 
                 Object.assign(state, {
                     list: BI().info.transition,
+                    onAdd: (e) => {
+                        if (this.propertyDialogRef) {
+                            let dialog = this.propertyDialogRef.current
+                            let top = e.clientY
+                            let left = e.clientX
+
+                            console.log(dialog)
+
+                            dialog.show(this, ItemlistType.TRANSITIONS, null, top, left, (val) => {
+                                BI().info.transition.push(val)
+                                BI().afterChange()
+                            })
+                        }
+                    },
                     addLabel: '장면 전환 추가',
                     bottomItem: (
                         <Li
@@ -104,6 +118,17 @@ export default class Itemlist extends React.Component {
                     onClickItemGenerator: (item, value) => () => {
                         BI().selectTransition(value.index)
                     },
+                    onDblClickGenerator: (item, value, onChange) => (e) => {
+                        if (this.propertyDialogRef) {
+                            let dialog = this.propertyDialogRef.current
+                            let top = e.clientY
+                            let left = e.clientX
+
+                            dialog.show(item, ItemlistType.TRANSITIONS, value, top, left, (val) => {
+                                onChange && onChange(val)
+                            })
+                        }
+                    },
                 })
                 break
             case ItemlistType.OVERLAYS:
@@ -117,7 +142,7 @@ export default class Itemlist extends React.Component {
 
                             console.log(dialog)
 
-                            dialog.show(this, null, top, left, (val) => {
+                            dialog.show(this, ItemlistType.OVERLAYS, null, top, left, (val) => {
                                 BI().currentScene().overlay.push(val)
                                 BI().afterChange()
                             })
@@ -130,7 +155,7 @@ export default class Itemlist extends React.Component {
                             let top = e.clientY
                             let left = e.clientX
 
-                            dialog.show(item, value, top, left, (val) => {
+                            dialog.show(item, ItemlistType.OVERLAYS, value, top, left, (val) => {
                                 onChange && onChange(val)
                             })
                         }
@@ -144,8 +169,8 @@ export default class Itemlist extends React.Component {
         return (
             <Div
                 flex
-                onMouseMove={(e) => {
-                    getSelection().empty()
+                style={{
+                    userSelect: 'none',
                 }}>
                 <Nav
                     flex

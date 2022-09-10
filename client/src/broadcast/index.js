@@ -218,45 +218,43 @@ class Toolbar extends React.Component {
     }
 
     render() {
-        let currentScene = <></>
-
-        switch (this.props.mode) {
-            case ItemlistType.SCENES:
-                currentScene = <h1>{BI().currentScene().name}</h1>
-                break
-            case ItemlistType.TRANSITIONS:
-                currentScene = <h1>화면 전환</h1>
-                break
-            case ItemlistType.OVERLAYS:
-                currentScene = (
-                    <>
-                        <input
-                            type='text'
-                            defaultValue={BI().currentScene().name}
-                            onChange={(e) => {
-                                BI().currentScene().name = e.target.value
-                            }}
-                        />
-                        <button onClick={this.props.saveScene}>저장</button>
-                        <button
-                            onClick={() => {
-                                if (BI().info.scene.length === 1) return alert('최소 1개 이상의 장면이 있어야 합니다.')
-                                BI().info.scene.splice(BI().info.scene.indexOf(BI().currentScene()), 1)
-                                BI().selectScene(0)
-                            }}>
-                            삭제
-                        </button>
-                    </>
-                )
-                break
-            default:
-                throw new Error('Invalid itemlist mode')
+        function CurrentScene({ mode, saveScene }) {
+            switch (mode) {
+                case ItemlistType.SCENES:
+                    return <h1>{BI().currentScene().name}</h1>
+                case ItemlistType.TRANSITIONS:
+                    return <h1>장면 전환</h1>
+                case ItemlistType.OVERLAYS:
+                    return (
+                        <>
+                            <input
+                                type='text'
+                                defaultValue={BI().currentScene().name}
+                                onChange={(e) => {
+                                    BI().currentScene().name = e.target.value
+                                }}
+                            />
+                            <button onClick={saveScene}>저장</button>
+                            <button
+                                onClick={() => {
+                                    if (BI().info.scene.length === 1)
+                                        return alert('최소 1개 이상의 장면이 있어야 합니다.')
+                                    BI().info.scene.splice(BI().info.scene.indexOf(BI().currentScene()), 1)
+                                    BI().selectScene(0)
+                                }}>
+                                삭제
+                            </button>
+                        </>
+                    )
+                default:
+                    throw new Error('Invalid itemlist mode')
+            }
         }
 
         return (
             <Header flex fixsize flex-justify='space-between' flex-align='center' border-bottom='normal' height='64'>
                 <Div flex fixsize padding-left='8'>
-                    {currentScene}
+                    <CurrentScene mode={this.props.mode} saveScene={this.props.saveScene} />
                 </Div>
                 <Div fixsize padding-right='8'>
                     <button onClick={this.props.toggleBroadcast}>
