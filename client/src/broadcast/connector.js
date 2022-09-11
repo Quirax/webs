@@ -1,5 +1,6 @@
 import { isString } from 'lodash'
 import { io } from 'socket.io-client'
+import BI from './info'
 import { OverlayType } from './overlay'
 
 export default class Connector {
@@ -20,6 +21,13 @@ export default class Connector {
 
     connect() {
         this.socket = this.socket || io(process.env.REACT_APP_SERVER)
+    }
+
+    getBroadcastInfo() {
+        this.socket.emit('getBroadcastInfo')
+        this.socket.on('getBroadcastInfo', (info) => {
+            BI().setInfo(info)
+        })
     }
 
     start() {

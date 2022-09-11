@@ -50,7 +50,7 @@ export default class Itemlist extends React.Component {
                 }
 
                 Object.assign(state, {
-                    list: BI().info.scene,
+                    list: BI().info?.scene || [],
                     addLabel: '장면 추가',
                     bottomItem: (
                         <Li

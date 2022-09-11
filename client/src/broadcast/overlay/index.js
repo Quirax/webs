@@ -163,6 +163,8 @@ export default function OverlayContainer(props) {
               }).main
     )
 
+    if (!BI().info) return
+
     console.log(styles)
 
     const overlayList = props.scene.overlay

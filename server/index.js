@@ -19,10 +19,7 @@ let app = Express()
 app.use(function (req, res, next) {
     if (req.headers.origin && req.headers.origin.match(corsOrigin)) {
         res.header('Access-Control-Allow-Origin', req.headers.origin)
-        res.header(
-            'Access-Control-Allow-Headers',
-            'Origin, X-Requested-With, Content-Type, Accept'
-        )
+        res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
     }
     next()
 })
@@ -42,7 +39,139 @@ let io = new Server(server, {
     },
 })
 
+let broadcastInfo = {
+    uid: 0,
+    title: '방송시험중',
+    category: 'Just Chatting',
+    currentScene: 0,
+    currentTransition: 0,
+    scene: [
+        {
+            name: '빨강',
+            defaultCategory: 'Just Chatting',
+            id: 'red',
+            overlay: [
+                // HACK: overlay sample
+                {
+                    name: '사각형',
+                    type: 'shape',
+                    id: 'redshape',
+                    params: {
+                        background_color: '#ff0000',
+                        background_opacity: 1,
+                        opacity: 1,
+                        aspect_ratio: false,
+                        radius: 0,
+                        border_color: '#000000',
+                        border_opacity: 1,
+                        border_width: 0,
+                        border_style: 'solid',
+                        margin: 0,
+                        padding: 0,
+
+                        // Specific params
+                        shape_type: 'rectangle',
+                    },
+                    transform: {
+                        x: 0,
+                        y: 0,
+                        height: 1080,
+                        width: 1920,
+                        rotate: 0,
+                    },
+                },
+            ],
+        },
+        {
+            name: '초록',
+            defaultCategory: 'Just Chatting',
+            id: 'green',
+            overlay: [
+                // HACK: overlay sample
+                {
+                    name: '사각형',
+                    type: 'shape',
+                    id: 'greenshape',
+                    params: {
+                        background_color: '#00ff00',
+                        background_opacity: 1,
+                        opacity: 1,
+                        aspect_ratio: false,
+                        radius: 1,
+                        border_color: '#000000',
+                        border_opacity: 1,
+                        border_width: 0,
+                        border_style: 'solid',
+                        margin: 0,
+                        padding: 0,
+
+                        // Specific params
+                        shape_type: 'rectangle',
+                    },
+                    transform: {
+                        x: 0,
+                        y: 0,
+                        height: 1080,
+                        width: 1920,
+                        rotate: 0,
+                    },
+                },
+            ],
+        },
+        {
+            name: '파랑',
+            defaultCategory: 'Just Chatting',
+            id: 'blue',
+            overlay: [
+                // HACK: overlay sample
+                {
+                    name: '사각형',
+                    type: 'shape',
+                    id: 'blueshape',
+                    params: {
+                        background_color: '#0000ff',
+                        background_opacity: 1,
+                        opacity: 1,
+                        aspect_ratio: false,
+                        radius: 1,
+                        border_color: '#000000',
+                        border_opacity: 1,
+                        border_width: 0,
+                        border_style: 'solid',
+                        margin: 0,
+                        padding: 0,
+
+                        // Specific params
+                        shape_type: 'rectangle',
+                    },
+                    transform: {
+                        x: 0,
+                        y: 0,
+                        height: 1080,
+                        width: 1920,
+                        rotate: 0,
+                    },
+                },
+            ],
+        },
+    ],
+    transition: [
+        {
+            name: '기본',
+            id: 'asdefault',
+            type: 'slide',
+            params: {
+                duration: 1000,
+                slide_from: 'left',
+            },
+        },
+    ],
+}
+
 io.on('connect', (socket) => {
+    const room = 'asdf'
+    socket.join(room)
+
     let log = (message) => {
         console.log(`[${socket.id}][ log ] ${message}`)
     }
@@ -52,6 +181,10 @@ io.on('connect', (socket) => {
     }
 
     log('Established connection')
+
+    socket.on('getBroadcastInfo', () => {
+        socket.emit('getBroadcastInfo', broadcastInfo)
+    })
 
     socket.on('destination', async (url) => {
         try {
@@ -71,8 +204,7 @@ io.on('connect', (socket) => {
 
     socket.on('start', async () => {
         try {
-            if (socket._ffmpeg || socket._feeder)
-                throw `Streaming already running.`
+            if (socket._ffmpeg || socket._feeder) throw `Streaming already running.`
             if (!socket._dest) throw `No destination url available.`
 
             log('Start streaming')
