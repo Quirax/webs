@@ -38,8 +38,14 @@ import {
     faLink,
     faVideoCamera,
     faDisplay,
+    faArrowRight,
+    faArrowDown,
+    faArrowLeft,
+    faArrowUp,
 } from '@fortawesome/free-solid-svg-icons'
 import Connector from '../connector'
+import { ItemlistType } from '.'
+import { TransitionGenerator, TransitionParam, TransitionType } from '../transition'
 
 export default class PropertyDialog extends React.Component {
     constructor() {
@@ -57,20 +63,23 @@ export default class PropertyDialog extends React.Component {
         this.isFocusing = false
 
         this.onClick = () => {
+            console.log('aaa')
             if (!this) return
             if (!this.isFocusing) {
                 // if (this.state.open && this.state.value !== null) {
                 //     this.state.onChange(this.state.originalValue)
                 //     BI().afterChange()
                 // }
-                // this.setState({
-                //     open: false,
-                // })
+                this.setState({
+                    open: false,
+                })
+                this.isFocusing = false
                 return
             } else {
                 this.isFocusing = false
             }
         }
+        this.onClick = this.onClick.bind(this)
 
         this.setFocus = () => {
             this.isFocusing = true
@@ -94,7 +103,7 @@ export default class PropertyDialog extends React.Component {
         window.removeEventListener('mousedown', this.onClick)
     }
 
-    show(target, value, top, left, onChange) {
+    show(target, type, value, top, left, onChange) {
         console.log(target, value)
         let ov = cloneDeep(value)
         this.setState({
@@ -105,80 +114,14 @@ export default class PropertyDialog extends React.Component {
             value: value,
             originalValue: ov,
             onChange: onChange,
+            type: type,
         })
     }
 
     render() {
         let formContent = <></>
 
-        if (this.state.value === null) {
-            // HACK : 오버레이 추가
-
-            formContent = (
-                <Form>
-                    <Div padding='8'>어떤 오버레이를 만드시겠습니까?</Div>
-                    <Div padding='8'>
-                        <Button
-                            width='100%'
-                            onClick={(e) => {
-                                this.state.onChange(OverlayGenerator('새 텍스트 오버레이', OverlayType.TEXT))
-                                this.leaveFocus(e)
-                            }}>
-                            <FontAwesomeIcon icon={faFont} /> 텍스트
-                        </Button>
-                        <Button
-                            width='100%'
-                            onClick={(e) => {
-                                this.state.onChange(OverlayGenerator('새 도형 오버레이', OverlayType.SHAPE))
-                                this.leaveFocus(e)
-                            }}>
-                            <FontAwesomeIcon icon={faShapes} /> 도형
-                        </Button>
-                        <Button
-                            width='100%'
-                            onClick={(e) => {
-                                this.state.onChange(OverlayGenerator('새 이미지 오버레이', OverlayType.IMAGE))
-                                this.leaveFocus(e)
-                            }}>
-                            <FontAwesomeIcon icon={faImage} /> 이미지
-                        </Button>
-                        <Button
-                            width='100%'
-                            onClick={(e) => {
-                                this.state.onChange(OverlayGenerator('새 동영상 오버레이', OverlayType.VIDEO))
-                                this.leaveFocus(e)
-                            }}>
-                            <FontAwesomeIcon icon={faFilm} /> 동영상
-                        </Button>
-                        <Button
-                            width='100%'
-                            onClick={(e) => {
-                                this.state.onChange(OverlayGenerator('새 웹캠 오버레이', OverlayType.WEBCAM))
-                                this.leaveFocus(e)
-                            }}>
-                            <FontAwesomeIcon icon={faVideoCamera} /> 웹캠
-                        </Button>
-                        <Button
-                            width='100%'
-                            onClick={(e) => {
-                                this.state.onChange(OverlayGenerator('새 화면공유 오버레이', OverlayType.DISPLAY))
-                                this.leaveFocus(e)
-                            }}>
-                            <FontAwesomeIcon icon={faDisplay} /> 화면공유
-                        </Button>
-                    </Div>
-                    <Div padding='8'>
-                        <Button
-                            width='100%'
-                            onClick={(e) => {
-                                this.leaveFocus(e)
-                            }}>
-                            취소
-                        </Button>
-                    </Div>
-                </Form>
-            )
-        } else {
+        if (this.state.value) {
             formContent = (
                 <Form>
                     <Div padding='8'>
@@ -197,6 +140,7 @@ export default class PropertyDialog extends React.Component {
                     </Div>
                     <Div padding='8' border-top='normal' border-bottom='normal'>
                         <ParamList
+                            type={this.state.type}
                             value={this.state.value}
                             onChange={(val) => {
                                 this.state.onChange(val)
@@ -226,6 +170,125 @@ export default class PropertyDialog extends React.Component {
                     </Div>
                 </Form>
             )
+        } else {
+            switch (this.state.type) {
+                case ItemlistType.OVERLAYS:
+                    // HACK : 오버레이 추가
+
+                    formContent = (
+                        <Form>
+                            <Div padding='8'>어떤 오버레이를 만드시겠습니까?</Div>
+                            <Div padding='8'>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(OverlayGenerator('새 텍스트 오버레이', OverlayType.TEXT))
+                                        this.leaveFocus(e)
+                                    }}>
+                                    <FontAwesomeIcon icon={faFont} /> 텍스트
+                                </Button>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(OverlayGenerator('새 도형 오버레이', OverlayType.SHAPE))
+                                        this.leaveFocus(e)
+                                    }}>
+                                    <FontAwesomeIcon icon={faShapes} /> 도형
+                                </Button>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(OverlayGenerator('새 이미지 오버레이', OverlayType.IMAGE))
+                                        this.leaveFocus(e)
+                                    }}>
+                                    <FontAwesomeIcon icon={faImage} /> 이미지
+                                </Button>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(OverlayGenerator('새 동영상 오버레이', OverlayType.VIDEO))
+                                        this.leaveFocus(e)
+                                    }}>
+                                    <FontAwesomeIcon icon={faFilm} /> 동영상
+                                </Button>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(OverlayGenerator('새 웹캠 오버레이', OverlayType.WEBCAM))
+                                        this.leaveFocus(e)
+                                    }}>
+                                    <FontAwesomeIcon icon={faVideoCamera} /> 웹캠
+                                </Button>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(
+                                            OverlayGenerator('새 화면공유 오버레이', OverlayType.DISPLAY)
+                                        )
+                                        this.leaveFocus(e)
+                                    }}>
+                                    <FontAwesomeIcon icon={faDisplay} /> 화면공유
+                                </Button>
+                            </Div>
+                            <Div padding='8'>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.leaveFocus(e)
+                                    }}>
+                                    취소
+                                </Button>
+                            </Div>
+                        </Form>
+                    )
+                    break
+                case ItemlistType.TRANSITIONS:
+                    // HACK : 장면 전환 추가
+
+                    formContent = (
+                        <Form>
+                            <Div padding='8'>어떤 장면 전환을 만드시겠습니까?</Div>
+                            <Div padding='8'>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(TransitionGenerator('새 기본 전환', TransitionType.PLAIN))
+                                        this.leaveFocus(e)
+                                    }}>
+                                    기본 전환 (효과 없음)
+                                </Button>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(TransitionGenerator('새 밀어내기', TransitionType.SLIDE))
+                                        this.leaveFocus(e)
+                                    }}>
+                                    밀어내기
+                                </Button>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(TransitionGenerator('새 밝기변화', TransitionType.FADE))
+                                        this.leaveFocus(e)
+                                    }}>
+                                    밝기변화
+                                </Button>
+                            </Div>
+                            <Div padding='8'>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.leaveFocus(e)
+                                    }}>
+                                    취소
+                                </Button>
+                            </Div>
+                        </Form>
+                    )
+
+                    break
+                default:
+            }
         }
 
         return (
@@ -249,254 +312,138 @@ export default class PropertyDialog extends React.Component {
 }
 
 function ParamList(props) {
-    const commonParams = (
-        <>
-            <Details title='공통'>
-                <Params>
-                    <Arg
-                        name='전체 투명도'
-                        type={ArgTypes.SLIDER}
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        default={props.value?.params.opacity}
-                        onChange={(val) => {
-                            props.value && (props.value.params.opacity = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        name='배경색'
-                        type={ArgTypes.COLOR}
-                        disabled={
-                            props.value &&
-                            (props.value.type === OverlayType.IMAGE || props.value.type === OverlayType.VIDEO)
-                        }
-                        default={props.value?.params.background_color}
-                        onChange={(val) => {
-                            props.value && (props.value.params.background_color = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        name='배경 투명도'
-                        type={ArgTypes.SLIDER}
-                        disabled={
-                            props.value &&
-                            (props.value.type === OverlayType.IMAGE || props.value.type === OverlayType.VIDEO)
-                        }
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        default={props.value?.params.background_opacity}
-                        onChange={(val) => {
-                            props.value && (props.value.params.background_opacity = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        name='현재 비율 유지'
-                        type={ArgTypes.CHECKBOX}
-                        default={props.value?.params.aspect_ratio}
-                        onChange={(val) => {
-                            props.value && (props.value.params.aspect_ratio = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        name='모서리 곡률 반경'
-                        type={ArgTypes.NUMBER}
-                        disabled={
-                            props.value &&
-                            props.value.type === OverlayType.SHAPE &&
-                            props.value.params.shape_type !== OverlayParam.shape_type.RECTANGLE
-                        }
-                        min={0}
-                        unit='px'
-                        default={props.value?.params.radius}
-                        onChange={(val) => {
-                            props.value && (props.value.params.radius = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                </Params>
-            </Details>
-            <Details title='테두리'>
-                <Params>
-                    <Arg
-                        name='형태'
-                        type={ArgTypes.COMBOBOX}
-                        disabled={
-                            props.value &&
-                            props.value.type === OverlayType.SHAPE &&
-                            props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
-                        }
-                        default={props.value?.params.border_style}
-                        onChange={(val) => {
-                            props.value && (props.value.params.border_style = val)
-                            props.onChange && props.onChange(props.value)
-                        }}>
-                        <option value={OverlayParam.border_style.NONE}>없음</option>
-                        <option value={OverlayParam.border_style.SOLID}>직선 (-----)</option>
-                        <option value={OverlayParam.border_style.DOUBLE}>겹선 (=====)</option>
-                        <option value={OverlayParam.border_style.DOTTED}>점선 (&middot; &middot; &middot;)</option>
-                        <option value={OverlayParam.border_style.DASHED}>점선 (- - -)</option>
-                        <option value={OverlayParam.border_style.GROOVE}>파인 테두리</option>
-                        <option value={OverlayParam.border_style.RIDGE}>튀어나온 테두리</option>
-                        <option value={OverlayParam.border_style.INSET}>파인 경사</option>
-                        <option value={OverlayParam.border_style.OUTSET}>튀어나온 경사</option>
-                    </Arg>
-                    <Arg
-                        name='두께'
-                        type={ArgTypes.NUMBER}
-                        disabled={
-                            props.value &&
-                            props.value.type === OverlayType.SHAPE &&
-                            props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
-                        }
-                        min={0}
-                        unit='px'
-                        default={props.value?.params.border_width}
-                        onChange={(val) => {
-                            props.value && (props.value.params.border_width = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        name='색'
-                        type={ArgTypes.COLOR}
-                        disabled={
-                            props.value &&
-                            props.value.type === OverlayType.SHAPE &&
-                            props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
-                        }
-                        default={props.value?.params.border_color}
-                        onChange={(val) => {
-                            props.value && (props.value.params.border_color = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        name='투명도'
-                        type={ArgTypes.SLIDER}
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        default={props.value?.params.border_opacity}
-                        disabled={
-                            props.value &&
-                            props.value.type === OverlayType.SHAPE &&
-                            props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
-                        }
-                        onChange={(val) => {
-                            props.value && (props.value.params.border_opacity = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                </Params>
-            </Details>
-            <Details title='여백'>
-                <Params>
-                    <Arg
-                        name='테두리 바깥쪽'
-                        type={ArgTypes.NUMBER}
-                        unit='px'
-                        min={0}
-                        default={props.value?.params.margin}
-                        onChange={(val) => {
-                            props.value && (props.value.params.margin = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                    <Arg
-                        name='테두리 안쪽'
-                        type={ArgTypes.NUMBER}
-                        min={0}
-                        unit='px'
-                        default={props.value?.params.padding}
-                        onChange={(val) => {
-                            props.value && (props.value.params.padding = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                </Params>
-            </Details>
-        </>
-    )
-
+    let commonParams = <></>
     let preCommonParams = <></>
     let postCommonParams = <></>
 
-    // HACK : 오버레이 추가
-    // FIXME : 크로마키 지원
-
-    switch (props.value?.type) {
-        case OverlayType.TEXT:
-            preCommonParams = (
-                <Params>
-                    <Arg
-                        type={ArgTypes.TEXTAREA}
-                        default={props.value?.params.text}
-                        placeholder='표시할 내용을 입력하십시오.'
-                        onChange={(val) => {
-                            props.value && (props.value.params.text = val)
-                            props.onChange && props.onChange(props.value)
-                        }}
-                    />
-                </Params>
-            )
-            postCommonParams = (
+    switch (props.type) {
+        case ItemlistType.OVERLAYS:
+            commonParams = (
                 <>
-                    <Details title='글꼴'>
+                    <Details title='공통'>
                         <Params>
                             <Arg
-                                name='글꼴'
-                                type={ArgTypes.COMBOBOX}
-                                onChange={(val) => {
-                                    // props.value && (props.value.params.overflow_y = val)
-                                    // props.onChange && props.onChange(props.value)
-                                }}>
-                                {/* FIXME: 글꼴 목록 반영 */}
-                                <option>굴림</option>
-                            </Arg>
-                            <Arg
-                                name='크기'
-                                type={ArgTypes.NUMBER}
-                                default={props.value?.params.font_size}
+                                name='전체 투명도'
+                                type={ArgTypes.SLIDER}
                                 min={0}
-                                unit='pt'
+                                max={1}
+                                step={0.01}
+                                default={props.value?.params.opacity}
                                 onChange={(val) => {
-                                    props.value && (props.value.params.font_size = val)
+                                    props.value && (props.value.params.opacity = val)
                                     props.onChange && props.onChange(props.value)
                                 }}
                             />
                             <Arg
-                                type={ArgTypes.BUTTONS}
-                                multiple
-                                default={props.value?.params.font_flags}
+                                name='배경색'
+                                type={ArgTypes.COLOR}
+                                disabled={
+                                    props.value &&
+                                    (props.value.type === OverlayType.IMAGE || props.value.type === OverlayType.VIDEO)
+                                }
+                                default={props.value?.params.background_color}
                                 onChange={(val) => {
-                                    props.value && (props.value.params.font_flags = val)
+                                    props.value && (props.value.params.background_color = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                            <Arg
+                                name='배경 투명도'
+                                type={ArgTypes.SLIDER}
+                                disabled={
+                                    props.value &&
+                                    (props.value.type === OverlayType.IMAGE || props.value.type === OverlayType.VIDEO)
+                                }
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                default={props.value?.params.background_opacity}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.background_opacity = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                            <Arg
+                                name='현재 비율 유지'
+                                type={ArgTypes.CHECKBOX}
+                                default={props.value?.params.aspect_ratio}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.aspect_ratio = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                            <Arg
+                                name='모서리 곡률 반경'
+                                type={ArgTypes.NUMBER}
+                                disabled={
+                                    props.value &&
+                                    props.value.type === OverlayType.SHAPE &&
+                                    props.value.params.shape_type !== OverlayParam.shape_type.RECTANGLE
+                                }
+                                min={0}
+                                unit='px'
+                                default={props.value?.params.radius}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.radius = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                        </Params>
+                    </Details>
+                    <Details title='테두리'>
+                        <Params>
+                            <Arg
+                                name='형태'
+                                type={ArgTypes.COMBOBOX}
+                                disabled={
+                                    props.value &&
+                                    props.value.type === OverlayType.SHAPE &&
+                                    props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                                }
+                                default={props.value?.params.border_style}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.border_style = val)
                                     props.onChange && props.onChange(props.value)
                                 }}>
-                                <option value={OverlayParam.font_flags.BOLD}>
-                                    <FontAwesomeIcon icon={faBold} />
+                                <option value={OverlayParam.border_style.NONE}>없음</option>
+                                <option value={OverlayParam.border_style.SOLID}>직선 (-----)</option>
+                                <option value={OverlayParam.border_style.DOUBLE}>겹선 (=====)</option>
+                                <option value={OverlayParam.border_style.DOTTED}>
+                                    점선 (&middot; &middot; &middot;)
                                 </option>
-                                <option value={OverlayParam.font_flags.ITALIC}>
-                                    <FontAwesomeIcon icon={faItalic} />
-                                </option>
-                                <option value={OverlayParam.font_flags.UNDERLINE}>
-                                    <FontAwesomeIcon icon={faUnderline} />
-                                </option>
-                                <option value={OverlayParam.font_flags.STRIKE}>
-                                    <FontAwesomeIcon icon={faStrikethrough} />
-                                </option>
+                                <option value={OverlayParam.border_style.DASHED}>점선 (- - -)</option>
+                                <option value={OverlayParam.border_style.GROOVE}>파인 테두리</option>
+                                <option value={OverlayParam.border_style.RIDGE}>튀어나온 테두리</option>
+                                <option value={OverlayParam.border_style.INSET}>파인 경사</option>
+                                <option value={OverlayParam.border_style.OUTSET}>튀어나온 경사</option>
                             </Arg>
+                            <Arg
+                                name='두께'
+                                type={ArgTypes.NUMBER}
+                                disabled={
+                                    props.value &&
+                                    props.value.type === OverlayType.SHAPE &&
+                                    props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                                }
+                                min={0}
+                                unit='px'
+                                default={props.value?.params.border_width}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.border_width = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
                             <Arg
                                 name='색'
                                 type={ArgTypes.COLOR}
-                                default={props.value?.params.font_color}
+                                disabled={
+                                    props.value &&
+                                    props.value.type === OverlayType.SHAPE &&
+                                    props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                                }
+                                default={props.value?.params.border_color}
                                 onChange={(val) => {
-                                    props.value && (props.value.params.font_color = val)
+                                    props.value && (props.value.params.border_color = val)
                                     props.onChange && props.onChange(props.value)
                                 }}
                             />
@@ -506,70 +453,40 @@ function ParamList(props) {
                                 min={0}
                                 max={1}
                                 step={0.01}
-                                default={props.value?.params.font_opacity}
+                                default={props.value?.params.border_opacity}
+                                disabled={
+                                    props.value &&
+                                    props.value.type === OverlayType.SHAPE &&
+                                    props.value.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                                }
                                 onChange={(val) => {
-                                    props.value && (props.value.params.font_opacity = val)
+                                    props.value && (props.value.params.border_opacity = val)
                                     props.onChange && props.onChange(props.value)
                                 }}
                             />
                         </Params>
                     </Details>
-                    <Details title='문단'>
+                    <Details title='여백'>
                         <Params>
                             <Arg
-                                name='넘칠 때'
-                                type={ArgTypes.COMBOBOX}
-                                default={props.value?.params.overflow}
-                                onChange={(val) => {
-                                    props.value && (props.value.params.overflow = val)
-                                    props.onChange && props.onChange(props.value)
-                                }}>
-                                <option value={OverlayParam.overflow.HIDDEN}>숨김</option>
-                                <option value={OverlayParam.overflow.SHOW}>표시</option>
-                            </Arg>
-                            <Arg
-                                name='가로 정렬'
-                                type={ArgTypes.BUTTONS}
-                                default={props.value?.params.text_align_horizontal}
-                                onChange={(val) => {
-                                    props.value && (props.value.params.text_align_horizontal = val)
-                                    props.onChange && props.onChange(props.value)
-                                }}>
-                                <option value={OverlayParam.text_align_horizontal.LEFT}>
-                                    <FontAwesomeIcon icon={faAlignLeft} />
-                                </option>
-                                <option value={OverlayParam.text_align_horizontal.CENTER}>
-                                    <FontAwesomeIcon icon={faAlignCenter} />
-                                </option>
-                                <option value={OverlayParam.text_align_horizontal.RIGHT}>
-                                    <FontAwesomeIcon icon={faAlignRight} />
-                                </option>
-                                <option value={OverlayParam.text_align_horizontal.JUSTIFY}>
-                                    <FontAwesomeIcon icon={faAlignJustify} />
-                                </option>
-                            </Arg>
-                            <Arg
-                                name='세로 정렬'
-                                type={ArgTypes.COMBOBOX}
-                                default={props.value?.params.text_align_vertical}
-                                onChange={(val) => {
-                                    props.value && (props.value.params.text_align_vertical = val)
-                                    props.onChange && props.onChange(props.value)
-                                }}>
-                                <option value={OverlayParam.text_align_vertical.TOP}>T</option>
-                                <option value={OverlayParam.text_align_vertical.MIDDLE}>M</option>
-                                <option value={OverlayParam.text_align_vertical.BOTTOM}>B</option>
-                            </Arg>
-                            <Arg
-                                name='줄 높이'
-                                prefix='텍스트의'
+                                name='테두리 바깥쪽'
                                 type={ArgTypes.NUMBER}
-                                default={props.value?.params.text_line_height}
-                                step={0.25}
-                                min={1.0}
-                                unit='배'
+                                unit='px'
+                                min={0}
+                                default={props.value?.params.margin}
                                 onChange={(val) => {
-                                    props.value && (props.value.params.text_line_height = val)
+                                    props.value && (props.value.params.margin = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                            <Arg
+                                name='테두리 안쪽'
+                                type={ArgTypes.NUMBER}
+                                min={0}
+                                unit='px'
+                                default={props.value?.params.padding}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.padding = val)
                                     props.onChange && props.onChange(props.value)
                                 }}
                             />
@@ -577,113 +494,334 @@ function ParamList(props) {
                     </Details>
                 </>
             )
+
+            // HACK : 오버레이 추가
+            // FIXME : 크로마키 지원
+
+            switch (props.value?.type) {
+                case OverlayType.TEXT:
+                    preCommonParams = (
+                        <Params>
+                            <Arg
+                                type={ArgTypes.TEXTAREA}
+                                default={props.value?.params.text}
+                                placeholder='표시할 내용을 입력하십시오.'
+                                onChange={(val) => {
+                                    props.value && (props.value.params.text = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                        </Params>
+                    )
+                    postCommonParams = (
+                        <>
+                            <Details title='글꼴'>
+                                <Params>
+                                    <Arg
+                                        name='글꼴'
+                                        type={ArgTypes.COMBOBOX}
+                                        onChange={(val) => {
+                                            // props.value && (props.value.params.overflow_y = val)
+                                            // props.onChange && props.onChange(props.value)
+                                        }}>
+                                        {/* FIXME: 글꼴 목록 반영 */}
+                                        <option>굴림</option>
+                                    </Arg>
+                                    <Arg
+                                        name='크기'
+                                        type={ArgTypes.NUMBER}
+                                        default={props.value?.params.font_size}
+                                        min={0}
+                                        unit='pt'
+                                        onChange={(val) => {
+                                            props.value && (props.value.params.font_size = val)
+                                            props.onChange && props.onChange(props.value)
+                                        }}
+                                    />
+                                    <Arg
+                                        type={ArgTypes.BUTTONS}
+                                        multiple
+                                        default={props.value?.params.font_flags}
+                                        onChange={(val) => {
+                                            props.value && (props.value.params.font_flags = val)
+                                            props.onChange && props.onChange(props.value)
+                                        }}>
+                                        <option value={OverlayParam.font_flags.BOLD}>
+                                            <FontAwesomeIcon icon={faBold} />
+                                        </option>
+                                        <option value={OverlayParam.font_flags.ITALIC}>
+                                            <FontAwesomeIcon icon={faItalic} />
+                                        </option>
+                                        <option value={OverlayParam.font_flags.UNDERLINE}>
+                                            <FontAwesomeIcon icon={faUnderline} />
+                                        </option>
+                                        <option value={OverlayParam.font_flags.STRIKE}>
+                                            <FontAwesomeIcon icon={faStrikethrough} />
+                                        </option>
+                                    </Arg>
+                                    <Arg
+                                        name='색'
+                                        type={ArgTypes.COLOR}
+                                        default={props.value?.params.font_color}
+                                        onChange={(val) => {
+                                            props.value && (props.value.params.font_color = val)
+                                            props.onChange && props.onChange(props.value)
+                                        }}
+                                    />
+                                    <Arg
+                                        name='투명도'
+                                        type={ArgTypes.SLIDER}
+                                        min={0}
+                                        max={1}
+                                        step={0.01}
+                                        default={props.value?.params.font_opacity}
+                                        onChange={(val) => {
+                                            props.value && (props.value.params.font_opacity = val)
+                                            props.onChange && props.onChange(props.value)
+                                        }}
+                                    />
+                                </Params>
+                            </Details>
+                            <Details title='문단'>
+                                <Params>
+                                    <Arg
+                                        name='넘칠 때'
+                                        type={ArgTypes.COMBOBOX}
+                                        default={props.value?.params.overflow}
+                                        onChange={(val) => {
+                                            props.value && (props.value.params.overflow = val)
+                                            props.onChange && props.onChange(props.value)
+                                        }}>
+                                        <option value={OverlayParam.overflow.HIDDEN}>숨김</option>
+                                        <option value={OverlayParam.overflow.SHOW}>표시</option>
+                                    </Arg>
+                                    <Arg
+                                        name='가로 정렬'
+                                        type={ArgTypes.BUTTONS}
+                                        default={props.value?.params.text_align_horizontal}
+                                        onChange={(val) => {
+                                            props.value && (props.value.params.text_align_horizontal = val)
+                                            props.onChange && props.onChange(props.value)
+                                        }}>
+                                        <option value={OverlayParam.text_align_horizontal.LEFT}>
+                                            <FontAwesomeIcon icon={faAlignLeft} />
+                                        </option>
+                                        <option value={OverlayParam.text_align_horizontal.CENTER}>
+                                            <FontAwesomeIcon icon={faAlignCenter} />
+                                        </option>
+                                        <option value={OverlayParam.text_align_horizontal.RIGHT}>
+                                            <FontAwesomeIcon icon={faAlignRight} />
+                                        </option>
+                                        <option value={OverlayParam.text_align_horizontal.JUSTIFY}>
+                                            <FontAwesomeIcon icon={faAlignJustify} />
+                                        </option>
+                                    </Arg>
+                                    <Arg
+                                        name='세로 정렬'
+                                        type={ArgTypes.COMBOBOX}
+                                        default={props.value?.params.text_align_vertical}
+                                        onChange={(val) => {
+                                            props.value && (props.value.params.text_align_vertical = val)
+                                            props.onChange && props.onChange(props.value)
+                                        }}>
+                                        <option value={OverlayParam.text_align_vertical.TOP}>T</option>
+                                        <option value={OverlayParam.text_align_vertical.MIDDLE}>M</option>
+                                        <option value={OverlayParam.text_align_vertical.BOTTOM}>B</option>
+                                    </Arg>
+                                    <Arg
+                                        name='줄 높이'
+                                        prefix='텍스트의'
+                                        type={ArgTypes.NUMBER}
+                                        default={props.value?.params.text_line_height}
+                                        step={0.25}
+                                        min={1.0}
+                                        unit='배'
+                                        onChange={(val) => {
+                                            props.value && (props.value.params.text_line_height = val)
+                                            props.onChange && props.onChange(props.value)
+                                        }}
+                                    />
+                                </Params>
+                            </Details>
+                        </>
+                    )
+                    break
+                case OverlayType.SHAPE:
+                    let triangleOption = (
+                        <Arg
+                            name='꼭짓점 위치'
+                            type={ArgTypes.SLIDER}
+                            min={0}
+                            max={100}
+                            step={0.1}
+                            default={props.value?.params.triangle_position}
+                            unit='%'
+                            onChange={(val) => {
+                                props.value && (props.value.params.triangle_position = val)
+                                props.onChange && props.onChange(props.value)
+                            }}
+                        />
+                    )
+                    preCommonParams = (
+                        <Params>
+                            <Arg
+                                type={ArgTypes.BUTTONS}
+                                default={props.value?.params.shape_type}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.shape_type = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}>
+                                <option value={OverlayParam.shape_type.RECTANGLE}>
+                                    <FontAwesomeIcon icon={faSquare} />
+                                </option>
+                                <option value={OverlayParam.shape_type.ELLIPSE}>
+                                    <FontAwesomeIcon icon={faCircle} />
+                                </option>
+                                <option value={OverlayParam.shape_type.TRIANGLE}>
+                                    <FontAwesomeIcon icon={faCaretUp} />
+                                </option>
+                            </Arg>
+                            {props.value?.params.shape_type === OverlayParam.shape_type.TRIANGLE
+                                ? triangleOption
+                                : null}
+                        </Params>
+                    )
+                    break
+                case OverlayType.VIDEO:
+                case OverlayType.IMAGE:
+                    let uploadOption = '[ 업로드 ]'
+                    let urlOption = (
+                        <Arg
+                            name='URL'
+                            type={ArgTypes.TEXT}
+                            default={props.value?.params.src}
+                            onChange={(val) => {
+                                props.value && (props.value.params.src = val)
+                                props.onChange && props.onChange(props.value)
+                            }}
+                        />
+                    )
+                    preCommonParams = (
+                        <Params>
+                            <Arg
+                                type={ArgTypes.BUTTONS}
+                                default={props.value?.params.src_type}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.src_type = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}>
+                                <option value={OverlayParam.src_type.UPLOAD}>
+                                    <FontAwesomeIcon icon={faFileImport} />
+                                </option>
+                                <option value={OverlayParam.src_type.URL}>
+                                    <FontAwesomeIcon icon={faLink} />
+                                </option>
+                            </Arg>
+                            {props.value?.params.src_type === OverlayParam.src_type.UPLOAD ? uploadOption : urlOption}
+                        </Params>
+                    )
+                    break
+                case OverlayType.WEBCAM:
+                    preCommonParams = (
+                        <Params>
+                            <Arg
+                                type={ArgTypes.BUTTON}
+                                multiple
+                                default={{}}
+                                onChange={() => {
+                                    let conn = Connector.getInstance()
+                                    conn.attachCameraStream(props.value.id, null, true)
+                                }}>
+                                <FontAwesomeIcon icon={faVideoCamera} /> 카메라 재설정
+                            </Arg>
+                        </Params>
+                    )
+                    break
+                case OverlayType.DISPLAY:
+                    preCommonParams = (
+                        <Params>
+                            <Arg
+                                type={ArgTypes.BUTTON}
+                                multiple
+                                default={{}}
+                                onChange={() => {
+                                    let conn = Connector.getInstance()
+                                    conn.attachDisplayStream(props.value.id, null, true)
+                                }}>
+                                <FontAwesomeIcon icon={faDisplay} /> 화면 재설정
+                            </Arg>
+                        </Params>
+                    )
+                    break
+                default:
+            }
             break
-        case OverlayType.SHAPE:
-            let triangleOption = (
-                <Arg
-                    name='꼭짓점 위치'
-                    type={ArgTypes.SLIDER}
-                    min={0}
-                    max={100}
-                    step={0.1}
-                    default={props.value?.params.triangle_position}
-                    unit='%'
-                    onChange={(val) => {
-                        props.value && (props.value.params.triangle_position = val)
-                        props.onChange && props.onChange(props.value)
-                    }}
-                />
-            )
-            preCommonParams = (
-                <Params>
-                    <Arg
-                        type={ArgTypes.BUTTONS}
-                        default={props.value?.params.shape_type}
-                        onChange={(val) => {
-                            props.value && (props.value.params.shape_type = val)
-                            props.onChange && props.onChange(props.value)
-                        }}>
-                        <option value={OverlayParam.shape_type.RECTANGLE}>
-                            <FontAwesomeIcon icon={faSquare} />
-                        </option>
-                        <option value={OverlayParam.shape_type.ELLIPSE}>
-                            <FontAwesomeIcon icon={faCircle} />
-                        </option>
-                        <option value={OverlayParam.shape_type.TRIANGLE}>
-                            <FontAwesomeIcon icon={faCaretUp} />
-                        </option>
-                    </Arg>
-                    {props.value?.params.shape_type === OverlayParam.shape_type.TRIANGLE ? triangleOption : null}
-                </Params>
-            )
-            break
-        case OverlayType.VIDEO:
-        case OverlayType.IMAGE:
-            let uploadOption = '[ 업로드 ]'
-            let urlOption = (
-                <Arg
-                    name='URL'
-                    type={ArgTypes.TEXT}
-                    default={props.value?.params.src}
-                    onChange={(val) => {
-                        props.value && (props.value.params.src = val)
-                        props.onChange && props.onChange(props.value)
-                    }}
-                />
-            )
-            preCommonParams = (
-                <Params>
-                    <Arg
-                        type={ArgTypes.BUTTONS}
-                        default={props.value?.params.src_type}
-                        onChange={(val) => {
-                            props.value && (props.value.params.src_type = val)
-                            props.onChange && props.onChange(props.value)
-                        }}>
-                        <option value={OverlayParam.src_type.UPLOAD}>
-                            <FontAwesomeIcon icon={faFileImport} />
-                        </option>
-                        <option value={OverlayParam.src_type.URL}>
-                            <FontAwesomeIcon icon={faLink} />
-                        </option>
-                    </Arg>
-                    {props.value?.params.src_type === OverlayParam.src_type.UPLOAD ? uploadOption : urlOption}
-                </Params>
-            )
-            break
-        case OverlayType.WEBCAM:
-            preCommonParams = (
-                <Params>
-                    <Arg
-                        type={ArgTypes.BUTTON}
-                        multiple
-                        default={{}}
-                        onChange={() => {
-                            let conn = Connector.getInstance()
-                            conn.attachCameraStream(props.value.id, null, true)
-                        }}>
-                        <FontAwesomeIcon icon={faVideoCamera} /> 카메라 재설정
-                    </Arg>
-                </Params>
-            )
-            break
-        case OverlayType.DISPLAY:
-            preCommonParams = (
-                <Params>
-                    <Arg
-                        type={ArgTypes.BUTTON}
-                        multiple
-                        default={{}}
-                        onChange={() => {
-                            let conn = Connector.getInstance()
-                            conn.attachDisplayStream(props.value.id, null, true)
-                        }}>
-                        <FontAwesomeIcon icon={faDisplay} /> 화면 재설정
-                    </Arg>
-                </Params>
-            )
+        case ItemlistType.TRANSITIONS:
+            // HACK : 장면 전환 추가
+
+            switch (props.value?.type) {
+                case TransitionType.FADE:
+                    postCommonParams = (
+                        <Params>
+                            <Arg
+                                name='소요시간'
+                                type={ArgTypes.NUMBER}
+                                default={props.value?.params.duration}
+                                step={1}
+                                min={0.0}
+                                unit='ms'
+                                onChange={(val) => {
+                                    props.value && (props.value.params.duration = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                        </Params>
+                    )
+                    break
+                case TransitionType.SLIDE:
+                    postCommonParams = (
+                        <Params>
+                            <Arg
+                                name='소요시간'
+                                type={ArgTypes.NUMBER}
+                                default={props.value?.params.duration}
+                                step={1}
+                                min={0.0}
+                                unit='ms'
+                                onChange={(val) => {
+                                    props.value && (props.value.params.duration = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
+                            <Arg
+                                name='밀어내는 방향'
+                                type={ArgTypes.BUTTONS}
+                                default={props.value?.params.slide_from}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.slide_from = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}>
+                                <option value={TransitionParam.slide_from.LEFT}>
+                                    <FontAwesomeIcon icon={faArrowRight} />
+                                </option>
+                                <option value={TransitionParam.slide_from.TOP}>
+                                    <FontAwesomeIcon icon={faArrowDown} />
+                                </option>
+                                <option value={TransitionParam.slide_from.RIGHT}>
+                                    <FontAwesomeIcon icon={faArrowLeft} />
+                                </option>
+                                <option value={TransitionParam.slide_from.BOTTOM}>
+                                    <FontAwesomeIcon icon={faArrowUp} />
+                                </option>
+                            </Arg>
+                        </Params>
+                    )
+                    break
+                default:
+            }
             break
         default:
+            throw new Error('Invalid parameter list type')
     }
 
     return (

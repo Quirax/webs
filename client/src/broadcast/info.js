@@ -1,7 +1,9 @@
 import { OverlayParam, OverlayType } from './overlay'
+import { TransitionType, TransitionParam } from './transition'
 
 let updateContainer = () => {}
 let updateList = () => {}
+let updateTitle = () => {}
 
 class BroadcastInfo {
     constructor() {
@@ -14,14 +16,15 @@ class BroadcastInfo {
             currentTransition: 0,
             scene: [
                 {
-                    name: '저챗',
+                    name: '빨강',
                     defaultCategory: 'Just Chatting',
+                    id: 'red',
                     overlay: [
                         // HACK: overlay sample
                         {
-                            name: '샘플 웹캠 오버레이',
-                            type: OverlayType.WEBCAM,
-                            id: 'asdf',
+                            name: '사각형',
+                            type: OverlayType.SHAPE,
+                            id: 'redshape',
                             params: {
                                 background_color: '#ff0000',
                                 background_opacity: 1,
@@ -36,14 +39,85 @@ class BroadcastInfo {
                                 padding: 0,
 
                                 // Specific params
-                                src_type: OverlayParam.src_type.URL,
-                                src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+                                shape_type: OverlayParam.shape_type.RECTANGLE,
                             },
                             transform: {
                                 x: 0,
                                 y: 0,
-                                height: 100,
-                                width: 300,
+                                height: 1080,
+                                width: 1920,
+                                rotate: 0,
+                            },
+                        },
+                    ],
+                },
+                {
+                    name: '초록',
+                    defaultCategory: 'Just Chatting',
+                    id: 'green',
+                    overlay: [
+                        // HACK: overlay sample
+                        {
+                            name: '사각형',
+                            type: OverlayType.SHAPE,
+                            id: 'greenshape',
+                            params: {
+                                background_color: '#00ff00',
+                                background_opacity: 1,
+                                opacity: 1,
+                                aspect_ratio: false,
+                                radius: 1,
+                                border_color: '#000000',
+                                border_opacity: 1,
+                                border_width: 0,
+                                border_style: OverlayParam.border_style.SOLID,
+                                margin: 0,
+                                padding: 0,
+
+                                // Specific params
+                                shape_type: OverlayParam.shape_type.RECTANGLE,
+                            },
+                            transform: {
+                                x: 0,
+                                y: 0,
+                                height: 1080,
+                                width: 1920,
+                                rotate: 0,
+                            },
+                        },
+                    ],
+                },
+                {
+                    name: '파랑',
+                    defaultCategory: 'Just Chatting',
+                    id: 'blue',
+                    overlay: [
+                        // HACK: overlay sample
+                        {
+                            name: '사각형',
+                            type: OverlayType.SHAPE,
+                            id: 'blueshape',
+                            params: {
+                                background_color: '#0000ff',
+                                background_opacity: 1,
+                                opacity: 1,
+                                aspect_ratio: false,
+                                radius: 1,
+                                border_color: '#000000',
+                                border_opacity: 1,
+                                border_width: 0,
+                                border_style: OverlayParam.border_style.SOLID,
+                                margin: 0,
+                                padding: 0,
+
+                                // Specific params
+                                shape_type: OverlayParam.shape_type.RECTANGLE,
+                            },
+                            transform: {
+                                x: 0,
+                                y: 0,
+                                height: 1080,
+                                width: 1920,
                                 rotate: 0,
                             },
                         },
@@ -53,11 +127,17 @@ class BroadcastInfo {
             transition: [
                 {
                     name: '기본',
-                    type: 0,
-                    params: {},
+                    id: 'asdefault',
+                    type: TransitionType.SLIDE,
+                    params: {
+                        duration: 1000,
+                        slide_from: TransitionParam.slide_from.LEFT,
+                    },
                 },
             ],
         }
+
+        this.tempScene = 0
 
         this.onChange = (update = true) => {
             updateList()
@@ -81,8 +161,25 @@ class BroadcastInfo {
         return this.info.scene[this.info.currentScene]
     }
 
+    getTempScene() {
+        return this.info.scene[this.tempScene]
+    }
+
     selectScene(idx) {
+        if (this.info.currentScene === idx) return
+
+        this.tempScene = this.info.currentScene
         this.info.currentScene = idx
+
+        updateContainer(true)
+        updateList()
+        updateTitle()
+    }
+
+    // FIXME : add deleteScene(idx)
+
+    isCurrentScene(idx) {
+        return this.info.currentScene === idx
     }
 
     currentTransition() {
@@ -91,6 +188,13 @@ class BroadcastInfo {
 
     selectTransition(idx) {
         this.info.currentTransition = idx
+        updateContainer()
+        updateList()
+        updateTitle()
+    }
+
+    isCurrentTransition(idx) {
+        return this.info.currentTransition === idx
     }
 }
 
@@ -105,4 +209,8 @@ export function assignContainer(c) {
 
 export function assignList(l) {
     updateList = l
+}
+
+export function assignTitle(t) {
+    updateTitle = t
 }

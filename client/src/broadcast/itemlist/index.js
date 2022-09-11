@@ -36,29 +36,99 @@ export default class Itemlist extends React.Component {
             },
             addLabel: '',
             bottomItem: <></>,
+            onDblClickGenerator: () => () => {},
+            isSelected: () => false,
+            onClickItemGenerator: () => () => {},
         }
+
+        let onClickBottomItem
 
         switch (this.props.mode) {
             case ItemlistType.SCENES:
+                onClickBottomItem = () => {
+                    this.props.changeMode(ItemlistType.TRANSITIONS)
+                }
+
                 Object.assign(state, {
                     list: BI().info.scene,
                     addLabel: '장면 추가',
                     bottomItem: (
-                        <Li padding='8' border-top='normal' align='center' cursor='default'>
+                        <Li
+                            padding='8'
+                            border-top='normal'
+                            align='center'
+                            cursor='default'
+                            onClick={onClickBottomItem.bind(this)}>
                             장면 전환 설정
                         </Li>
                     ),
+                    onDblClickGenerator: (item, value, onChange) => (e) => {
+                        BI().selectScene(value.index)
+                        this.props.changeMode(ItemlistType.OVERLAYS)
+                    },
+                    isSelected: (idx) => BI().isCurrentScene(idx),
+                    onClickItemGenerator: (item, value) => () => {
+                        BI().selectScene(value.index)
+                        // BI().afterChange()
+                    },
+                    onAdd: () => {
+                        BI().info.scene.push({
+                            name: '새 장면',
+                            defaultCategory: 'Just Chatting',
+                            id: Math.random().toString(36).substring(2, 11),
+                            overlay: [],
+                        })
+                        BI().afterChange()
+                    },
                 })
                 break
             case ItemlistType.TRANSITIONS:
+                onClickBottomItem = () => {
+                    this.props.changeMode(ItemlistType.SCENES)
+                }
+
                 Object.assign(state, {
                     list: BI().info.transition,
+                    onAdd: (e) => {
+                        if (this.propertyDialogRef) {
+                            let dialog = this.propertyDialogRef.current
+                            let top = e.clientY
+                            let left = e.clientX
+
+                            console.log(dialog)
+
+                            dialog.show(this, ItemlistType.TRANSITIONS, null, top, left, (val) => {
+                                BI().info.transition.push(val)
+                                BI().afterChange()
+                            })
+                        }
+                    },
                     addLabel: '장면 전환 추가',
                     bottomItem: (
-                        <Li padding='8' border-top='normal' align='center' cursor='default'>
+                        <Li
+                            padding='8'
+                            border-top='normal'
+                            align='center'
+                            cursor='default'
+                            onClick={onClickBottomItem.bind(this)}>
                             장면 설정
                         </Li>
                     ),
+                    isSelected: (idx) => BI().isCurrentTransition(idx),
+                    onClickItemGenerator: (item, value) => () => {
+                        BI().selectTransition(value.index)
+                    },
+                    onDblClickGenerator: (item, value, onChange) => (e) => {
+                        if (this.propertyDialogRef) {
+                            let dialog = this.propertyDialogRef.current
+                            let top = e.clientY
+                            let left = e.clientX
+
+                            dialog.show(item, ItemlistType.TRANSITIONS, value, top, left, (val) => {
+                                onChange && onChange(val)
+                            })
+                        }
+                    },
                 })
                 break
             case ItemlistType.OVERLAYS:
@@ -72,13 +142,24 @@ export default class Itemlist extends React.Component {
 
                             console.log(dialog)
 
-                            dialog.show(this, null, top, left, (val) => {
+                            dialog.show(this, ItemlistType.OVERLAYS, null, top, left, (val) => {
                                 BI().currentScene().overlay.push(val)
                                 BI().afterChange()
                             })
                         }
                     },
                     addLabel: '오버레이 추가',
+                    onDblClickGenerator: (item, value, onChange) => (e) => {
+                        if (this.propertyDialogRef) {
+                            let dialog = this.propertyDialogRef.current
+                            let top = e.clientY
+                            let left = e.clientX
+
+                            dialog.show(item, ItemlistType.OVERLAYS, value, top, left, (val) => {
+                                onChange && onChange(val)
+                            })
+                        }
+                    },
                 })
                 break
             default:
@@ -88,8 +169,8 @@ export default class Itemlist extends React.Component {
         return (
             <Div
                 flex
-                onMouseMove={(e) => {
-                    getSelection().empty()
+                style={{
+                    userSelect: 'none',
                 }}>
                 <Nav
                     flex
@@ -102,10 +183,13 @@ export default class Itemlist extends React.Component {
                     <Ul>
                         <DndProvider backend={HTML5Backend}>
                             {state.list.map((v, i) => {
+                                let selected = state.isSelected(i)
+
                                 return (
                                     <Item
                                         menu={this.contextMenuRef}
-                                        propertyDialog={this.propertyDialogRef}
+                                        onDblClickGenerator={state.onDblClickGenerator}
+                                        onClickItemGenerator={state.onClickItemGenerator}
                                         mode={this.props.mode}
                                         value={v}
                                         key={i}
@@ -114,6 +198,10 @@ export default class Itemlist extends React.Component {
                                             Object.assign(v, val)
                                             BI().onChange()
                                         }}
+                                        style={{
+                                            backgroundColor: selected === true ? 'blue' : null,
+                                        }}
+                                        onChangeMode={this.props.changeMode}
                                     />
                                 )
                             })}
@@ -136,7 +224,7 @@ export default class Itemlist extends React.Component {
     }
 }
 
-function Item({ propertyDialog, menu, value, onChange, mode, index }) {
+function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style, onClickItemGenerator }) {
     const ref = React.useRef(null)
     const [{ handlerId }, drop] = useDrop({
         accept: 'Item',
@@ -205,18 +293,18 @@ function Item({ propertyDialog, menu, value, onChange, mode, index }) {
 
     drag(drop(ref))
 
-    let onDblClick = (e) => {
-        if (propertyDialog) {
-            let dialog = propertyDialog.current
-            let top = e.clientY
-            let left = e.clientX
+    let onDblClick = null,
+        onClick = null
 
-            dialog.show(this, value, top, left, (val) => {
-                onChange && onChange(val)
-            })
-        }
+    if (onDblClickGenerator != null) {
+        onDblClick = onDblClickGenerator(this, { ...value, index: index }, onChange)
+        // onDblClick = onDblClick.bind(this)
     }
-    onDblClick = onDblClick.bind(this)
+
+    if (onClickItemGenerator != null) {
+        onClick = onClickItemGenerator(this, { ...value, index: index }, onChange)
+        // onClick = onDblClick.bind(this)
+    }
 
     let onContextMenu = (e) => {
         e.preventDefault()
@@ -250,10 +338,12 @@ function Item({ propertyDialog, menu, value, onChange, mode, index }) {
             selected={value.selected}
             onContextMenu={onContextMenu}
             style={{
+                ...style,
                 opacity,
             }}
             data-handler-id={handlerId}
-            onDoubleClick={onDblClick}>
+            onDoubleClick={onDblClick}
+            onClick={onClick}>
             {value.name}
         </Li>
     )
@@ -294,12 +384,26 @@ class ContextMenu extends React.Component {
     }
 
     onDelete(e) {
-        if (this.state.value.type === OverlayType.WEBCAM) {
-            let conn = Connector.getInstance()
+        switch (this.state.mode) {
+            case ItemlistType.SCENES:
+                if (this.state.list.length === 1) return alert('최소 1개 이상의 장면이 있어야 합니다.')
+                BI().selectScene(0)
+                break
+            case ItemlistType.TRANSITIONS:
+                if (this.state.list.length === 1) return alert('최소 1개 이상의 화면전환이 있어야 합니다.')
+                BI().selectTransition(0)
+                break
+            default:
+                if (this.state.value.type === OverlayType.WEBCAM) {
+                    let conn = Connector.getInstance()
+                    conn.detachDisplayStream(this.state.value.id)
+                }
 
-            conn.detachDisplayStream(this.state.value.id)
+                break
         }
+
         this.state.list.splice(this.state.list.indexOf(this.state.value), 1)
+
         BI().afterChange()
     }
 
@@ -334,6 +438,7 @@ class ContextMenu extends React.Component {
             open: true,
             list: list,
             dialogOpener: dialogOpener,
+            mode: mode,
         })
     }
 
