@@ -1,3 +1,4 @@
+import Connector from './connector'
 import { OverlayParam, OverlayType } from './overlay'
 import { TransitionType, TransitionParam } from './transition'
 
@@ -10,11 +11,17 @@ class BroadcastInfo {
         this.tempScene = 0
 
         this.onChange = (update = true) => {
+            const conn = Connector.getInstance()
+            conn.onChange()
+
             updateList()
             update && updateContainer()
         }
 
         this.afterChange = () => {
+            const conn = Connector.getInstance()
+            conn.afterChange()
+
             updateContainer()
             updateList()
         }

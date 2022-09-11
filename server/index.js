@@ -53,9 +53,9 @@ let broadcastInfo = {
             overlay: [
                 // HACK: overlay sample
                 {
-                    name: '사각형',
-                    type: 'shape',
-                    id: 'redshape',
+                    name: '동영상',
+                    type: 'video',
+                    id: 'videotest',
                     params: {
                         background_color: '#ff0000',
                         background_opacity: 1,
@@ -70,79 +70,8 @@ let broadcastInfo = {
                         padding: 0,
 
                         // Specific params
-                        shape_type: 'rectangle',
-                    },
-                    transform: {
-                        x: 0,
-                        y: 0,
-                        height: 1080,
-                        width: 1920,
-                        rotate: 0,
-                    },
-                },
-            ],
-        },
-        {
-            name: '초록',
-            defaultCategory: 'Just Chatting',
-            id: 'green',
-            overlay: [
-                // HACK: overlay sample
-                {
-                    name: '사각형',
-                    type: 'shape',
-                    id: 'greenshape',
-                    params: {
-                        background_color: '#00ff00',
-                        background_opacity: 1,
-                        opacity: 1,
-                        aspect_ratio: false,
-                        radius: 1,
-                        border_color: '#000000',
-                        border_opacity: 1,
-                        border_width: 0,
-                        border_style: 'solid',
-                        margin: 0,
-                        padding: 0,
-
-                        // Specific params
-                        shape_type: 'rectangle',
-                    },
-                    transform: {
-                        x: 0,
-                        y: 0,
-                        height: 1080,
-                        width: 1920,
-                        rotate: 0,
-                    },
-                },
-            ],
-        },
-        {
-            name: '파랑',
-            defaultCategory: 'Just Chatting',
-            id: 'blue',
-            overlay: [
-                // HACK: overlay sample
-                {
-                    name: '사각형',
-                    type: 'shape',
-                    id: 'blueshape',
-                    params: {
-                        background_color: '#0000ff',
-                        background_opacity: 1,
-                        opacity: 1,
-                        aspect_ratio: false,
-                        radius: 1,
-                        border_color: '#000000',
-                        border_opacity: 1,
-                        border_width: 0,
-                        border_style: 'solid',
-                        margin: 0,
-                        padding: 0,
-
-                        // Specific params
-                        shape_type: 'rectangle',
+                        src_type: 'url',
+                        src: 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
                     },
                     transform: {
                         x: 0,
@@ -184,6 +113,20 @@ io.on('connect', (socket) => {
 
     socket.on('getBroadcastInfo', () => {
         socket.emit('getBroadcastInfo', broadcastInfo)
+    })
+
+    socket.on('onChange', (info) => {
+        socket.to(room).emit('getBroadcastInfo', info)
+    })
+
+    socket.on('afterChange', (info) => {
+        broadcastInfo = info
+        socket.to(room).emit('getBroadcastInfo', info)
+    })
+
+    socket.on('selectScene', (idx) => {
+        broadcastInfo.currentScene = idx
+        socket.to(room).emit('selectScene', idx)
     })
 
     socket.on('destination', async (url) => {

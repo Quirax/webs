@@ -28,6 +28,23 @@ export default class Connector {
         this.socket.on('getBroadcastInfo', (info) => {
             BI().setInfo(info)
         })
+        this.socket.on('selectScene', (idx) => {
+            BI().selectScene(idx)
+        })
+    }
+
+    selectScene(idx) {
+        this.socket.emit('selectScene', idx)
+    }
+
+    onChange() {
+        if (!BI().info) return
+        this.socket.emit('onChange', BI().info)
+    }
+
+    afterChange() {
+        if (!BI().info) return
+        this.socket.emit('afterChange', BI().info)
     }
 
     start() {
