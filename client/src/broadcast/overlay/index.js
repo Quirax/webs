@@ -212,7 +212,7 @@ export default function OverlayContainer(props) {
                             }
                             referrer={props.referrer}> */}
                         <Ol>
-                            <OverlayElems overlay={overlayList} />
+                            <OverlayElems overlay={overlayList} isTemp={props.isTemp} />
                         </Ol>
                         {/* </Div> */}
                     </animated.div>
@@ -238,11 +238,11 @@ function OverlayElems(props) {
                     case OverlayType.IMAGE:
                         return <ImageOverlay key={i} value={v} />
                     case OverlayType.VIDEO:
-                        return <VideoOverlay key={i} value={v} />
+                        return <VideoOverlay key={i} value={v} isTemp={props.isTemp} />
                     case OverlayType.WEBCAM:
-                        return <WebcamOverlay key={i} value={v} />
+                        return <WebcamOverlay key={i} value={v} isTemp={props.isTemp} />
                     case OverlayType.DISPLAY:
-                        return <DisplayOverlay key={i} value={v} />
+                        return <DisplayOverlay key={i} value={v} isTemp={props.isTemp} />
                     default:
                 }
                 return <></>

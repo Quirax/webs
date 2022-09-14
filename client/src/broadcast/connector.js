@@ -1,4 +1,3 @@
-import { isString } from 'lodash'
 import { io } from 'socket.io-client'
 import BI from './info'
 import { OverlayType } from './overlay'
@@ -24,6 +23,7 @@ export default class Connector {
     }
 
     getBroadcastInfo() {
+        if (this.socket === null) this.connect()
         this.socket.emit('getBroadcastInfo')
         this.socket.on('getBroadcastInfo', (info) => {
             BI().setInfo(info)
@@ -34,16 +34,19 @@ export default class Connector {
     }
 
     selectScene(idx) {
+        if (this.socket === null) this.connect()
         this.socket.emit('selectScene', idx)
     }
 
     onChange() {
         if (!BI().info) return
+        if (this.socket === null) this.connect()
         this.socket.emit('onChange', BI().info)
     }
 
     afterChange() {
         if (!BI().info) return
+        if (this.socket === null) this.connect()
         this.socket.emit('afterChange', BI().info)
     }
 
@@ -92,16 +95,113 @@ export default class Connector {
         this.isBroadcasting = false
     }
 
-    registerElement(type, id) {
-        if (!isString(type) || Object.values(OverlayType).indexOf(type) === -1)
-            console.log(isString(type), Object.values(OverlayType).indexOf(type))
-        console.log('register', type, id)
+    registerElement(type, id, elem) {
+        // if (!isString(type) || Object.values(OverlayType).indexOf(type) === -1)
+        //     console.log(isString(type), Object.values(OverlayType).indexOf(type))
+        // console.log('register', type, id)
+        if (this.socket === null) this.connect()
+        const socket = this.socket
+
+        socket.emit('registerElement', id)
+
+        switch (type) {
+            case OverlayType.DISPLAY:
+            case OverlayType.VIDEO:
+            case OverlayType.WEBCAM:
+                socket.isTriggered = false
+                socket.on('event_' + id, async (params) => {
+                    switch (params.type) {
+                        case 'play':
+                            if (socket.isTriggered) return
+                            socket.isTriggered = true
+                            socket.blockPause = true
+                            await elem.play()
+                            socket.blockPause = false
+                            break
+                        case 'pause':
+                            if (socket.isTriggered) return
+                            socket.isTriggered = true
+                            if (socket.blockPause === true) break
+                            elem.pause()
+                            break
+                        case 'ratechange':
+                            if (socket.isTriggered) return
+                            socket.isTriggered = true
+                            elem.playbackRate = params.rate
+                            break
+                        case 'seeking':
+                            if (socket.isTriggered) return
+                            socket.isTriggered = true
+                            elem.currentTime = params.time
+                            break
+                        case 'volumechange':
+                            elem.volume = params.volume
+                            elem.muted = params.muted
+                            break
+                        default:
+                    }
+                })
+
+                elem.addEventListener('play', (e) => {
+                    if (!e.isTrusted) return
+                    if (socket.isTriggered === true) {
+                        socket.isTriggered = false
+                        return
+                    }
+                    socket.emit('event_' + id, { type: 'play' })
+                })
+                elem.addEventListener('pause', (e) => {
+                    if (!e.isTrusted) return
+                    if (socket.isTriggered === true) {
+                        socket.isTriggered = false
+                        return
+                    }
+                    socket.emit('event_' + id, { type: 'pause' })
+                })
+                elem.addEventListener('ratechange', (e) => {
+                    if (!e.isTrusted) return
+                    if (socket.isTriggered === true) {
+                        socket.isTriggered = false
+                        return
+                    }
+                    socket.emit('event_' + id, { type: 'ratechange', rate: elem.playbackRate })
+                })
+                elem.addEventListener('seeking', (e) => {
+                    if (!e.isTrusted) return
+                    if (socket.isTriggered === true) {
+                        socket.isTriggered = false
+                        return
+                    }
+                    socket.emit('event_' + id, { type: 'seeking', time: elem.currentTime })
+                })
+                elem.addEventListener('volumechange', (e) => {
+                    if (!e.isTrusted) return
+                    socket.emit('event_' + id, { type: 'volumechange', volume: elem.volume, muted: elem.muted })
+                })
+                // elem.addEventListener('playing', (e) => {
+                //     if (!e.isTrusted) return
+                //     socket.emit('event_' + id, { type: 'play' })
+                // })
+                // elem.addEventListener('waiting', (e) => {
+                //     if (!e.isTrusted) return
+                //     socket.emit('event_' + id, { type: 'pause' })
+                // })
+                elem.dataset.clicked = 'false'
+                break
+            default:
+        }
     }
 
     unregisterElement(type, id) {
-        if (!isString(type) || Object.values(OverlayType).indexOf(type) === -1)
-            console.log(isString(type), Object.values(OverlayType).indexOf(type))
-        console.log('unregister', type, id)
+        // if (!isString(type) || Object.values(OverlayType).indexOf(type) === -1)
+        //     console.log(isString(type), Object.values(OverlayType).indexOf(type))
+        // console.log('unregister', type, id)
+        if (this.socket === null) this.connect()
+        const socket = this.socket
+
+        socket.emit('unregisterElement', id)
+
+        socket.off('event_' + id)
     }
 
     attachDisplayStream(id, cb, reset) {

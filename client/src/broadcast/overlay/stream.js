@@ -63,10 +63,16 @@ export class WebcamOverlay extends Overlay {
                             if (e.target.dataset.muted !== 'true') return
                             e.target.muted = false
                         }}
-                        onPause={(e) => {
-                            if (e.target.dataset.muted !== 'true') return
-                            e.target.dataset.muted = false
-                            e.target.play()
+                        onLoadedMetadata={(e) => {
+                            e.target.addEventListener('pause', (e) => {
+                                if (e.target.dataset.muted !== 'true') return
+                                e.target.dataset.muted = false
+                                e.target.play()
+                            })
+
+                            if (props.isTemp === true) return
+                            let conn = Connector.getInstance()
+                            conn.registerElement(this.overlayType, this.props.value.id, e.target)
                         }}
                     />
                     <Div
@@ -110,8 +116,6 @@ export class WebcamOverlay extends Overlay {
         super.componentDidMount()
 
         window.addEventListener('mouseup', this.onMouseUp)
-        let conn = Connector.getInstance()
-        conn.registerElement(this.overlayType, this.props.value.id)
 
         this.attachStream()
     }

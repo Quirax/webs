@@ -129,6 +129,17 @@ io.on('connect', (socket) => {
         socket.to(room).emit('selectScene', idx)
     })
 
+    socket.on('registerElement', (id) => {
+        if (socket.eventNames().indexOf('event_' + id) > -1) return
+        socket.on('event_' + id, (params) => {
+            socket.to(room).emit('event_' + id, params)
+        })
+    })
+
+    socket.on('unregisterElement', (id) => {
+        socket.offAny('event_' + id)
+    })
+
     socket.on('destination', async (url) => {
         try {
             if (typeof url != 'string') {

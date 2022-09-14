@@ -39,10 +39,16 @@ export class VideoOverlay extends Overlay {
                         if (e.target.dataset.muted !== 'true') return
                         e.target.muted = false
                     }}
-                    onPause={(e) => {
-                        if (e.target.dataset.muted !== 'true') return
-                        e.target.dataset.muted = false
-                        e.target.play()
+                    onLoadedMetadata={(e) => {
+                        e.target.addEventListener('pause', (e) => {
+                            if (e.target.dataset.muted !== 'true') return
+                            e.target.dataset.muted = false
+                            e.target.play()
+                        })
+
+                        if (props.isTemp === true) return
+                        let conn = Connector.getInstance()
+                        conn.registerElement(OverlayType.VIDEO, this.props.value.id, e.target)
                     }}
                 />
             )
@@ -150,8 +156,6 @@ export class VideoOverlay extends Overlay {
         super.componentDidMount()
 
         window.addEventListener('mouseup', this.onMouseUp)
-        let conn = Connector.getInstance()
-        conn.registerElement(OverlayType.VIDEO, this.props.value.id)
     }
 
     componentWillUnmount() {

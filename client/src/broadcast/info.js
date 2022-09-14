@@ -1,6 +1,4 @@
 import Connector from './connector'
-import { OverlayParam, OverlayType } from './overlay'
-import { TransitionType, TransitionParam } from './transition'
 
 let updateContainer = () => {}
 let updateList = () => {}
