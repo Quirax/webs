@@ -12,7 +12,7 @@ spawn('ffmpeg', ['-h']).on('error', function (m) {
 })
 
 // const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
-const corsOrigin = RegExp(`^(http?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
+const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
 
 let app = Express()
 // app.use(Express.static('public'));
@@ -24,11 +24,11 @@ app.use(function (req, res, next) {
     next()
 })
 
-const server = http.createServer(
-    // {
-    //     key: fs.readFileSync('cert/privkey.pem'),
-    //     cert: fs.readFileSync('cert/cert.pem'),
-    // },
+const server = https.createServer(
+    {
+        key: fs.readFileSync('cert/localhost.key'),
+        cert: fs.readFileSync('cert/localhost.crt'),
+    },
     app
 )
 
@@ -55,7 +55,7 @@ let broadcastInfo = {
                 {
                     name: '동영상',
                     type: 'video',
-                    id: 'videotest',
+                    id: 'videotest1',
                     params: {
                         background_color: '#ff0000',
                         background_opacity: 1,
@@ -71,13 +71,42 @@ let broadcastInfo = {
 
                         // Specific params
                         src_type: 'url',
-                        src: 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
+                        src: 'https://www.youtube.com/watch?v=FDSf6n_Bemk',
                     },
                     transform: {
                         x: 0,
                         y: 0,
-                        height: 1080,
-                        width: 1920,
+                        height: 480,
+                        width: 640,
+                        rotate: 0,
+                    },
+                },
+                {
+                    name: '동영상 2',
+                    type: 'video',
+                    id: 'videotest2',
+                    params: {
+                        background_color: '#ff0000',
+                        background_opacity: 1,
+                        opacity: 1,
+                        aspect_ratio: false,
+                        radius: 0,
+                        border_color: '#000000',
+                        border_opacity: 1,
+                        border_width: 0,
+                        border_style: 'solid',
+                        margin: 0,
+                        padding: 0,
+
+                        // Specific params
+                        src_type: 'url',
+                        src: 'https://www.youtube.com/watch?v=TXuMFKS2y5k',
+                    },
+                    transform: {
+                        x: 640,
+                        y: 0,
+                        height: 480,
+                        width: 640,
                         rotate: 0,
                     },
                 },

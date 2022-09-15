@@ -104,34 +104,51 @@ export default class Connector {
 
         socket.emit('registerElement', id)
 
+        socket[id] = {
+            isTriggered: false,
+            blockPause: false,
+            timers: [],
+            elem: elem,
+        }
+
+        function isTriggered(e) {
+            if (!e.isTrusted) return false
+            if (socket[id].isTriggered !== true) return true
+            socket[id].isTriggered = false
+            return false
+        }
+
+        function setTriggered() {
+            if (socket[id].isTriggered) return true
+            socket[id].isTriggered = true
+            return false
+        }
+
         switch (type) {
             case OverlayType.DISPLAY:
             case OverlayType.VIDEO:
             case OverlayType.WEBCAM:
-                socket.isTriggered = false
                 socket.on('event_' + id, async (params) => {
+                    const elem = socket[id].elem
+
                     switch (params.type) {
                         case 'play':
-                            if (socket.isTriggered) return
-                            socket.isTriggered = true
-                            socket.blockPause = true
+                            if (!setTriggered()) return
+                            socket[id].blockPause = true
                             await elem.play()
-                            socket.blockPause = false
+                            socket[id].blockPause = false
                             break
                         case 'pause':
-                            if (socket.isTriggered) return
-                            socket.isTriggered = true
-                            if (socket.blockPause === true) break
+                            if (!setTriggered()) return
+                            if (socket[id].blockPause === true) break
                             elem.pause()
                             break
                         case 'ratechange':
-                            if (socket.isTriggered) return
-                            socket.isTriggered = true
+                            if (!setTriggered()) return
                             elem.playbackRate = params.rate
                             break
                         case 'seeking':
-                            if (socket.isTriggered) return
-                            socket.isTriggered = true
+                            if (!setTriggered()) return
                             elem.currentTime = params.time
                             break
                         case 'volumechange':
@@ -143,50 +160,28 @@ export default class Connector {
                 })
 
                 elem.addEventListener('play', (e) => {
-                    if (!e.isTrusted) return
-                    if (socket.isTriggered === true) {
-                        socket.isTriggered = false
-                        return
-                    }
+                    if (!isTriggered(e)) return
                     socket.emit('event_' + id, { type: 'play' })
                 })
                 elem.addEventListener('pause', (e) => {
-                    if (!e.isTrusted) return
-                    if (socket.isTriggered === true) {
-                        socket.isTriggered = false
-                        return
-                    }
+                    if (!isTriggered(e)) return
                     socket.emit('event_' + id, { type: 'pause' })
                 })
                 elem.addEventListener('ratechange', (e) => {
-                    if (!e.isTrusted) return
-                    if (socket.isTriggered === true) {
-                        socket.isTriggered = false
-                        return
-                    }
+                    if (!isTriggered(e)) return
+                    const elem = socket[id].elem
                     socket.emit('event_' + id, { type: 'ratechange', rate: elem.playbackRate })
                 })
                 elem.addEventListener('seeking', (e) => {
-                    if (!e.isTrusted) return
-                    if (socket.isTriggered === true) {
-                        socket.isTriggered = false
-                        return
-                    }
+                    if (!isTriggered(e)) return
+                    const elem = socket[id].elem
                     socket.emit('event_' + id, { type: 'seeking', time: elem.currentTime })
                 })
                 elem.addEventListener('volumechange', (e) => {
                     if (!e.isTrusted) return
+                    const elem = socket[id].elem
                     socket.emit('event_' + id, { type: 'volumechange', volume: elem.volume, muted: elem.muted })
                 })
-                // elem.addEventListener('playing', (e) => {
-                //     if (!e.isTrusted) return
-                //     socket.emit('event_' + id, { type: 'play' })
-                // })
-                // elem.addEventListener('waiting', (e) => {
-                //     if (!e.isTrusted) return
-                //     socket.emit('event_' + id, { type: 'pause' })
-                // })
-                elem.dataset.clicked = 'false'
                 break
             default:
         }
@@ -202,6 +197,15 @@ export default class Connector {
         socket.emit('unregisterElement', id)
 
         socket.off('event_' + id)
+
+        if (socket[id]) {
+            if (socket[id].timers)
+                socket[id].timers.forEach((v) => {
+                    clearInterval(v)
+                })
+
+            delete socket[id]
+        }
     }
 
     attachDisplayStream(id, cb, reset) {
