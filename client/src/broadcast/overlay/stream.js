@@ -64,12 +64,6 @@ export class WebcamOverlay extends Overlay {
                             e.target.muted = false
                         }}
                         onLoadedMetadata={(e) => {
-                            e.target.addEventListener('pause', (e) => {
-                                if (e.target.dataset.muted !== 'true') return
-                                e.target.dataset.muted = false
-                                e.target.play()
-                            })
-
                             if (props.isTemp === true) return
                             let conn = Connector.getInstance()
                             conn.registerElement(this.overlayType, this.props.value.id, e.target)
@@ -104,6 +98,7 @@ export class WebcamOverlay extends Overlay {
         }
 
         this.attach = (stream) => {
+            console.log(stream, this.videoRef.current)
             this.videoRef.current && (this.videoRef.current.srcObject = stream)
         }
 
@@ -117,7 +112,7 @@ export class WebcamOverlay extends Overlay {
 
         window.addEventListener('mouseup', this.onMouseUp)
 
-        this.attachStream()
+        if (!this.props.isTemp) this.attachStream()
     }
 
     componentWillUnmount() {
@@ -131,7 +126,7 @@ export class WebcamOverlay extends Overlay {
         super.componentDidUpdate()
 
         if (this.id !== this.props.value.id) {
-            this.attachStream()
+            if (!this.props.isTemp) this.attachStream()
             this.id = this.props.value.id
         }
     }
@@ -143,7 +138,7 @@ export class WebcamOverlay extends Overlay {
 
     detachStream() {
         let conn = Connector.getInstance()
-        conn.detachCameraStream(this.props.value.id)
+        conn.detachStream(this.props.value.id)
     }
 }
 
@@ -151,16 +146,11 @@ export class DisplayOverlay extends WebcamOverlay {
     constructor() {
         super()
 
-        this.overlayType = OverlayType.WEBCAM
+        this.overlayType = OverlayType.DISPLAY
     }
 
     attachStream() {
         let conn = Connector.getInstance()
         conn.attachDisplayStream(this.props.value.id, this.attach)
-    }
-
-    detachStream() {
-        let conn = Connector.getInstance()
-        conn.detachDisplayStream(this.props.value.id)
     }
 }

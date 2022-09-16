@@ -4,7 +4,16 @@ import fs from 'fs'
 import https from 'https'
 import http from 'http'
 import { Server } from 'socket.io'
+import wrtc from 'wrtc'
 //TODO: import .env
+
+const wrtc_cfg = {
+    iceServers: [
+        {
+            urls: 'stun:stun.l.google.com:19302',
+        },
+    ],
+}
 
 spawn('ffmpeg', ['-h']).on('error', function (m) {
     console.error('Not found ffmpeg on current working directory.')
@@ -54,7 +63,7 @@ let broadcastInfo = {
                 // HACK: overlay sample
                 {
                     name: '동영상',
-                    type: 'video',
+                    type: 'display',
                     id: 'videotest1',
                     params: {
                         background_color: '#ff0000',
@@ -81,35 +90,35 @@ let broadcastInfo = {
                         rotate: 0,
                     },
                 },
-                {
-                    name: '동영상 2',
-                    type: 'video',
-                    id: 'videotest2',
-                    params: {
-                        background_color: '#ff0000',
-                        background_opacity: 1,
-                        opacity: 1,
-                        aspect_ratio: false,
-                        radius: 0,
-                        border_color: '#000000',
-                        border_opacity: 1,
-                        border_width: 0,
-                        border_style: 'solid',
-                        margin: 0,
-                        padding: 0,
+                // {
+                //     name: '동영상 2',
+                //     type: 'display',
+                //     id: 'videotest2',
+                //     params: {
+                //         background_color: '#ff0000',
+                //         background_opacity: 1,
+                //         opacity: 1,
+                //         aspect_ratio: false,
+                //         radius: 0,
+                //         border_color: '#000000',
+                //         border_opacity: 1,
+                //         border_width: 0,
+                //         border_style: 'solid',
+                //         margin: 0,
+                //         padding: 0,
 
-                        // Specific params
-                        src_type: 'url',
-                        src: 'https://www.youtube.com/watch?v=TXuMFKS2y5k',
-                    },
-                    transform: {
-                        x: 640,
-                        y: 0,
-                        height: 480,
-                        width: 640,
-                        rotate: 0,
-                    },
-                },
+                //         // Specific params
+                //         src_type: 'url',
+                //         src: 'https://www.youtube.com/watch?v=TXuMFKS2y5k',
+                //     },
+                //     transform: {
+                //         x: 640,
+                //         y: 0,
+                //         height: 480,
+                //         width: 640,
+                //         rotate: 0,
+                //     },
+                // },
             ],
         },
     ],
@@ -126,9 +135,15 @@ let broadcastInfo = {
     ],
 }
 
+const streams = {}
+
 io.on('connect', (socket) => {
     const room = 'asdf'
+    const room_preview = room + '_preview'
     socket.join(room)
+    socket.isPreview = false
+
+    if (!streams[room]) streams[room] = {}
 
     let log = (message) => {
         console.log(`[${socket.id}][ log ] ${message}`)
@@ -139,6 +154,16 @@ io.on('connect', (socket) => {
     }
 
     log('Established connection')
+
+    socket.on('isPreview', (ip) => {
+        if (!ip) return
+        socket.isPreview = true
+        socket.join(room_preview)
+
+        for (let id in streams[room]) {
+            socket.emit('streamConnect', { id: id })
+        }
+    })
 
     socket.on('getBroadcastInfo', () => {
         socket.emit('getBroadcastInfo', broadcastInfo)
@@ -167,6 +192,92 @@ io.on('connect', (socket) => {
 
     socket.on('unregisterElement', (id) => {
         socket.offAny('event_' + id)
+    })
+
+    socket.on('streamSenderCandidate', async (data) => {
+        try {
+            let pc = streams[room][data.id].sender
+            await pc.addIceCandidate(new wrtc.RTCIceCandidate(data.candidate))
+        } catch (error) {
+            console.log(error)
+        }
+    })
+
+    socket.on('streamSenderOffer', async (data) => {
+        try {
+            // let pc = createReceiverPeerConnection(data.senderSocketID, socket, data.roomID)
+            let pc = new wrtc.RTCPeerConnection(wrtc_cfg)
+            if (!streams[room][data.id]) streams[room][data.id] = {}
+            streams[room][data.id].sender = pc
+
+            pc.onicecandidate = (e) => {
+                socket.emit('streamSenderCandidate', {
+                    candidate: e.candidate,
+                    id: data.id,
+                })
+            }
+
+            pc.oniceconnectionstatechange = (e) => {}
+
+            pc.ontrack = (e) => {
+                streams[room][data.id].stream = e.streams[0]
+
+                socket.to(room_preview).emit('streamConnect', { id: data.id })
+            }
+
+            await pc.setRemoteDescription(data.sdp)
+
+            let sdp = await pc.createAnswer({
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: true,
+            })
+            await pc.setLocalDescription(sdp)
+            socket.emit('streamSenderAnswer', { sdp, id: data.id })
+        } catch (error) {
+            console.log(error)
+        }
+    })
+
+    socket.on('streamReceiverCandidate', async (data) => {
+        try {
+            let pc = streams[room][data.id].receiver
+            await pc.addIceCandidate(new wrtc.RTCIceCandidate(data.candidate))
+        } catch (error) {
+            console.log(error)
+        }
+    })
+
+    socket.on('streamReceiverOffer', async (data) => {
+        try {
+            // let pc = createReceiverPeerConnection(data.senderSocketID, socket, data.roomID)
+            let pc = new wrtc.RTCPeerConnection(wrtc_cfg)
+            if (!streams[room][data.id]) streams[room][data.id] = {}
+            streams[room][data.id].receiver = pc
+
+            pc.onicecandidate = (e) => {
+                socket.emit('streamReceiverCandidate', {
+                    candidate: e.candidate,
+                    id: data.id,
+                })
+            }
+
+            pc.oniceconnectionstatechange = (e) => {}
+
+            streams[room][data.id].stream.getTracks().forEach((track) => {
+                pc.addTrack(track, streams[room][data.id].stream)
+            })
+
+            await pc.setRemoteDescription(data.sdp)
+
+            let sdp = await pc.createAnswer({
+                offerToReceiveAudio: false,
+                offerToReceiveVideo: false,
+            })
+            await pc.setLocalDescription(sdp)
+            socket.emit('streamReceiverAnswer', { sdp, id: data.id })
+        } catch (error) {
+            console.log(error)
+        }
     })
 
     socket.on('destination', async (url) => {
@@ -251,6 +362,10 @@ io.on('connect', (socket) => {
             }
 
             if (feeder) delete socket._feeder
+
+            if (socket.isPreview)
+                for (let id in streams[room]) streams[room][id].receiver && streams[room][id].receiver.close()
+            else for (let id in streams[room]) streams[room][id].sender && streams[room][id].sender.close()
         } catch (err) {
             errorHandler(err)
         } finally {

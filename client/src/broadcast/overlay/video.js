@@ -5,7 +5,6 @@ import { OverlayParam, OverlayType } from '.'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowsUpDownLeftRight } from '@fortawesome/free-solid-svg-icons'
 import Connector from '../connector'
-import YouTube from 'react-youtube'
 
 export class VideoOverlay extends Overlay {
     constructor() {
