@@ -6,6 +6,8 @@ const wrtc_cfg = {
     iceServers: [
         {
             urls: 'stun:stun.l.google.com:19302',
+            // credential: 'webrtc',
+            // username: 'webrtc',
         },
     ],
 }
@@ -48,8 +50,6 @@ export default class Connector {
                 })
 
                 let getMedia = (stream) => {
-                    _cb(stream)
-
                     this.stream[id].stream = stream
                     this.stream[id].callback = _cb
 
@@ -64,7 +64,9 @@ export default class Connector {
                         })
                     }
 
-                    this.stream[id].pc.oniceconnectionstatechange = (e) => {}
+                    this.stream[id].pc.oniceconnectionstatechange = (e) => {
+                        console.log('sender_oniceconnectionstatechange', e)
+                    }
 
                     stream.getTracks().forEach((track) => {
                         this.stream[id].pc.addTrack(track, stream)
@@ -77,7 +79,7 @@ export default class Connector {
                             offerToReceiveVideo: false,
                         })
                         .then(async (sdp) => {
-                            await this.stream[id].pc.setLocalDescription(sdp)
+                            await this.stream[id].pc.setLocalDescription(new RTCSessionDescription(sdp))
 
                             console.log(this.stream[id].pc, sdp)
 
@@ -142,7 +144,9 @@ export default class Connector {
                     })
                 }
 
-                this.stream[id].pc.oniceconnectionstatechange = (e) => {}
+                this.stream[id].pc.oniceconnectionstatechange = (e) => {
+                    console.log('receiver_oniceconnectionstatechange', e)
+                }
 
                 this.stream[id].pc.ontrack = (e) => {
                     this.stream[id].stream = e.streams[0]
@@ -150,7 +154,6 @@ export default class Connector {
                     console.log(e)
 
                     this.stream[id].callback(this.stream[id].stream)
-
                     this.stream[id].available = true
                 }
 
@@ -160,6 +163,8 @@ export default class Connector {
                     offerToReceiveVideo: true,
                 })
                 await this.stream[id].pc.setLocalDescription(new RTCSessionDescription(sdp))
+
+                console.log(this.stream[id].pc, sdp)
 
                 this.socket.emit('streamReceiverOffer', {
                     sdp,
@@ -177,7 +182,9 @@ export default class Connector {
 
         this.socket.on('streamSenderAnswer', async (data) => {
             try {
+                console.log('streamSenderAnswer', data)
                 await this.stream[data.id].pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
+                this.stream[data.id].callback(this.stream[data.id].stream)
                 this.stream[data.id].available = true
             } catch (error) {
                 console.log(error)
@@ -186,8 +193,9 @@ export default class Connector {
 
         this.socket.on('streamSenderCandidate', async (data) => {
             try {
+                console.log('streamSenderCandidate', data)
                 if (!data.candidate) return
-                this.stream[data.id].pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+                await this.stream[data.id].pc.addIceCandidate(new RTCIceCandidate(data.candidate))
             } catch (error) {
                 console.log(error)
             }
@@ -195,8 +203,8 @@ export default class Connector {
 
         this.socket.on('streamReceiverAnswer', async (data) => {
             try {
-                let pc = this.stream[data.id].pc
-                await pc.setRemoteDescription(data.sdp)
+                console.log('streamReceiverAnswer', data)
+                await this.stream[data.id].pc.setRemoteDescription(new RTCSessionDescription(data.sdp))
             } catch (error) {
                 console.log(error)
             }
@@ -204,9 +212,9 @@ export default class Connector {
 
         this.socket.on('streamReceiverCandidate', async (data) => {
             try {
-                let pc = this.stream[data.id].pc
+                console.log('streamReceiverCandidate', data)
                 if (!data.candidate) return
-                pc.addIceCandidate(new RTCIceCandidate(data.candidate))
+                await this.stream[data.id].pc.addIceCandidate(new RTCIceCandidate(data.candidate))
             } catch (error) {
                 console.log(error)
             }

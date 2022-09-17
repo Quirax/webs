@@ -11,6 +11,8 @@ const wrtc_cfg = {
     iceServers: [
         {
             urls: 'stun:stun.l.google.com:19302',
+            // credential: 'webrtc',
+            // username: 'webrtc',
         },
     ],
 }
@@ -20,8 +22,8 @@ spawn('ffmpeg', ['-h']).on('error', function (m) {
     process.exit(-1)
 })
 
-// const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
-const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
+const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
+// const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
 
 let app = Express()
 // app.use(Express.static('public'));
@@ -34,9 +36,16 @@ app.use(function (req, res, next) {
 })
 
 const server = https.createServer(
+    // {
+    //     key: fs.readFileSync('cert/localhost.key'),
+    //     cert: fs.readFileSync('cert/localhost.crt'),
+    // },
     {
-        key: fs.readFileSync('cert/localhost.key'),
-        cert: fs.readFileSync('cert/localhost.crt'),
+        key: fs.readFileSync('cert/privkey.pem', 'utf8'),
+        cert: fs.readFileSync('cert/fullchain.pem', 'utf8'),
+        // ca: [fs.readFileSync('cert/fullchain.pem', 'utf8')],
+        // requestCert: false,
+        // rejectUnauthorized: false,
     },
     app
 )
@@ -225,13 +234,13 @@ io.on('connect', (socket) => {
                 socket.to(room_preview).emit('streamConnect', { id: data.id })
             }
 
-            await pc.setRemoteDescription(data.sdp)
+            await pc.setRemoteDescription(new wrtc.RTCSessionDescription(data.sdp))
 
             let sdp = await pc.createAnswer({
                 offerToReceiveAudio: true,
                 offerToReceiveVideo: true,
             })
-            await pc.setLocalDescription(sdp)
+            await pc.setLocalDescription(new wrtc.RTCSessionDescription(sdp))
             socket.emit('streamSenderAnswer', { sdp, id: data.id })
         } catch (error) {
             console.log(error)
@@ -267,13 +276,13 @@ io.on('connect', (socket) => {
                 pc.addTrack(track, streams[room][data.id].stream)
             })
 
-            await pc.setRemoteDescription(data.sdp)
+            await pc.setRemoteDescription(new wrtc.RTCSessionDescription(data.sdp))
 
             let sdp = await pc.createAnswer({
                 offerToReceiveAudio: false,
                 offerToReceiveVideo: false,
             })
-            await pc.setLocalDescription(sdp)
+            await pc.setLocalDescription(new wrtc.RTCSessionDescription(sdp))
             socket.emit('streamReceiverAnswer', { sdp, id: data.id })
         } catch (error) {
             console.log(error)
