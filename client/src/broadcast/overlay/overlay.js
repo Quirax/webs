@@ -120,6 +120,7 @@ export class Overlay extends React.Component {
                                     height={this.props.value.transform.height}
                                     width={this.props.value.transform.width}
                                     ratio={ratio}
+                                    isTemp={this.props.isTemp}
                                 />
                             </Div>
                             <Moveable

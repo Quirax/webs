@@ -45,7 +45,7 @@ export const TransitionGenerator = (name, type) => {
 }
 
 export default function getTransitionEffect(transition, options) {
-    if (!transition) return null
+    if (!transition || !transition.type) return { temp: null, main: null }
 
     const defaultStyle = { opacity: 1, top: '0%', left: '0%' }
 

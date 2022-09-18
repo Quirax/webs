@@ -50,7 +50,7 @@ export default class Itemlist extends React.Component {
                 }
 
                 Object.assign(state, {
-                    list: BI().info.scene,
+                    list: BI().info?.scene || [],
                     addLabel: '장면 추가',
                     bottomItem: (
                         <Li
@@ -64,12 +64,18 @@ export default class Itemlist extends React.Component {
                     ),
                     onDblClickGenerator: (item, value, onChange) => (e) => {
                         BI().selectScene(value.index)
+
+                        const conn = Connector.getInstance()
+                        conn.selectScene(value.index)
+
                         this.props.changeMode(ItemlistType.OVERLAYS)
                     },
                     isSelected: (idx) => BI().isCurrentScene(idx),
                     onClickItemGenerator: (item, value) => () => {
                         BI().selectScene(value.index)
-                        // BI().afterChange()
+
+                        const conn = Connector.getInstance()
+                        conn.selectScene(value.index)
                     },
                     onAdd: () => {
                         BI().info.scene.push({

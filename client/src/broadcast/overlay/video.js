@@ -14,7 +14,6 @@ export class VideoOverlay extends Overlay {
 
         this.onMouseUp = (e) => {
             handleRef.current && (handleRef.current.dataset.move = 'false')
-            console.log('mouseup', handleRef.current.dataset.move)
         }
 
         this.children = (props) => {
@@ -24,72 +23,11 @@ export class VideoOverlay extends Overlay {
 
             let src = params.src
 
-            let video = (
-                <Video
-                    width='100%'
-                    height='100%'
-                    alt=''
-                    src={src}
-                    autoPlay
-                    loop
-                    muted
-                    controls
-                    data-muted={true}
-                    onClick={(e) => {
-                        if (e.target.dataset.muted !== 'true') return
-                        e.target.muted = false
-                    }}
-                    onPause={(e) => {
-                        if (e.target.dataset.muted !== 'true') return
-                        e.target.dataset.muted = false
-                        e.target.play()
-                    }}
-                />
-            )
-
-            let onClick = null
-
             switch (params.src_type) {
                 case OverlayParam.src_type.UPLOAD:
                     // FIXME: upload file url
                     break
                 case OverlayParam.src_type.URL:
-                    let regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|\?v=)([^#&?]*).*/
-                    let match = src.match(regExp)
-
-                    if (match && match[2].length === 11) {
-                        src = `https://www.youtube-nocookie.com/embed/${match[2]}`
-                        src += `?autoplay=1&mute=1`
-                        src += `&loop=1&playlist=${match[2]}`
-                        src += `&controls=1&fs=0&iv_load_policy=3`
-                        src += `&enablejsapi=1`
-
-                        video = (
-                            <iframe
-                                title={`youtube_${match[2]}`}
-                                src={src}
-                                width='100%'
-                                height='100%'
-                                allow='autoplay'
-                                frameBorder='0'
-                                // style={{ pointerEvents: 'none' }}
-                            ></iframe>
-                        )
-
-                        onClick = (e) => {
-                            console.log(props.referrer.current)
-                            if (!props.referrer.current) return
-                            // props.referrer.current.contentWindow.click = () => {}
-                            props.referrer.current.contentWindow.postMessage(
-                                JSON.stringify({
-                                    event: 'command',
-                                    func: 'unMute',
-                                    args: Array.prototype.slice.call([]),
-                                }),
-                                src
-                            )
-                        }
-                    }
                     break
                 default:
             }
@@ -109,14 +47,28 @@ export class VideoOverlay extends Overlay {
                     width={props.width * props.ratio}
                     height={props.height * props.ratio}
                     referrer={props.referrer}
-                    onClick={onClick}
                     onMouseEnter={(e) => {
                         handleRef.current.style.display = 'inline-block'
                     }}
                     onMouseLeave={(e) => {
                         handleRef.current.dataset.handle === 'false' && (handleRef.current.style.display = 'none')
                     }}>
-                    {video}
+                    <Video
+                        width='100%'
+                        height='100%'
+                        alt=''
+                        src={src}
+                        autoPlay
+                        loop
+                        muted
+                        controls
+                        data-muted={true}
+                        onLoadedMetadata={(e) => {
+                            if (props.isTemp === true) return
+                            let conn = Connector.getInstance()
+                            conn.registerElement(OverlayType.VIDEO, this.props.value.id, e.target)
+                        }}
+                    />
                     <Div
                         referrer={handleRef}
                         position='absolute'
@@ -150,8 +102,6 @@ export class VideoOverlay extends Overlay {
         super.componentDidMount()
 
         window.addEventListener('mouseup', this.onMouseUp)
-        let conn = Connector.getInstance()
-        conn.registerElement(OverlayType.VIDEO, this.props.value.id)
     }
 
     componentWillUnmount() {

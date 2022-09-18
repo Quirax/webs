@@ -81,6 +81,11 @@ export default class Broadcast extends React.Component {
     }
 
     componentDidMount() {
+        let connector = Connector.getInstance()
+        Connector.setIsPreview(this.props.preview)
+        connector.connect()
+        connector.getBroadcastInfo()
+
         window.addEventListener('resize', this.getRects)
         this.getRects()
     }

@@ -1,7 +1,6 @@
-FROM node:alpine as builder
+FROM node:latest as builder
 
 # Create working directory
-RUN mkdir /usr/src
 RUN mkdir /usr/src/app
 WORKDIR /usr/src/app
 
@@ -10,18 +9,19 @@ ENV PATH /usr/src/app/node_modules/.bin:$PATH
 
 # Update npm
 RUN npm i -g npm
-# RUN npm install --save
+
+# Run additional module optimization
+RUN apt-get update
+RUN apt install ffmpeg -y
+
+# For experimental
+RUN apt install -y vim
 
 # Copy sources to working directory
 COPY . /usr/src/app
 
-# Run additional module optimization
-RUN apk update
-RUN apk add
-RUN apk add ffmpeg
-
-# Build
-
+# Install node modules
+RUN npm install
 
 # Open necessary ports
 EXPOSE 8080
