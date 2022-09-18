@@ -1,0 +1,18 @@
+{
+    "name": "web2stream",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+        "start": "cross-env NODE_ENV=development FFMPEG_PATH=\"C:\\Program Files (x86)\\FFmpeg for Audacity\\ffmpeg.exe\" nodemon -w . .",
+        "test": "cross-env NODE_ENV=test nodemon -w . ."
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "ffmpeg-installer": "^1.0.2",
+        "puppeteer": "^17.1.3",
+        "puppeteer-screen-recorder": "^2.1.1"
+    }
+}
