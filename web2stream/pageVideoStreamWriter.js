@@ -131,7 +131,6 @@ export default class PageVideoStreamWriter extends EventEmitter {
             priority: 20,
         })
             .videoCodec('libx264')
-            .audioCodec('copy')
             .size(this.videoFrameSize)
             .aspect(this.options.aspectRatio || '4:3')
             .autopad(this.autopad.activation, this.autopad?.color)
