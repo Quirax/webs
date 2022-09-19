@@ -22,8 +22,8 @@ spawn('ffmpeg', ['-h']).on('error', function (m) {
     process.exit(-1)
 })
 
-const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
-// const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
+// const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
+const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
 
 let app = Express()
 // app.use(Express.static('public'));
@@ -36,17 +36,17 @@ app.use(function (req, res, next) {
 })
 
 const server = https.createServer(
-    // {
-    //     key: fs.readFileSync('cert/localhost.key'),
-    //     cert: fs.readFileSync('cert/localhost.crt'),
-    // },
     {
-        key: fs.readFileSync('cert/privkey.pem', 'utf8'),
-        cert: fs.readFileSync('cert/fullchain.pem', 'utf8'),
-        // ca: [fs.readFileSync('cert/fullchain.pem', 'utf8')],
-        // requestCert: false,
-        // rejectUnauthorized: false,
+        key: fs.readFileSync('cert/localhost.key'),
+        cert: fs.readFileSync('cert/localhost.crt'),
     },
+    // {
+    //     key: fs.readFileSync('cert/privkey.pem', 'utf8'),
+    //     cert: fs.readFileSync('cert/fullchain.pem', 'utf8'),
+    //     // ca: [fs.readFileSync('cert/fullchain.pem', 'utf8')],
+    //     // requestCert: false,
+    //     // rejectUnauthorized: false,
+    // },
     app
 )
 

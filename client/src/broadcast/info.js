@@ -49,14 +49,29 @@ class BroadcastInfo {
         return this.info.scene[this.tempScene]
     }
 
-    selectScene(idx) {
+    selectScene(idx, noTransition = false) {
         if (this.info.currentScene === idx) return
 
         this.tempScene = this.info.currentScene
         this.info.currentScene = idx
 
-        updateContainer(true)
+        updateContainer(!noTransition)
         updateList()
+        updateTitle()
+    }
+
+    deleteScene(idx) {
+        if (this.info.scene.length === 1) return alert('최소 1개 이상의 장면이 있어야 합니다.')
+
+        if (this.tempScene > idx) this.tempScene--
+        else if (this.tempScene === idx && this.tempScene === this.info.scene.length - 1) this.tempScene--
+        if (this.info.currentScene > idx) this.info.currentScene--
+        else if (this.info.currentScene === idx && this.info.currentScene === this.info.scene.length - 1)
+            this.info.currentScene--
+
+        this.info.scene.splice(idx, 1)
+
+        this.afterChange()
         updateTitle()
     }
 

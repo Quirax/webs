@@ -155,6 +155,11 @@ export default class Itemlist extends React.Component {
                         }
                     },
                     addLabel: '오버레이 추가',
+                    isSelected: (idx) => BI().currentScene().overlay.selected === idx,
+                    onClickItemGenerator: (item, value) => () => {
+                        BI().currentScene().overlay.selected = value.index
+                        BI().onChange(true)
+                    },
                     onDblClickGenerator: (item, value, onChange) => (e) => {
                         if (this.propertyDialogRef) {
                             let dialog = this.propertyDialogRef.current
@@ -262,6 +267,7 @@ function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style, 
             switch (mode) {
                 case ItemlistType.SCENES:
                     list = BI().info.scene
+                    BI().selectScene(hoverIndex, true)
                     break
                 case ItemlistType.TRANSITIONS:
                     list = BI().info.transition
@@ -393,8 +399,8 @@ class ContextMenu extends React.Component {
         switch (this.state.mode) {
             case ItemlistType.SCENES:
                 if (this.state.list.length === 1) return alert('최소 1개 이상의 장면이 있어야 합니다.')
-                BI().selectScene(0)
-                break
+                BI().deleteScene(this.state.list.indexOf(this.state.value))
+                return
             case ItemlistType.TRANSITIONS:
                 if (this.state.list.length === 1) return alert('최소 1개 이상의 화면전환이 있어야 합니다.')
                 BI().selectTransition(0)
@@ -402,7 +408,7 @@ class ContextMenu extends React.Component {
             default:
                 if (this.state.value.type === OverlayType.WEBCAM) {
                     let conn = Connector.getInstance()
-                    conn.detachDisplayStream(this.state.value.id)
+                    conn.detachStream(this.state.value.id)
                 }
 
                 break

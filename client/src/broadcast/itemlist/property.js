@@ -624,9 +624,9 @@ function ParamList(props) {
                                             props.value && (props.value.params.text_align_vertical = val)
                                             props.onChange && props.onChange(props.value)
                                         }}>
-                                        <option value={OverlayParam.text_align_vertical.TOP}>T</option>
-                                        <option value={OverlayParam.text_align_vertical.MIDDLE}>M</option>
-                                        <option value={OverlayParam.text_align_vertical.BOTTOM}>B</option>
+                                        <option value={OverlayParam.text_align_vertical.TOP}>위</option>
+                                        <option value={OverlayParam.text_align_vertical.MIDDLE}>중간</option>
+                                        <option value={OverlayParam.text_align_vertical.BOTTOM}>아래</option>
                                     </Arg>
                                     <Arg
                                         name='줄 높이'

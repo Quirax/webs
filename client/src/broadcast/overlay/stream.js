@@ -138,6 +138,7 @@ export class WebcamOverlay extends Overlay {
 
     detachStream() {
         let conn = Connector.getInstance()
+        console.log(this.props.value)
         conn.detachStream(this.props.value.id)
     }
 }

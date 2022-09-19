@@ -34,10 +34,10 @@ export default class Broadcast extends React.Component {
 
             const wp = this.workplaceRef.current
 
-            if (wp.clientWidth > wp.parentElement.clientWidth) {
-                wp.style.width = '100%'
-                wp.style.height = null
-            }
+            // if (wp.clientWidth > wp.parentElement.clientWidth) {
+            wp.style.width = '100%'
+            wp.style.height = null
+            // }
             if (wp.clientHeight > wp.parentElement.clientHeight) {
                 wp.style.height = '100%'
                 wp.style.width = null
@@ -49,6 +49,7 @@ export default class Broadcast extends React.Component {
                     width: wp.clientWidth,
                 },
             })
+            BI().onChange()
         }
 
         this.getCanvasRatio = (size) => (this.state.canvasRect.width / 1920) * size
@@ -75,6 +76,7 @@ export default class Broadcast extends React.Component {
         this.changeMode = this.changeMode.bind(this)
 
         this.saveScene = () => {
+            BI().currentScene().overlay.selected = null
             this.changeMode(ItemlistType.SCENES)
         }
         this.saveScene = this.saveScene.bind(this)
@@ -242,10 +244,8 @@ class Toolbar extends React.Component {
                             <button onClick={saveScene}>저장</button>
                             <button
                                 onClick={() => {
-                                    if (BI().info.scene.length === 1)
-                                        return alert('최소 1개 이상의 장면이 있어야 합니다.')
-                                    BI().info.scene.splice(BI().info.scene.indexOf(BI().currentScene()), 1)
-                                    BI().selectScene(0)
+                                    BI().deleteScene(BI().info.scene.indexOf(BI().currentScene()))
+                                    saveScene()
                                 }}>
                                 삭제
                             </button>

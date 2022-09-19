@@ -5,18 +5,19 @@ import Moveable from 'react-moveable'
 import BI from '../info'
 
 export class Overlay extends React.Component {
+    state = {
+        x: 0,
+        y: 0,
+        height: 0,
+        width: 0,
+        rotate: 0,
+        sizeBias: 0,
+        params: {},
+        moveable: false,
+    }
+
     constructor() {
         super()
-
-        this.state = {
-            x: 0,
-            y: 0,
-            height: 0,
-            width: 0,
-            rotate: 0,
-            sizeBias: 0,
-            params: {},
-        }
 
         this.contentRef = React.createRef()
         this.childrenRef = React.createRef()
@@ -43,6 +44,12 @@ export class Overlay extends React.Component {
             })
         }
         this.offShift = this.offShift.bind(this)
+
+        this.setFocus = () => {
+            BI().currentScene().overlay.selected = this.props.idx
+            BI().onChange(true)
+        }
+        this.setFocus = this.setFocus.bind(this)
     }
 
     componentDidMount() {
@@ -86,7 +93,10 @@ export class Overlay extends React.Component {
             <OVERLAY_PROPS.Consumer>
                 {(props) => {
                     let ratio = this.props.ratio || props.ratio || 1
-                    let moveable = !(this.props.preview || props.preview)
+                    let moveable =
+                        !(this.props.preview || props.preview) &&
+                        BI().currentScene().overlay.selected === this.props.idx &&
+                        !props.isTemp
                     let childrenRef = this.childrenRef.current
 
                     return (
