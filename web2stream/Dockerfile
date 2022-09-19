@@ -45,6 +45,16 @@ RUN apt-get install -y libappindicator1 fonts-liberation libatk-bridge2.0-0 liba
 # RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
 # RUN dpkg -i google-chrome*.deb
 
+# Hangul support
+RUN apt install -y udev fonts-freefont-ttf tzdata
+RUN mkdir /usr/share/fonts/nanumfont
+RUN wget http://cdn.naver.com/naver/NanumFont/fontfiles/NanumFont_TTF_ALL.zip
+RUN unzip NanumFont_TTF_ALL.zip -d /usr/share/fonts/nanumfont
+RUN fc-cache -f -v
+RUN ln -sf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+ENV LANG=ko_KR.UTF-8 \
+    LANGUAGE=ko_KR.UTF-8
+
 # For experimental
 RUN apt install -y vim
 

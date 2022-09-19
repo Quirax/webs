@@ -15,7 +15,7 @@ import { start as PAStart, setDefaultSink, createSink, getInputId, moveInput } f
 
 const defaultOptions = {
     followNewTab: true,
-    fps: 60,
+    fps: 30,
     quality: 100,
     ffmpeg_Path: 'ffmpeg',
     videoFrame: {
@@ -36,10 +36,9 @@ export class RTMPWriter extends PageVideoStreamWriter {
                 priority: 20,
             })
                 .inputOptions([
-                    '-thread_queue_size',
-                    '1024',
-                    '-itsoffset',
-                    '0',
+                    // '-re',
+                    // '-itsoffset',
+                    // '0',
                     '-f',
                     'pulse',
                     // '-ac',
@@ -48,20 +47,28 @@ export class RTMPWriter extends PageVideoStreamWriter {
                     this.options.outputname + '.monitor',
                     // '-acodec',
                     // 'aac',
+                    '-thread_queue_size',
+                    '2048',
                 ])
+                .inputFormat('image2pipe')
+                .inputOptions('-thread_queue_size 2048')
+                .inputOptions('-fflags +genpts')
+                .inputOptions('-itsoffset 00:00:00.5')
+                .inputFPS(35)
                 .videoCodec('libx264')
                 .size(this.videoFrameSize)
                 .aspect(this.options.aspectRatio || '4:3')
                 .autopad(this.autopad.activation, this.autopad?.color)
-                .inputFormat('image2pipe')
-                .inputOptions(['-thread_queue_size 1024'])
-                .inputFPS(this.options.fps)
                 .outputOptions('-preset ultrafast')
                 .outputOptions('-pix_fmt yuv420p')
-                // .outputOptions('-minrate 1000')
-                // .outputOptions('-maxrate 1000')
-                .outputOptions('-framerate 1')
-                // .outputFPS(this.options.fps)
+                .outputOptions('-profile:v baseline')
+                .outputOptions('-g 30')
+                // .outputOptions('-vb 128k')
+                .outputOptions('-minrate 2M')
+                .outputOptions('-maxrate 6M')
+                .outputOptions('-bufsize 10M')
+                // .outputOptions('-framerate 1')
+                .outputFPS(this.options.fps)
                 .outputOptions(`-threads ${cpu}`)
                 .on('progress', (progressDetails) => {
                     this.duration = progressDetails.timemark
@@ -96,7 +103,7 @@ export class Streamer extends PuppeteerScreenRecorder {
 
 ;(async () => {
     const OUTPUT_NAME = 'streamtest'
-    const TARGET_URL = 'https://www.youtube.com/watch?v=HOVp2jqWzSM'
+    const TARGET_URL = 'https://www.youtube.com/watch?v=jrOi3NZI2qw'
 
     const browser = await Puppeteer.launch({
         args: ['--window-size=1920,1080', '--autoplay-policy=no-user-gesture-required', '--no-sandbox'],
@@ -135,8 +142,8 @@ export class Streamer extends PuppeteerScreenRecorder {
     // await streamer.start('./report/video/simple.mp4')
     console.log(`Chrome is streamed to rtmp server with pid ${browser.process().pid}`)
     // await keypress()
-    setTimeout(async () => {
-        await streamer.stop()
-        await browser.close()
-    }, 10000)
+    // setTimeout(async () => {
+    //     await streamer.stop()
+    //     await browser.close()
+    // }, 10000)
 })()
