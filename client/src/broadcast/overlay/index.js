@@ -1,5 +1,5 @@
 import React from 'react'
-import BI from '../info'
+import BI, { GenerateID } from '../info'
 import { Ol } from '../../components'
 
 // HACK : 오버레이 추가
@@ -80,7 +80,7 @@ export const OverlayGenerator = (name, type) => {
     let obj = {
         name,
         type,
-        id: Math.random().toString(36).substring(2, 11),
+        id: GenerateID(),
         params: {
             background_color: '#000000',
             background_opacity: 0,
@@ -229,8 +229,6 @@ function OverlayElems(props) {
         <>
             {props.overlay.map((v, i) => {
                 // HACK : 오버레이 추가
-
-                console.log(v)
 
                 switch (v.type) {
                     case OverlayType.TEXT:

@@ -2,7 +2,7 @@ import { cloneDeep } from 'lodash'
 import React from 'react'
 import { Div, Ul, Li, Nav, Dialog } from '../../components'
 import Connector from '../connector'
-import BI, { assignList } from '../info'
+import BI, { assignList, GenerateID } from '../info'
 import { OverlayType } from '../overlay'
 import PropertyDialog from './property'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
@@ -386,7 +386,15 @@ class ContextMenu extends React.Component {
 
     onCopy(e) {
         let newValue = cloneDeep(this.state.value)
+        newValue.id = GenerateID()
         newValue.name += ' (복제)'
+
+        if (this.state.mode === ItemlistType.SCENES) {
+            newValue.overlay.forEach((v) => {
+                v.id = GenerateID()
+            })
+        }
+
         this.state.list.push(newValue)
         BI().afterChange()
     }
@@ -408,7 +416,7 @@ class ContextMenu extends React.Component {
             default:
                 if (this.state.value.type === OverlayType.WEBCAM) {
                     let conn = Connector.getInstance()
-                    conn.detachStream(this.state.value.id)
+                    conn.detachStream(this.state.value.id, BI().currentScene().id)
                 }
 
                 break

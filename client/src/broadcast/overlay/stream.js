@@ -5,6 +5,7 @@ import { OverlayType } from '.'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowsUpDownLeftRight } from '@fortawesome/free-solid-svg-icons'
 import Connector from '../connector'
+import BI from '../info'
 
 export class WebcamOverlay extends Overlay {
     constructor() {
@@ -14,6 +15,7 @@ export class WebcamOverlay extends Overlay {
         const videoRef = React.createRef()
         this.videoRef = videoRef
         this.id = null
+        this.sid = null
 
         this.onMouseUp = (e) => {
             handleRef.current && (handleRef.current.dataset.move = 'false')
@@ -66,7 +68,12 @@ export class WebcamOverlay extends Overlay {
                         onLoadedMetadata={(e) => {
                             if (props.isTemp === true) return
                             let conn = Connector.getInstance()
-                            conn.registerElement(this.overlayType, this.props.value.id, e.target)
+                            conn.registerElement(
+                                this.overlayType,
+                                this.props.value.id,
+                                BI().currentScene().id,
+                                e.target
+                            )
                         }}
                     />
                     <Div
@@ -119,27 +126,39 @@ export class WebcamOverlay extends Overlay {
         window.removeEventListener('mouseup', this.onMouseUp)
 
         let conn = Connector.getInstance()
-        conn.unregisterElement(this.overlayType, this.props.value.id)
+        if (this.props.isTemp === false)
+            conn.unregisterElement(
+                this.overlayType,
+                this.props.value.id,
+                this.props.isTemp ? BI().getTempScene().id : BI().currentScene().id
+            )
     }
 
     componentDidUpdate() {
         super.componentDidUpdate()
 
-        if (this.id !== this.props.value.id) {
-            if (!this.props.isTemp) this.attachStream()
+        const sid = this.props.isTemp ? BI().getTempScene().id : BI().currentScene().id
+
+        if (this.id !== this.props.value.id || sid !== this.sid) {
+            this.attachStream()
             this.id = this.props.value.id
+            this.sid = sid
         }
     }
 
     attachStream() {
         let conn = Connector.getInstance()
-        conn.attachCameraStream(this.props.value.id, this.attach)
+        this.attach(null)
+        conn.attachCameraStream(
+            this.props.value.id,
+            this.props.isTemp ? BI().getTempScene().id : BI().currentScene().id,
+            this.attach
+        )
     }
 
     detachStream() {
         let conn = Connector.getInstance()
-        console.log(this.props.value)
-        conn.detachStream(this.props.value.id)
+        conn.detachStream(this.props.value.id, this.props.isTemp ? BI().getTempScene().id : BI().currentScene().id)
     }
 }
 
@@ -152,6 +171,11 @@ export class DisplayOverlay extends WebcamOverlay {
 
     attachStream() {
         let conn = Connector.getInstance()
-        conn.attachDisplayStream(this.props.value.id, this.attach)
+        this.attach(null)
+        conn.attachDisplayStream(
+            this.props.value.id,
+            this.props.isTemp ? BI().getTempScene().id : BI().currentScene().id,
+            this.attach
+        )
     }
 }

@@ -730,7 +730,7 @@ function ParamList(props) {
                                 default={{}}
                                 onChange={() => {
                                     let conn = Connector.getInstance()
-                                    conn.attachCameraStream(props.value.id, null, true)
+                                    conn.attachCameraStream(props.value.id, BI().currentScene().id, null, true)
                                 }}>
                                 <FontAwesomeIcon icon={faVideoCamera} /> 카메라 재설정
                             </Arg>
@@ -746,7 +746,7 @@ function ParamList(props) {
                                 default={{}}
                                 onChange={() => {
                                     let conn = Connector.getInstance()
-                                    conn.attachDisplayStream(props.value.id, null, true)
+                                    conn.attachDisplayStream(props.value.id, BI().currentScene().id, null, true)
                                 }}>
                                 <FontAwesomeIcon icon={faDisplay} /> 화면 재설정
                             </Arg>

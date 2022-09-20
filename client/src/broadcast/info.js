@@ -6,7 +6,7 @@ let updateTitle = () => {}
 
 class BroadcastInfo {
     constructor() {
-        this.tempScene = 0
+        this.tempScene = -1
 
         this.onChange = (update = true) => {
             const conn = Connector.getInstance()
@@ -45,7 +45,7 @@ class BroadcastInfo {
     }
 
     getTempScene() {
-        if (!this.info) return {}
+        if (!this.info || this.tempScene === -1) return { overlay: [] }
         return this.info.scene[this.tempScene]
     }
 
@@ -117,3 +117,5 @@ export function assignList(l) {
 export function assignTitle(t) {
     updateTitle = t
 }
+
+export const GenerateID = () => Math.random().toString(36).substring(2, 11)
