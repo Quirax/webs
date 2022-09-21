@@ -5,7 +5,8 @@ import https from 'https'
 import http from 'http'
 import { Server } from 'socket.io'
 import wrtc from 'wrtc'
-//TODO: import .env
+
+import './env.js'
 
 const wrtc_cfg = {
     iceServers: [
@@ -23,7 +24,7 @@ spawn('ffmpeg', ['-h']).on('error', function (m) {
 })
 
 // const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
-const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
+const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?${process.env.HOST}(?::d{1,5})?)`)
 
 let app = Express()
 // app.use(Express.static('public'));
@@ -36,17 +37,15 @@ app.use(function (req, res, next) {
 })
 
 const server = https.createServer(
-    {
-        key: fs.readFileSync('cert/localhost.key'),
-        cert: fs.readFileSync('cert/localhost.crt'),
-    },
-    // {
-    //     key: fs.readFileSync('cert/privkey.pem', 'utf8'),
-    //     cert: fs.readFileSync('cert/fullchain.pem', 'utf8'),
-    //     // ca: [fs.readFileSync('cert/fullchain.pem', 'utf8')],
-    //     // requestCert: false,
-    //     // rejectUnauthorized: false,
-    // },
+    process.env.HOST === 'localhost'
+        ? {
+              key: fs.readFileSync('cert/localhost.key'),
+              cert: fs.readFileSync('cert/localhost.crt'),
+          }
+        : {
+              key: fs.readFileSync('cert/privkey.pem', 'utf8'),
+              cert: fs.readFileSync('cert/fullchain.pem', 'utf8'),
+          },
     app
 )
 
