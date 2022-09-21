@@ -48,6 +48,8 @@ export default class Connector {
             if (Connector.isPreview) return _cb(this.stream[id].stream)
 
             if (!this.stream[id].stream || this.stream[id].stream === null) {
+                if (scene === BI().getTempScene().id) return
+
                 Object.assign(this.stream[id], {
                     available: false,
                 })
@@ -93,20 +95,30 @@ export default class Connector {
 
                 getMedia = getMedia.bind(this)
 
-                streamer(getMedia)
-                console.log(this.stream[id])
+                streamer()
+                    .then(getMedia)
+                    .catch((err) => {
+                        console.log('streamer_err', err)
+                        Object.assign(this.stream[id], {
+                            available: true,
+                        })
+                    })
             } else return _cb(this.stream[id].stream)
         }
 
         this.attachDisplayStream = (id, scene, cb, reset) => {
-            attachStream(id, scene, cb, reset, (cb) => {
-                navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(cb)
+            attachStream(id, scene, cb, reset, () => {
+                return new Promise((resolve, reject) => {
+                    navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(resolve).catch(reject)
+                })
             })
         }
 
         this.attachCameraStream = (id, scene, cb, reset) => {
-            attachStream(id, scene, cb, reset, (cb) => {
-                navigator.mediaDevices.getUserMedia({ video: true }).then(cb)
+            attachStream(id, scene, cb, reset, () => {
+                return new Promise((resolve, reject) => {
+                    navigator.mediaDevices.getUserMedia({ video: true }).then(resolve).catch(reject)
+                })
             })
         }
     }

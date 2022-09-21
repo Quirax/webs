@@ -105,38 +105,7 @@ let broadcastInfo = {
             name: '빨강2',
             defaultCategory: 'Just Chatting',
             id: 'redred',
-            overlay: [
-                // HACK: overlay sample
-                {
-                    name: '동영상',
-                    type: 'display',
-                    id: 'videotest2',
-                    params: {
-                        background_color: '#ff0000',
-                        background_opacity: 1,
-                        opacity: 1,
-                        aspect_ratio: false,
-                        radius: 0,
-                        border_color: '#000000',
-                        border_opacity: 1,
-                        border_width: 0,
-                        border_style: 'solid',
-                        margin: 0,
-                        padding: 0,
-
-                        // Specific params
-                        src_type: 'url',
-                        src: 'https://www.youtube.com/watch?v=FDSf6n_Bemk',
-                    },
-                    transform: {
-                        x: 0,
-                        y: 0,
-                        height: 480,
-                        width: 640,
-                        rotate: 0,
-                    },
-                },
-            ],
+            overlay: [],
         },
     ],
     transition: [
