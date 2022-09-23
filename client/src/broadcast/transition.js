@@ -50,7 +50,7 @@ export default function getTransitionEffect(transition, options) {
     const defaultStyle = { opacity: 1, top: '0%', left: '0%' }
 
     const common = {
-        config: { duration: transition.params.duration },
+        config: { duration: transition.params?.duration || 0 },
         reset: true,
         ...options,
     }

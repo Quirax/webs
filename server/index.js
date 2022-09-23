@@ -5,7 +5,10 @@ import https from 'https'
 import http from 'http'
 import { Server } from 'socket.io'
 import wrtc from 'wrtc'
-//TODO: import .env
+
+import './env.js'
+
+import db from './db/index.js'
 
 const wrtc_cfg = {
     iceServers: [
@@ -23,7 +26,7 @@ spawn('ffmpeg', ['-h']).on('error', function (m) {
 })
 
 // const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?qrmoo.mooo.com(?::d{1,5})?)`)
-const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?localhost(?::d{1,5})?)`)
+const corsOrigin = RegExp(`^(https?:\/\/(?:.+.)?${process.env.HOST}(?::d{1,5})?)`)
 
 let app = Express()
 // app.use(Express.static('public'));
@@ -36,17 +39,15 @@ app.use(function (req, res, next) {
 })
 
 const server = https.createServer(
-    {
-        key: fs.readFileSync('cert/localhost.key'),
-        cert: fs.readFileSync('cert/localhost.crt'),
-    },
-    // {
-    //     key: fs.readFileSync('cert/privkey.pem', 'utf8'),
-    //     cert: fs.readFileSync('cert/fullchain.pem', 'utf8'),
-    //     // ca: [fs.readFileSync('cert/fullchain.pem', 'utf8')],
-    //     // requestCert: false,
-    //     // rejectUnauthorized: false,
-    // },
+    process.env.HOST === 'localhost'
+        ? {
+              key: fs.readFileSync('cert/localhost.key'),
+              cert: fs.readFileSync('cert/localhost.crt'),
+          }
+        : {
+              key: fs.readFileSync('cert/privkey.pem', 'utf8'),
+              cert: fs.readFileSync('cert/fullchain.pem', 'utf8'),
+          },
     app
 )
 
@@ -57,73 +58,11 @@ let io = new Server(server, {
     },
 })
 
-let broadcastInfo = {
-    uid: 0,
-    title: '방송시험중',
-    category: 'Just Chatting',
-    currentScene: 0,
-    currentTransition: 0,
-    scene: [
-        {
-            name: '빨강',
-            defaultCategory: 'Just Chatting',
-            id: 'red',
-            overlay: [
-                // HACK: overlay sample
-                {
-                    name: '동영상',
-                    type: 'display',
-                    id: 'videotest1',
-                    params: {
-                        background_color: '#ff0000',
-                        background_opacity: 1,
-                        opacity: 1,
-                        aspect_ratio: false,
-                        radius: 0,
-                        border_color: '#000000',
-                        border_opacity: 1,
-                        border_width: 0,
-                        border_style: 'solid',
-                        margin: 0,
-                        padding: 0,
-
-                        // Specific params
-                        src_type: 'url',
-                        src: 'https://www.youtube.com/watch?v=FDSf6n_Bemk',
-                    },
-                    transform: {
-                        x: 0,
-                        y: 0,
-                        height: 480,
-                        width: 640,
-                        rotate: 0,
-                    },
-                },
-            ],
-        },
-        {
-            name: '빨강2',
-            defaultCategory: 'Just Chatting',
-            id: 'redred',
-            overlay: [],
-        },
-    ],
-    transition: [
-        {
-            name: '기본',
-            id: 'asdefault',
-            type: 'slide',
-            params: {
-                duration: 1000,
-                slide_from: 'left',
-            },
-        },
-    ],
-}
+let broadcastInfo = null
 
 const streams = {}
 
-io.on('connect', (socket) => {
+io.on('connect', async (socket) => {
     const room = 'asdf'
     const room_preview = room + '_preview'
     socket.join(room)
@@ -140,6 +79,16 @@ io.on('connect', (socket) => {
     }
 
     log('Established connection')
+
+    try {
+        broadcastInfo = await db.get(0)
+        if (broadcastInfo === null) {
+            broadcastInfo = db.newUser(0)
+            await db.save(broadcastInfo)
+        }
+    } catch (e) {
+        return console.error(e)
+    }
 
     socket.on('isPreview', (ip) => {
         if (!ip) return
@@ -159,14 +108,30 @@ io.on('connect', (socket) => {
         socket.to(room).emit('getBroadcastInfo', info)
     })
 
-    socket.on('afterChange', (info) => {
-        broadcastInfo = info
-        socket.to(room).emit('getBroadcastInfo', info)
+    socket.on('afterChange', async (info) => {
+        // broadcastInfo = new db.BI(info)
+
+        try {
+            // await db.save(broadcastInfo)
+            broadcastInfo.overwrite(info)
+            await db.save(broadcastInfo)
+        } catch (e) {
+            console.error(e)
+        } finally {
+            socket.to(room).emit('getBroadcastInfo', info)
+        }
     })
 
-    socket.on('selectScene', (idx) => {
+    socket.on('selectScene', async (idx) => {
         broadcastInfo.currentScene = idx
-        socket.to(room).emit('selectScene', idx)
+
+        try {
+            await db.save(broadcastInfo)
+        } catch (e) {
+            console.error(e)
+        } finally {
+            socket.to(room).emit('selectScene', idx)
+        }
     })
 
     socket.on('registerElement', (id) => {
