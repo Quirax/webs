@@ -266,6 +266,21 @@ io.on('connect', (socket) => {
         }
     })
 
+    socket.on('disconnectStream', (id) => {
+        if (socket.isPreview) {
+            return
+        } else {
+            streams[room][id].stream &&
+                streams[room][id].stream.getTracks().forEach((t) => {
+                    t.stop()
+                })
+            streams[room][id].sender && streams[room][id].sender.close()
+            streams[room][id].receiver && streams[room][id].receiver.close()
+            delete streams[room][id]
+            console.log(streams[room][id] || 'deleted: ' + id)
+        }
+    })
+
     socket.on('destination', async (url) => {
         try {
             if (typeof url != 'string') {
@@ -349,9 +364,13 @@ io.on('connect', (socket) => {
 
             if (feeder) delete socket._feeder
 
-            if (socket.isPreview)
-                for (let id in streams[room]) streams[room][id].receiver && streams[room][id].receiver.close()
-            else for (let id in streams[room]) streams[room][id].sender && streams[room][id].sender.close()
+            if (socket.isPreview) return
+            else
+                for (let id in streams[room]) {
+                    streams[room][id].sender && streams[room][id].sender.close()
+                    streams[room][id].receiver && streams[room][id].receiver.close()
+                    delete streams[room][id]
+                }
         } catch (err) {
             errorHandler(err)
         } finally {

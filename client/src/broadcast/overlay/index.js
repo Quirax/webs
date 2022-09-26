@@ -167,7 +167,7 @@ export default function OverlayContainer(props) {
 
     console.log(styles)
 
-    const overlayList = props.scene.overlay
+    const overlayList = props.scene?.overlay || []
 
     console.log(getTransitionEffect(BI().currentTransition()))
 

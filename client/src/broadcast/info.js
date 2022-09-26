@@ -64,7 +64,8 @@ class BroadcastInfo {
         if (this.info.scene.length === 1) return alert('최소 1개 이상의 장면이 있어야 합니다.')
 
         if (this.tempScene > idx) this.tempScene--
-        else if (this.tempScene === idx && this.tempScene === this.info.scene.length - 1) this.tempScene--
+        else if (this.tempScene === idx && this.tempScene >= this.info.scene.length - 1)
+            this.tempScene = this.info.scene.length - 2
         if (this.info.currentScene > idx) this.info.currentScene--
         else if (this.info.currentScene === idx && this.info.currentScene === this.info.scene.length - 1)
             this.info.currentScene--

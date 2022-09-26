@@ -45,7 +45,7 @@ export default class Connector {
                 })
             }
 
-            if (Connector.isPreview) return _cb(this.stream[id].stream)
+            if (Connector.isPreview === true) return _cb(this.stream[id].stream)
 
             if (!this.stream[id].stream || this.stream[id].stream === null) {
                 if (scene === BI().getTempScene().id) return
@@ -166,7 +166,7 @@ export default class Connector {
 
                     console.log(e, id)
 
-                    this.stream[id].callback(this.stream[id].stream)
+                    this.stream[id].callback && this.stream[id].callback(this.stream[id].stream)
                     this.stream[id].available = true
                 }
 
@@ -431,20 +431,29 @@ export default class Connector {
         }
     }
 
-    detachStream(id, scene) {
-        if (Connector.isPreview) return
+    detachStream(oid, scene) {
+        if (Connector.isPreview === true) return
 
-        if (!this.stream[`${scene}_${id}`]) return
+        const id = `${scene}_${oid}`
 
-        this.stream[`${scene}_${id}`].stream &&
-            this.stream[`${scene}_${id}`].stream.getTracks().forEach((t) => {
+        console.log('detachStream', id, this.stream[id])
+
+        if (!this.stream[id]) return
+
+        if (this.stream[id].available === false) return
+
+        this.stream[id].stream &&
+            this.stream[id].stream.getTracks().forEach((t) => {
                 t.stop()
             })
-        this.stream[`${scene}_${id}`].callback(null)
-        this.stream[`${scene}_${id}`].stream = null
-        this.stream[`${scene}_${id}`].available = true
+        this.stream[id].callback(null)
+        this.stream[id].stream = null
+        this.stream[id].available = true
+        this.stream[id].pc.close()
 
-        delete this.stream[`${scene}_${id}`]
+        delete this.stream[id]
+
+        this.socket.emit('disconnectStream', id)
     }
 
     disconnect() {

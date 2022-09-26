@@ -205,6 +205,7 @@ class Containers extends React.Component {
                         <OverlayContainer
                             scene={BI().currentScene()}
                             ratio={this.props.ratio}
+                            isTemp={false}
                             preview={this.props.preview}
                             isTransition={this.state.isTransition}
                         />
