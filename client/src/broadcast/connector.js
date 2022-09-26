@@ -346,6 +346,19 @@ export default class Connector {
                     const elem = socket[id].elem
 
                     switch (params.type) {
+                        case 'connect':
+                            if (!setTriggered()) break
+                            elem.currentTime = 0
+                            if (!elem.paused) break
+                            socket[id].blockPause = true
+                            try {
+                                await elem.play()
+                            } catch (err) {
+                                console.log(err)
+                                socket[id].isTriggered = false
+                            }
+                            socket[id].blockPause = false
+                            break
                         case 'play':
                             if (!elem.paused) break
                             if (!setTriggered()) break

@@ -63,6 +63,8 @@ export class VideoOverlay extends Overlay {
                         loop
                         muted
                         controls
+                        controlsList='nofullscreen nodownload noremoteplayback'
+                        disablePictureInPicture
                         data-muted={true}
                         onLoadedMetadata={(e) => {
                             if (props.isTemp === true) return

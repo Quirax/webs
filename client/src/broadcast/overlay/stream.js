@@ -59,7 +59,6 @@ export class WebcamOverlay extends Overlay {
                         autoPlay
                         loop
                         muted
-                        controls
                         data-muted={true}
                         onClick={(e) => {
                             if (e.target.dataset.muted !== 'true') return

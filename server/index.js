@@ -170,6 +170,7 @@ io.on('connect', (socket) => {
     })
 
     socket.on('registerElement', (id) => {
+        socket.to(room).emit('event_' + id, { type: 'connect' })
         if (socket.eventNames().indexOf('event_' + id) > -1) return
         socket.on('event_' + id, (params) => {
             socket.to(room).emit('event_' + id, params)
@@ -178,6 +179,7 @@ io.on('connect', (socket) => {
 
     socket.on('unregisterElement', (id) => {
         socket.offAny('event_' + id)
+        socket.to(room).emit('event_' + id, { type: 'disconnect' })
     })
 
     socket.on('streamSenderCandidate', async (data) => {
