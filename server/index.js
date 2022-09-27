@@ -135,6 +135,7 @@ io.on('connect', async (socket) => {
     })
 
     socket.on('registerElement', (id) => {
+        socket.to(room).emit('event_' + id, { type: 'connect' })
         if (socket.eventNames().indexOf('event_' + id) > -1) return
         socket.on('event_' + id, (params) => {
             socket.to(room).emit('event_' + id, params)
@@ -143,6 +144,7 @@ io.on('connect', async (socket) => {
 
     socket.on('unregisterElement', (id) => {
         socket.offAny('event_' + id)
+        socket.to(room).emit('event_' + id, { type: 'disconnect' })
     })
 
     socket.on('streamSenderCandidate', async (data) => {
@@ -231,6 +233,22 @@ io.on('connect', async (socket) => {
         }
     })
 
+    socket.on('disconnectStream', (id) => {
+        if (socket.isPreview) {
+            return
+        } else {
+            if (!streams[room][id]) return
+            streams[room][id].stream &&
+                streams[room][id].stream.getTracks().forEach((t) => {
+                    t.stop()
+                })
+            streams[room][id].sender && streams[room][id].sender.close()
+            streams[room][id].receiver && streams[room][id].receiver.close()
+            delete streams[room][id]
+            console.log(streams[room][id] || 'deleted: ' + id)
+        }
+    })
+
     socket.on('destination', async (url) => {
         try {
             if (typeof url != 'string') {
@@ -314,9 +332,13 @@ io.on('connect', async (socket) => {
 
             if (feeder) delete socket._feeder
 
-            if (socket.isPreview)
-                for (let id in streams[room]) streams[room][id].receiver && streams[room][id].receiver.close()
-            else for (let id in streams[room]) streams[room][id].sender && streams[room][id].sender.close()
+            if (socket.isPreview) return
+            else
+                for (let id in streams[room]) {
+                    streams[room][id].sender && streams[room][id].sender.close()
+                    streams[room][id].receiver && streams[room][id].receiver.close()
+                    delete streams[room][id]
+                }
         } catch (err) {
             errorHandler(err)
         } finally {
