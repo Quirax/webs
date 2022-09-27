@@ -424,6 +424,8 @@ export default class Connector {
     }
 
     unregisterElement(type, oid, scene) {
+        if (scene === BI().getTempScene().id || scene === BI().currentScene().id) return
+
         const id = `${scene}_${oid}`
         console.log(id)
 
@@ -447,6 +449,8 @@ export default class Connector {
     detachStream(oid, scene) {
         if (Connector.isPreview === true) return
 
+        if (scene === BI().getTempScene().id || scene === BI().currentScene().id) return
+
         const id = `${scene}_${oid}`
 
         console.log('detachStream', id, this.stream[id])
@@ -462,7 +466,7 @@ export default class Connector {
         this.stream[id].callback(null)
         this.stream[id].stream = null
         this.stream[id].available = true
-        this.stream[id].pc.close()
+        this.stream[id].pc && this.stream[id].pc.close()
 
         delete this.stream[id]
 

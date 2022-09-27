@@ -17,7 +17,7 @@ export default class Broadcast extends React.Component {
         this.state = {
             canvasRect: { height: 1080, width: 1920 },
             isBroadcasting: false,
-            mode: ItemlistType.SCENES,
+            mode: '',
         }
 
         this.workplaceRef = React.createRef()
@@ -80,6 +80,13 @@ export default class Broadcast extends React.Component {
             this.changeMode(ItemlistType.SCENES)
         }
         this.saveScene = this.saveScene.bind(this)
+
+        this.onClickTitle = () => {
+            if (this.state.mode === '') this.changeMode(ItemlistType.SCENES)
+            else this.changeMode('')
+            setTimeout(this.getRects, 100)
+        }
+        this.onClickTitle = this.onClickTitle.bind(this)
     }
 
     componentDidMount() {
@@ -118,6 +125,7 @@ export default class Broadcast extends React.Component {
                     toggleBroadcast={this.toggleBroadcast}
                     isBroadcasting={this.state.isBroadcasting}
                     mode={this.state.mode}
+                    onClickTitle={this.onClickTitle}
                 />
                 <Div flex height='calc(100% - 65px)' width='100%'>
                     <Itemlist mode={this.state.mode} changeMode={this.changeMode} />
@@ -226,12 +234,10 @@ class Toolbar extends React.Component {
     }
 
     render() {
-        function CurrentScene({ mode, saveScene }) {
+        function CurrentScene({ mode, saveScene, onClickTitle }) {
             switch (mode) {
-                case ItemlistType.SCENES:
-                    return <h1>{BI().currentScene().name}</h1>
                 case ItemlistType.TRANSITIONS:
-                    return <h1>장면 전환</h1>
+                    return <h1 onClick={onClickTitle}>장면 전환</h1>
                 case ItemlistType.OVERLAYS:
                     return (
                         <>
@@ -253,14 +259,18 @@ class Toolbar extends React.Component {
                         </>
                     )
                 default:
-                    throw new Error('Invalid itemlist mode')
+                    return <h1 onClick={onClickTitle}>{BI().currentScene().name}</h1>
             }
         }
 
         return (
             <Header flex fixsize flex-justify='space-between' flex-align='center' border-bottom='normal' height='64'>
                 <Div flex fixsize padding-left='8'>
-                    <CurrentScene mode={this.props.mode} saveScene={this.props.saveScene} />
+                    <CurrentScene
+                        mode={this.props.mode}
+                        saveScene={this.props.saveScene}
+                        onClickTitle={this.props.onClickTitle}
+                    />
                 </Div>
                 <Div fixsize padding-right='8'>
                     <button onClick={this.props.toggleBroadcast}>

@@ -272,6 +272,7 @@ io.on('connect', (socket) => {
         if (socket.isPreview) {
             return
         } else {
+            if (!streams[room][id]) return
             streams[room][id].stream &&
                 streams[room][id].stream.getTracks().forEach((t) => {
                     t.stop()

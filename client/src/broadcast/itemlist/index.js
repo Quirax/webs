@@ -173,6 +173,8 @@ export default class Itemlist extends React.Component {
                     },
                 })
                 break
+            case '':
+                return <></>
             default:
                 throw new Error('Invalid itemlist mode')
         }
@@ -218,6 +220,7 @@ export default class Itemlist extends React.Component {
                             })}
                         </DndProvider>
                         <Li
+                            display={BI().detectMobileDevice() ? 'none' : null}
                             padding='8'
                             border-bottom='normal'
                             align='center'
@@ -436,6 +439,8 @@ class ContextMenu extends React.Component {
     }
 
     show(target, mode, value, dialogOpener, top, left) {
+        if (BI().detectMobileDevice()) return
+
         let list = []
         switch (mode) {
             case ItemlistType.SCENES:
