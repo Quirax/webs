@@ -21,6 +21,7 @@ const SceneSchema = new Schema(
     {
         name: String,
         defaultCategory: String,
+        defaultTitle: String,
         id: String,
         overlay: [OverlaySchema],
     },

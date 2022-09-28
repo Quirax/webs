@@ -3,10 +3,12 @@ import { Header, Main, Div, Footer, Article, CommonProps } from '../components'
 import './index.scss'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
-import Connector from './connector'
+import Connector from '../connector'
 import OverlayContainer from './overlay'
 import Itemlist, { ItemlistType } from './itemlist'
-import BI, { assignTitle, assignContainer } from './info'
+import BI, { assignTitle, assignContainer, assignStatus } from './info'
+import Twitch from '../twitch'
+import Autosuggest from 'react-autosuggest'
 
 export const CANVAS_RECT = React.createContext({ width: 1920, height: 1080 })
 
@@ -95,6 +97,11 @@ export default class Broadcast extends React.Component {
         connector.connect()
         connector.getBroadcastInfo()
 
+        let twitch = Twitch.getInstance()
+        twitch.connect()
+
+        console.log(connector, twitch, BI())
+
         window.addEventListener('resize', this.getRects)
         this.getRects()
     }
@@ -146,25 +153,7 @@ export default class Broadcast extends React.Component {
                                 />
                             </CANVAS_RECT.Provider>
                         </Article>
-                        <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
-                            <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
-                                {/* FIXME: 방송 시 방송 세팅과 동기화 */}
-                                {/* TODO: 장면 수정 시 기본 방송 세팅과 동기화 */}
-                                <input type='text' defaultValue='방송제목' />
-                                <select>
-                                    <option>Just Chatting</option>
-                                    <option>Art</option>
-                                    <option>ASMR</option>
-                                </select>
-                            </Div>
-                            <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
-                                {/* FIXME: 방송 시 방송 통계와 동기화 */}
-                                <div>
-                                    <FontAwesomeIcon icon={faUserAlt} /> 123
-                                </div>
-                                <div>12:34:56</div>
-                            </Div>
-                        </Footer>
+                        <Status mode={this.state.mode} />
                     </Main>
                 </Div>
             </CommonProps>
@@ -279,5 +268,166 @@ class Toolbar extends React.Component {
                 </Div>
             </Header>
         )
+    }
+}
+
+class Status extends React.Component {
+    state = {
+        category: '',
+        suggestions: [],
+        title: '',
+    }
+
+    constructor() {
+        super()
+
+        const onChangeCategory = (e, { newValue }) => {
+            this.setState({
+                category: newValue,
+            })
+        }
+
+        const onChangeTitle = (e) => {
+            if (this.props.mode === ItemlistType.OVERLAYS) {
+                BI().currentScene().defaultTitle = e.target.value || ''
+            } else {
+                BI().info.title = e.target.value || ''
+            }
+
+            this.setState({
+                title: e.target.value || '',
+            })
+            BI().afterChange()
+        }
+
+        const onFetchReq = async ({ value }) => {
+            let twitch = Twitch.getInstance()
+            this.setState({
+                suggestions: (await twitch.searchCategories(value)) || [],
+            })
+        }
+
+        const onClearReq = () => {
+            this.setState({
+                suggestions: [],
+            })
+        }
+
+        const getSuggestion = (suggestion) => suggestion.name
+
+        const renderSuggestion = (suggestion, { isHighlighted }) => (
+            <div
+                style={{
+                    backgroundColor: isHighlighted ? 'blue' : null,
+                    color: isHighlighted ? 'white' : null,
+                    lineHeight: 1.2,
+                    padding: '8px',
+                    textOverflow: 'ellipsis',
+                    overflow: 'hidden',
+                    whiteSpace: 'nowrap',
+                    borderTop: suggestion.id === this.state.suggestions[0].id ? null : '1px solid black',
+                }}>
+                <img
+                    src={suggestion.box_art_url}
+                    alt={suggestion.name}
+                    style={{
+                        height: '48px',
+                        padding: '4px',
+                        border: '1px solid black',
+                        marginRight: '8px',
+                        verticalAlign: 'middle',
+                    }}
+                />
+                {suggestion.name}
+            </div>
+        )
+
+        const onSelected = (e, { suggestionValue }) => {
+            if (this.props.mode === ItemlistType.OVERLAYS) {
+                BI().currentScene().defaultCategory = suggestionValue
+            } else {
+                BI().info.category = suggestionValue
+            }
+
+            BI().afterChange()
+        }
+
+        this.render = () => {
+            return (
+                <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
+                    <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
+                        {/* FIXME: 방송 시 방송 세팅과 동기화 */}
+                        {/* TODO: 장면 수정 시 기본 방송 세팅과 동기화 */}
+                        <input
+                            type='text'
+                            placeholder='방송제목'
+                            value={this.state.title || ''}
+                            onChange={onChangeTitle}
+                        />
+                        <Autosuggest
+                            suggestions={this.state.suggestions}
+                            onSuggestionsFetchRequested={onFetchReq}
+                            onSuggestionsClearRequested={onClearReq}
+                            getSuggestionValue={getSuggestion}
+                            renderSuggestion={renderSuggestion}
+                            onSuggestionSelected={onSelected}
+                            highlightFirstSuggestion={true}
+                            inputProps={{
+                                placeholder: '카테고리',
+                                value: this.state.category,
+                                onChange: onChangeCategory,
+                            }}
+                            theme={{
+                                suggestionsContainerOpen: {
+                                    position: 'fixed',
+                                    bottom: `${8 + 16 * 1.2 + 2 + 2}px`,
+                                    border: '1px solid black',
+                                    backgroundColor: 'white',
+                                    maxHeight: '300px',
+                                    width: '250px',
+                                    overflowY: 'scroll',
+                                },
+                            }}
+                        />
+                    </Div>
+                    <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
+                        {/* FIXME: 방송 시 방송 통계와 동기화 */}
+                        <div>
+                            <FontAwesomeIcon icon={faUserAlt} /> 123
+                        </div>
+                        <div>12:34:56</div>
+                    </Div>
+                </Footer>
+            )
+        }
+
+        assignStatus(() => {
+            BI().info.category = BI().currentScene().defaultCategory
+            BI().info.title = BI().currentScene().defaultTitle
+            this.setState({
+                category: BI().currentScene().defaultCategory,
+                title: BI().currentScene().defaultTitle,
+            })
+
+            BI().afterChange()
+        })
+
+        let mode = null
+
+        this.componentDidUpdate = () => {
+            if (mode !== this.props.mode) {
+                this.setState({
+                    category:
+                        (this.props.mode === ItemlistType.OVERLAYS
+                            ? BI().currentScene()?.defaultCategory
+                            : BI().info?.category) || '',
+                    title:
+                        (this.props.mode === ItemlistType.OVERLAYS
+                            ? BI().currentScene()?.defaultTitle
+                            : BI().info?.title) || '',
+                })
+                mode = this.props.mode
+            }
+        }
     }
 }

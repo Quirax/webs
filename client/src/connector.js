@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client'
-import BI from './info'
-import { OverlayType } from './overlay'
+import BI from './broadcast/info'
+import { OverlayType } from './broadcast/overlay'
 
 const wrtc_cfg = {
     iceServers: [
@@ -124,7 +124,6 @@ export default class Connector {
     }
 
     static getInstance() {
-        console.log(Connector.instance)
         if (Connector.instance === null) Connector.instance = new Connector()
         return Connector.instance
     }

@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash'
 import React from 'react'
 import { Div, Ul, Li, Nav, Dialog } from '../../components'
-import Connector from '../connector'
+import Connector from '../../connector'
 import BI, { assignList, GenerateID } from '../info'
 import { OverlayType } from '../overlay'
 import PropertyDialog from './property'
