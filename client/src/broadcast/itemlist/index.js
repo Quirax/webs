@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash'
 import React from 'react'
 import { Div, Ul, Li, Nav, Dialog } from '../../components'
-import Connector from '../connector'
+import Connector from '../../connector'
 import BI, { assignList, GenerateID } from '../info'
 import { OverlayType } from '../overlay'
 import PropertyDialog from './property'
@@ -80,7 +80,7 @@ export default class Itemlist extends React.Component {
                     onAdd: () => {
                         BI().info.scene.push({
                             name: '새 장면',
-                            defaultCategory: 'Just Chatting',
+                            defaultCategory: 509658,
                             id: Math.random().toString(36).substring(2, 11),
                             overlay: [],
                         })

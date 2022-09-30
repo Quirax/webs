@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client'
-import BI from './info'
-import { OverlayType } from './overlay'
+import BI from './broadcast/info'
+import { OverlayType } from './broadcast/overlay'
+import Twitch from './twitch'
 
 const wrtc_cfg = {
     iceServers: [
@@ -124,7 +125,6 @@ export default class Connector {
     }
 
     static getInstance() {
-        console.log(Connector.instance)
         if (Connector.instance === null) Connector.instance = new Connector()
         return Connector.instance
     }
@@ -133,9 +133,17 @@ export default class Connector {
         Connector.isPreview = ip
     }
 
-    connect() {
+    connect(uid) {
         if (this.socket) return
-        this.socket = io(process.env.REACT_APP_SERVER)
+        if (!uid) {
+            return
+        }
+
+        this.socket = io(process.env.REACT_APP_SERVER, {
+            query: {
+                uid,
+            },
+        })
         this.socket.emit('isPreview', Connector.isPreview)
 
         this.socket.on('streamConnect', async (data) => {
@@ -250,6 +258,10 @@ export default class Connector {
         this.socket.emit('selectScene', idx)
     }
 
+    setDescription(desc) {
+        this.socket.emit('setDescription', desc)
+    }
+
     onChange() {
         if (!BI().info) return
         if (this.socket === null) this.connect()
@@ -265,8 +277,13 @@ export default class Connector {
     start() {
         if (this.isBroadcasting) return
 
-        let bootstrap = (socket, stream) => {
-            socket.emit('destination', process.env.REACT_APP_DESTINATION)
+        let bootstrap = async (socket, stream) => {
+            const twitch = Twitch.getInstance()
+
+            let key = await twitch.getStreamKey()
+            if (!key) return alert('스트림 키를 받을 수 없습니다.')
+
+            socket.emit('destination', 'rtmp://sel04.contribute.live-video.net/app/' + key)
             socket.emit('start')
 
             let mediaRecorder = new MediaRecorder(stream)
@@ -291,8 +308,8 @@ export default class Connector {
 
         let my = this
 
-        navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(function (stream) {
-            bootstrap(my.socket, stream)
+        navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(async (stream) => {
+            await bootstrap(my.socket, stream)
             my.isBroadcasting = true
         })
     }

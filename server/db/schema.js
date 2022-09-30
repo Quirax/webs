@@ -20,7 +20,8 @@ const OverlaySchema = new Schema(
 const SceneSchema = new Schema(
     {
         name: String,
-        defaultCategory: String,
+        defaultCategory: Number,
+        defaultTitle: String,
         id: String,
         overlay: [OverlaySchema],
     },
@@ -41,9 +42,9 @@ export default new Schema(
     {
         uid: String,
         title: String,
-        category: String,
-        currentScene: Number,
-        currentTransition: Number,
+        category: Number,
+        currentScene: { type: Number, default: 0 },
+        currentTransition: { type: Number, default: 0 },
         scene: [SceneSchema],
         transition: [TransitionSchema],
     },

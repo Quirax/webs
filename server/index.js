@@ -65,6 +65,7 @@ const streams = {}
 io.on('connect', async (socket) => {
     const room = 'asdf'
     const room_preview = room + '_preview'
+    const uid = socket.handshake.query.uid
     socket.join(room)
     socket.isPreview = false
 
@@ -78,12 +79,12 @@ io.on('connect', async (socket) => {
         socket.emit('error', err)
     }
 
-    log('Established connection')
+    log(`Established connection with client (uid = ${uid})`)
 
     try {
-        broadcastInfo = await db.get(0)
+        broadcastInfo = await db.get(uid)
         if (broadcastInfo === null) {
-            broadcastInfo = db.newUser(0)
+            broadcastInfo = db.newUser(uid)
             await db.save(broadcastInfo)
         }
     } catch (e) {
@@ -119,6 +120,17 @@ io.on('connect', async (socket) => {
             console.error(e)
         } finally {
             socket.to(room).emit('getBroadcastInfo', info)
+        }
+    })
+
+    socket.on('setDescription', async ({ category_id, title }) => {
+        broadcastInfo.category = category_id
+        broadcastInfo.title = title
+
+        try {
+            await db.save(broadcastInfo)
+        } catch (e) {
+            console.error(e)
         }
     })
 

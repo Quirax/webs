@@ -1,8 +1,9 @@
-import Connector from './connector'
+import Connector from '../connector'
 
 let updateContainer = () => {}
 let updateList = () => {}
 let updateTitle = () => {}
+let updateStatus = () => {}
 
 class BroadcastInfo {
     constructor() {
@@ -37,6 +38,7 @@ class BroadcastInfo {
         updateContainer()
         updateList()
         updateTitle()
+        updateStatus()
     }
 
     currentScene() {
@@ -58,6 +60,7 @@ class BroadcastInfo {
         updateContainer(!noTransition)
         updateList()
         updateTitle()
+        updateStatus()
     }
 
     deleteScene(idx) {
@@ -74,6 +77,7 @@ class BroadcastInfo {
 
         this.afterChange()
         updateTitle()
+        updateStatus()
     }
 
     // FIXME : add deleteScene(idx)
@@ -123,6 +127,10 @@ export function assignList(l) {
 
 export function assignTitle(t) {
     updateTitle = t
+}
+
+export function assignStatus(s) {
+    updateStatus = s
 }
 
 export const GenerateID = () => Math.random().toString(36).substring(2, 11)

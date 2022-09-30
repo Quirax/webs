@@ -4,7 +4,7 @@ import { Overlay, HexToRGB } from './overlay'
 import { OverlayType } from '.'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowsUpDownLeftRight } from '@fortawesome/free-solid-svg-icons'
-import Connector from '../connector'
+import Connector from '../../connector'
 import BI from '../info'
 
 export class WebcamOverlay extends Overlay {
