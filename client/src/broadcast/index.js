@@ -157,7 +157,10 @@ export default class Broadcast extends React.Component {
                                 />
                             </CANVAS_RECT.Provider>
                         </Article>
-                        <Status mode={this.state.mode} />
+                        <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
+                            <Description mode={this.state.mode} />
+                            <Status />
+                        </Footer>
                     </Main>
                 </Div>
             </CommonProps>
@@ -275,7 +278,7 @@ class Toolbar extends React.Component {
     }
 }
 
-class Status extends React.Component {
+class Description extends React.Component {
     state = {
         category: '',
         suggestions: [],
@@ -382,51 +385,40 @@ class Status extends React.Component {
 
         this.render = () => {
             return (
-                <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
-                    <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
-                        {/* FIXME: 방송 시 방송 세팅과 동기화 */}
-                        {/* TODO: 장면 수정 시 기본 방송 세팅과 동기화 */}
-                        <input
-                            type='text'
-                            placeholder='방송제목'
-                            value={this.state.title || ''}
-                            onChange={onChangeTitle}
-                            onBlur={onBlurTitle}
-                        />
-                        <Autosuggest
-                            suggestions={this.state.suggestions}
-                            onSuggestionsFetchRequested={onFetchReq}
-                            onSuggestionsClearRequested={onClearReq}
-                            getSuggestionValue={getSuggestion}
-                            renderSuggestion={renderSuggestion}
-                            onSuggestionSelected={onSelected}
-                            highlightFirstSuggestion={true}
-                            inputProps={{
-                                placeholder: '카테고리',
-                                value: this.state.category,
-                                onChange: onChangeCategory,
-                            }}
-                            theme={{
-                                suggestionsContainerOpen: {
-                                    position: 'fixed',
-                                    bottom: `${8 + 16 * 1.2 + 2 + 2}px`,
-                                    border: '1px solid black',
-                                    backgroundColor: 'white',
-                                    maxHeight: '300px',
-                                    width: '250px',
-                                    overflowY: 'scroll',
-                                },
-                            }}
-                        />
-                    </Div>
-                    <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
-                        {/* FIXME: 방송 시 방송 통계와 동기화 */}
-                        <div>
-                            <FontAwesomeIcon icon={faUserAlt} /> 123
-                        </div>
-                        <div>12:34:56</div>
-                    </Div>
-                </Footer>
+                <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
+                    <input
+                        type='text'
+                        placeholder='방송제목'
+                        value={this.state.title || ''}
+                        onChange={onChangeTitle}
+                        onBlur={onBlurTitle}
+                    />
+                    <Autosuggest
+                        suggestions={this.state.suggestions}
+                        onSuggestionsFetchRequested={onFetchReq}
+                        onSuggestionsClearRequested={onClearReq}
+                        getSuggestionValue={getSuggestion}
+                        renderSuggestion={renderSuggestion}
+                        onSuggestionSelected={onSelected}
+                        highlightFirstSuggestion={true}
+                        inputProps={{
+                            placeholder: '카테고리',
+                            value: this.state.category,
+                            onChange: onChangeCategory,
+                        }}
+                        theme={{
+                            suggestionsContainerOpen: {
+                                position: 'fixed',
+                                bottom: `${8 + 16 * 1.2 + 2 + 2}px`,
+                                border: '1px solid black',
+                                backgroundColor: 'white',
+                                maxHeight: '300px',
+                                width: '250px',
+                                overflowY: 'scroll',
+                            },
+                        }}
+                    />
+                </Div>
             )
         }
 
@@ -472,5 +464,84 @@ class Status extends React.Component {
                 mode = this.props.mode
             }
         }
+    }
+}
+
+class Status extends React.Component {
+    state = {
+        viewerCount: 0,
+        timeStarted: undefined,
+        timeElapsed: 0,
+    }
+
+    constructor() {
+        super()
+
+        let refresher = undefined
+        let timer = undefined
+
+        this.componentDidMount = () => {
+            refresher = setInterval(async () => {
+                const twitch = Twitch.getInstance()
+                const data = await twitch.getStatus()
+
+                if (data) {
+                    this.setState({
+                        viewerCount: data.viewer_count,
+                        timeStarted: new Date(data.started_at),
+                    })
+
+                    if (!timer) {
+                        timer = setInterval(() => {
+                            this.setState({
+                                timeElapsed: new Date() - new Date(this.state.timeStarted),
+                            })
+                        }, 1000)
+                    }
+                } else {
+                    this.setState({
+                        viewerCount: 0,
+                        timeStarted: undefined,
+                        timeElapsed: 0,
+                    })
+
+                    if (timer) {
+                        clearInterval(timer)
+                        timer = undefined
+                    }
+                }
+            }, 5000)
+        }
+
+        this.componentWillUnmount = () => {
+            clearInterval(refresher)
+        }
+    }
+
+    render() {
+        let { timeElapsed, viewerCount } = this.state
+        timeElapsed /= 1000
+        let hours = Math.floor(timeElapsed / 3600),
+            minutes = Math.floor((timeElapsed % 3600) / 60),
+            seconds = Math.floor((timeElapsed % 3600) % 60)
+
+        return (
+            <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
+                {/* FIXME: 방송 시 방송 통계와 동기화 */}
+                <div
+                    style={{
+                        color: this.state.timeStarted && 'red',
+                    }}>
+                    <FontAwesomeIcon icon={faUserAlt} /> {viewerCount}
+                </div>
+                <div>
+                    {[
+                        String(hours).padStart(2, '0'),
+                        String(minutes).padStart(2, '0'),
+                        String(seconds).padStart(2, '0'),
+                    ].join(':')}
+                </div>
+            </Div>
+        )
     }
 }
