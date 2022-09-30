@@ -20,13 +20,13 @@ export default {
         new BI({
             uid: uid,
             title: '',
-            category: 'Just Chatting',
+            category: 509658,
             currentScene: 0,
             currentTransition: 0,
             scene: [
                 {
                     name: '기본',
-                    defaultCategory: 'Just Chatting',
+                    defaultCategory: 509658,
                     id: GenerateID(),
                     overlay: [],
                 },

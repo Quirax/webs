@@ -48,76 +48,96 @@ export default class Twitch {
             if (expiredDate < new Date()) await this.connect()
         }
 
+        const fetchAPI = async (uri, query, method = 'GET', body) => {
+            await beforePerform()
+
+            const header = {
+                Authorization: `Bearer ${accessToken}`,
+                'Client-Id': process.env.REACT_APP_CLIENT_ID,
+            }
+
+            let url = `https://api.twitch.tv/helix/${uri}`
+
+            if (query) url += '?' + query
+
+            if (body) {
+                Object.apply(header, {
+                    'Content-Type': 'application/json',
+                })
+            }
+
+            const resp = await fetch(url, {
+                method: method,
+                headers: header,
+                body: body,
+            })
+
+            return await resp.json()
+        }
+
+        const fetchToken = async (mode, token) => {
+            const body = new URLSearchParams({
+                client_id: process.env.REACT_APP_CLIENT_ID,
+                client_secret: process.env.REACT_APP_CLIENT_SECRET,
+            })
+
+            if (mode === 'refresh') {
+                body.append('grant_type', 'refresh_token')
+                body.append('refresh_token', token)
+            } else {
+                body.append('grant_type', 'authorization_code')
+                body.append('code', token)
+                body.append('redirect_uri', `https://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT || 80}`)
+            }
+
+            console.log(mode, body)
+
+            let resp = await fetch('https://id.twitch.tv/oauth2/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: body,
+            })
+            const resp_json = await resp.json()
+
+            accessToken = resp_json.access_token
+            refreshToken = resp_json.refresh_token
+            expiredDate = new Date()
+            expiredDate.setTime(expiredDate.getTime() + resp_json.expires_in * 1000)
+            setCookie('refresh_token', refreshToken, {
+                'max-age': resp_json.expires_in,
+            })
+
+            console.log(accessToken, refreshToken)
+
+            //https://dev.twitch.tv/docs/api/reference#get-users
+            resp = await fetchAPI('users')
+            this.user = resp.data[0]
+        }
+
         this.connect = async () => {
             if (expiredDate > new Date()) return true
 
-            if (refreshToken) {
-                try {
-                    let resp = await fetch('https://id.twitch.tv/oauth2/token', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                        body: new URLSearchParams({
-                            client_id: process.env.REACT_APP_CLIENT_ID,
-                            client_secret: process.env.REACT_APP_CLIENT_SECRET,
-                            refresh_token: refreshToken,
-                            grant_type: 'refresh_token',
-                        }),
-                    })
-                    let resp_json = await resp.json()
-
-                    accessToken = resp_json.access_token
-                    refreshToken = resp_json.refresh_token
-                    expiredDate = new Date()
-                    expiredDate.setTime(expiredDate.getTime() + resp_json.expires_in * 1000)
-
-                    //https://dev.twitch.tv/docs/api/reference#get-users
-                    resp = await fetch('https://api.twitch.tv/helix/users', {
-                        method: 'GET',
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            'Client-Id': process.env.REACT_APP_CLIENT_ID,
-                        },
-                    })
-                    resp_json = await resp.json()
-
-                    this.user = resp_json.data[0]
-
-                    return true
-                } catch (e) {
-                    console.error('Twitch', 'connect', e)
-                    return false
-                }
-            }
-
-            let code = getCookie('code')
-            deleteCookie('code')
-            if (!code) {
-                alert('잘못된 접근입니다.')
-                window.history.back()
-            }
-
             try {
-                const resp = await fetch('https://id.twitch.tv/oauth2/token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        client_id: process.env.REACT_APP_CLIENT_ID,
-                        client_secret: process.env.REACT_APP_CLIENT_SECRET,
-                        code: code,
-                        grant_type: 'authorization_code',
-                        redirect_uri: `https://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT || 80}`,
-                    }),
-                })
-                const resp_json = await resp.json()
+                let code = getCookie('code')
+                deleteCookie('code')
+                if (code) {
+                    await fetchToken('auth', code)
+                    return true
+                }
 
-                accessToken = resp_json.access_token
-                refreshToken = resp_json.refresh_token
-                expiredDate = new Date()
-                expiredDate.setTime(expiredDate.getTime() + resp_json.expires_in * 1000)
+                const rt = refreshToken || getCookie('refresh_token')
+
+                console.log(rt)
+
+                if (!rt) {
+                    alert('잘못된 접근입니다.')
+                    window.history.back()
+                }
+
+                await fetchToken('refresh', rt)
+
                 return true
             } catch (e) {
                 console.error('Twitch', 'connect', e)
@@ -126,28 +146,94 @@ export default class Twitch {
         }
 
         this.searchCategories = async (query) => {
-            beforePerform()
-
             try {
-                const resp = await fetch(
-                    'https://api.twitch.tv/helix/search/categories?' +
-                        new URLSearchParams({
-                            query,
-                        }),
-                    {
-                        method: 'GET',
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            'Client-Id': process.env.REACT_APP_CLIENT_ID,
-                        },
-                    }
+                const resp = await fetchAPI(
+                    'search/categories',
+                    new URLSearchParams({
+                        query,
+                    })
                 )
-                const resp_json = await resp.json()
 
-                return resp_json.data
+                return resp.data
             } catch (e) {
                 console.error('Twitch', `searchCategories(${query})`, e)
                 return []
+            }
+        }
+
+        this.getCategoryWithID = async (id) => {
+            try {
+                const resp = await fetchAPI(
+                    'games',
+                    new URLSearchParams({
+                        id: id,
+                    })
+                )
+
+                return resp.data[0]
+            } catch (e) {
+                console.error('Twitch', `getCategoryWithID(${id})`, e)
+                return undefined
+            }
+        }
+
+        this.getStreamKey = async () => {
+            try {
+                const resp = await fetchAPI(
+                    'streams/key',
+                    new URLSearchParams({
+                        broadcaster_id: this.user.id,
+                    })
+                )
+
+                return resp.data[0].stream_key
+            } catch (e) {
+                console.error('Twitch', `getStreamKey()`, e)
+                return undefined
+            }
+        }
+
+        // this.getDescription = async () => {
+        //     //https://dev.twitch.tv/docs/api/reference#get-channel-information
+        // }
+
+        this.setDescription = async ({ category_id, title }) => {
+            //https://dev.twitch.tv/docs/api/reference#modify-channel-information
+            try {
+                await fetchAPI(
+                    'channels',
+                    new URLSearchParams({
+                        broadcaster_id: this.user.id,
+                    }),
+                    'PATCH',
+                    {
+                        game_id: category_id,
+                        title: title,
+                    }
+                )
+
+                return true
+            } catch (e) {
+                console.error('Twitch', `setDescription({${category_id}, ${title}})`, e)
+                return false
+            }
+        }
+
+        this.getStatus = async () => {
+            //https://dev.twitch.tv/docs/api/reference#get-streams
+            try {
+                const resp = await fetchAPI(
+                    'streams',
+                    new URLSearchParams({
+                        user_id: this.user.id,
+                    })
+                )
+
+                if (resp.data.length > 0) return resp.data[0]
+                else return undefined
+            } catch (e) {
+                console.error('Twitch', `getStatus()`, e)
+                return undefined
             }
         }
     }

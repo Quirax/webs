@@ -132,9 +132,17 @@ export default class Connector {
         Connector.isPreview = ip
     }
 
-    connect() {
+    connect(uid) {
         if (this.socket) return
-        this.socket = io(process.env.REACT_APP_SERVER)
+        if (!uid) {
+            return
+        }
+
+        this.socket = io(process.env.REACT_APP_SERVER, {
+            query: {
+                uid,
+            },
+        })
         this.socket.emit('isPreview', Connector.isPreview)
 
         this.socket.on('streamConnect', async (data) => {
@@ -247,6 +255,10 @@ export default class Connector {
     selectScene(idx) {
         if (this.socket === null) this.connect()
         this.socket.emit('selectScene', idx)
+    }
+
+    setDescription(desc) {
+        this.socket.emit('setDescription', desc)
     }
 
     onChange() {

@@ -91,16 +91,20 @@ export default class Broadcast extends React.Component {
         this.onClickTitle = this.onClickTitle.bind(this)
     }
 
-    componentDidMount() {
+    async componentDidMount() {
         let connector = Connector.getInstance()
         Connector.setIsPreview(this.props.preview)
-        connector.connect()
+
+        if (!this.props.preview) {
+            let twitch = Twitch.getInstance()
+            await twitch.connect()
+            connector.connect(twitch.user.id)
+            console.log(connector, twitch, BI())
+        } else {
+            const query = new URLSearchParams(window.location.search)
+            if (query.get('id')) connector.connect(query.get('id'))
+        }
         connector.getBroadcastInfo()
-
-        let twitch = Twitch.getInstance()
-        twitch.connect()
-
-        console.log(connector, twitch, BI())
 
         window.addEventListener('resize', this.getRects)
         this.getRects()
@@ -342,13 +346,12 @@ class Status extends React.Component {
             </div>
         )
 
-        const onSelected = (e, { suggestionValue }) => {
+        const onSelected = (e, { suggestion }) => {
             if (this.props.mode === ItemlistType.OVERLAYS) {
-                BI().currentScene().defaultCategory = suggestionValue
+                BI().currentScene().defaultCategory = suggestion.id
             } else {
-                BI().info.category = suggestionValue
+                BI().info.category = suggestion.id
             }
-
             BI().afterChange()
         }
 
@@ -404,23 +407,35 @@ class Status extends React.Component {
         assignStatus(() => {
             BI().info.category = BI().currentScene().defaultCategory
             BI().info.title = BI().currentScene().defaultTitle
-            this.setState({
-                category: BI().currentScene().defaultCategory,
-                title: BI().currentScene().defaultTitle,
-            })
 
-            BI().afterChange()
+            const conn = Connector.getInstance()
+            conn.setDescription({
+                category_id: BI().info.category,
+                title: BI().info.title,
+            })
+            ;(async () => {
+                const twitch = Twitch.getInstance()
+                this.setState({
+                    category: (await twitch.getCategoryWithID(BI().currentScene().defaultCategory)).name || '',
+                    title: BI().currentScene().defaultTitle,
+                })
+                console.log((await twitch.getCategoryWithID(BI().currentScene().defaultCategory)).name)
+            })()
         })
 
         let mode = null
 
-        this.componentDidUpdate = () => {
+        this.componentDidUpdate = async () => {
             if (mode !== this.props.mode) {
+                const twitch = Twitch.getInstance()
+                let category_id =
+                    this.props.mode === ItemlistType.OVERLAYS
+                        ? BI().currentScene()?.defaultCategory
+                        : BI().info?.category
+                let category = ''
+                if (category_id) category = (await twitch.getCategoryWithID(category_id)).name || ''
                 this.setState({
-                    category:
-                        (this.props.mode === ItemlistType.OVERLAYS
-                            ? BI().currentScene()?.defaultCategory
-                            : BI().info?.category) || '',
+                    category: category,
                     title:
                         (this.props.mode === ItemlistType.OVERLAYS
                             ? BI().currentScene()?.defaultTitle
