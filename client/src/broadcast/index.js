@@ -291,11 +291,30 @@ class Status extends React.Component {
             })
         }
 
+        let changingTitle = false
+
+        const onBlurTitle = () => {
+            console.log('onBlurTitle')
+            const twitch = Twitch.getInstance()
+            twitch.setDescription({
+                category_id: BI().info.category,
+                title: BI().info.title || '',
+            })
+            changingTitle = false
+        }
+
         const onChangeTitle = (e) => {
             if (this.props.mode === ItemlistType.OVERLAYS) {
                 BI().currentScene().defaultTitle = e.target.value || ''
             } else {
                 BI().info.title = e.target.value || ''
+
+                if (!changingTitle) {
+                    setTimeout(() => {
+                        if (changingTitle) onBlurTitle()
+                    }, 5000)
+                    changingTitle = true
+                }
             }
 
             this.setState({
@@ -346,11 +365,17 @@ class Status extends React.Component {
             </div>
         )
 
-        const onSelected = (e, { suggestion }) => {
+        const onSelected = async (e, { suggestion }) => {
             if (this.props.mode === ItemlistType.OVERLAYS) {
                 BI().currentScene().defaultCategory = suggestion.id
             } else {
                 BI().info.category = suggestion.id
+
+                const twitch = Twitch.getInstance()
+                await twitch.setDescription({
+                    category_id: suggestion.id,
+                    title: BI().info.title,
+                })
             }
             BI().afterChange()
         }
@@ -366,6 +391,7 @@ class Status extends React.Component {
                             placeholder='방송제목'
                             value={this.state.title || ''}
                             onChange={onChangeTitle}
+                            onBlur={onBlurTitle}
                         />
                         <Autosuggest
                             suggestions={this.state.suggestions}
@@ -408,18 +434,20 @@ class Status extends React.Component {
             BI().info.category = BI().currentScene().defaultCategory
             BI().info.title = BI().currentScene().defaultTitle
 
-            const conn = Connector.getInstance()
-            conn.setDescription({
+            const desc = {
                 category_id: BI().info.category,
                 title: BI().info.title,
-            })
+            }
+
+            const conn = Connector.getInstance()
+            conn.setDescription(desc)
             ;(async () => {
                 const twitch = Twitch.getInstance()
                 this.setState({
-                    category: (await twitch.getCategoryWithID(BI().currentScene().defaultCategory)).name || '',
-                    title: BI().currentScene().defaultTitle,
+                    category: (await twitch.getCategoryWithID(desc.category_id)).name || '',
+                    title: desc.title,
                 })
-                console.log((await twitch.getCategoryWithID(BI().currentScene().defaultCategory)).name)
+                await twitch.setDescription(desc)
             })()
         })
 

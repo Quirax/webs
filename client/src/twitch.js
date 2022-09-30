@@ -60,19 +60,25 @@ export default class Twitch {
 
             if (query) url += '?' + query
 
+            let b = undefined
+
             if (body) {
-                Object.apply(header, {
+                Object.assign(header, {
                     'Content-Type': 'application/json',
                 })
+                b = JSON.stringify(body)
             }
 
             const resp = await fetch(url, {
                 method: method,
                 headers: header,
-                body: body,
+                body: b,
             })
 
-            return await resp.json()
+            const resp_text = await resp.text()
+
+            if (resp_text.length > 0) return JSON.parse(resp_text)
+            return true
         }
 
         const fetchToken = async (mode, token) => {
