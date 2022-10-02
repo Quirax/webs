@@ -1,12 +1,13 @@
-import Connector from './connector'
+import Connector from '../connector'
 
 let updateContainer = () => {}
 let updateList = () => {}
 let updateTitle = () => {}
+let updateStatus = () => {}
 
 class BroadcastInfo {
     constructor() {
-        this.tempScene = 0
+        this.tempScene = -1
 
         this.onChange = (update = true) => {
             const conn = Connector.getInstance()
@@ -37,6 +38,7 @@ class BroadcastInfo {
         updateContainer()
         updateList()
         updateTitle()
+        updateStatus()
     }
 
     currentScene() {
@@ -45,19 +47,37 @@ class BroadcastInfo {
     }
 
     getTempScene() {
-        if (!this.info) return {}
+        if (!this.info || this.tempScene === -1) return { overlay: [] }
         return this.info.scene[this.tempScene]
     }
 
-    selectScene(idx) {
+    selectScene(idx, noTransition = false) {
         if (this.info.currentScene === idx) return
 
         this.tempScene = this.info.currentScene
         this.info.currentScene = idx
 
-        updateContainer(true)
+        updateContainer(!noTransition)
         updateList()
         updateTitle()
+        updateStatus()
+    }
+
+    deleteScene(idx) {
+        if (this.info.scene.length === 1) return alert('최소 1개 이상의 장면이 있어야 합니다.')
+
+        if (this.tempScene > idx) this.tempScene--
+        else if (this.tempScene === idx && this.tempScene >= this.info.scene.length - 1)
+            this.tempScene = this.info.scene.length - 2
+        if (this.info.currentScene > idx) this.info.currentScene--
+        else if (this.info.currentScene === idx && this.info.currentScene === this.info.scene.length - 1)
+            this.info.currentScene--
+
+        this.info.scene.splice(idx, 1)
+
+        this.afterChange()
+        updateTitle()
+        updateStatus()
     }
 
     // FIXME : add deleteScene(idx)
@@ -84,6 +104,12 @@ class BroadcastInfo {
         if (!this.info) return true
         return this.info.currentTransition === idx
     }
+
+    detectMobileDevice() {
+        const mobileRegex = [/Android/i, /iPhone/i, /iPad/i, /iPod/i, /BlackBerry/i, /Windows Phone/i]
+
+        return mobileRegex.some((mobile) => window.navigator.userAgent.match(mobile))
+    }
 }
 
 export default function BI() {
@@ -102,3 +128,9 @@ export function assignList(l) {
 export function assignTitle(t) {
     updateTitle = t
 }
+
+export function assignStatus(s) {
+    updateStatus = s
+}
+
+export const GenerateID = () => Math.random().toString(36).substring(2, 11)

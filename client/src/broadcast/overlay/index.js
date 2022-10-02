@@ -1,5 +1,5 @@
 import React from 'react'
-import BI from '../info'
+import BI, { GenerateID } from '../info'
 import { Ol } from '../../components'
 
 // HACK : 오버레이 추가
@@ -80,7 +80,7 @@ export const OverlayGenerator = (name, type) => {
     let obj = {
         name,
         type,
-        id: Math.random().toString(36).substring(2, 11),
+        id: GenerateID(),
         params: {
             background_color: '#000000',
             background_opacity: 0,
@@ -167,7 +167,7 @@ export default function OverlayContainer(props) {
 
     console.log(styles)
 
-    const overlayList = props.scene.overlay
+    const overlayList = props.scene?.overlay || []
 
     console.log(getTransitionEffect(BI().currentTransition()))
 
@@ -176,6 +176,7 @@ export default function OverlayContainer(props) {
             value={{
                 ratio: props.ratio,
                 preview: props.preview,
+                isTemp: props.isTemp,
             }}>
             <CANVAS_RECT.Consumer>
                 {({ width }) => (
@@ -185,6 +186,7 @@ export default function OverlayContainer(props) {
                             position: 'absolute',
                             height: '100%',
                             width: '100%',
+                            overflow: 'hidden',
                             // width: props.preview ? 1920 : width,
                             // display: 'inline-block',
                             // aspectRatio: '16/9',
@@ -228,21 +230,19 @@ function OverlayElems(props) {
             {props.overlay.map((v, i) => {
                 // HACK : 오버레이 추가
 
-                console.log(v)
-
                 switch (v.type) {
                     case OverlayType.TEXT:
-                        return <TextOverlay key={i} value={v} />
+                        return <TextOverlay key={i} idx={i} value={v} />
                     case OverlayType.SHAPE:
-                        return <ShapeOverlay key={i} value={v} />
+                        return <ShapeOverlay key={i} idx={i} value={v} />
                     case OverlayType.IMAGE:
-                        return <ImageOverlay key={i} value={v} />
+                        return <ImageOverlay key={i} idx={i} value={v} />
                     case OverlayType.VIDEO:
-                        return <VideoOverlay key={i} value={v} isTemp={props.isTemp} />
+                        return <VideoOverlay key={i} idx={i} value={v} isTemp={props.isTemp} />
                     case OverlayType.WEBCAM:
-                        return <WebcamOverlay key={i} value={v} isTemp={props.isTemp} />
+                        return <WebcamOverlay key={i} idx={i} value={v} isTemp={props.isTemp} />
                     case OverlayType.DISPLAY:
-                        return <DisplayOverlay key={i} value={v} isTemp={props.isTemp} />
+                        return <DisplayOverlay key={i} idx={i} value={v} isTemp={props.isTemp} />
                     default:
                 }
                 return <></>

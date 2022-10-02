@@ -1,8 +1,8 @@
 import { cloneDeep } from 'lodash'
 import React from 'react'
 import { Div, Ul, Li, Nav, Dialog } from '../../components'
-import Connector from '../connector'
-import BI, { assignList } from '../info'
+import Connector from '../../connector'
+import BI, { assignList, GenerateID } from '../info'
 import { OverlayType } from '../overlay'
 import PropertyDialog from './property'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
@@ -80,7 +80,7 @@ export default class Itemlist extends React.Component {
                     onAdd: () => {
                         BI().info.scene.push({
                             name: '새 장면',
-                            defaultCategory: 'Just Chatting',
+                            defaultCategory: 509658,
                             id: Math.random().toString(36).substring(2, 11),
                             overlay: [],
                         })
@@ -155,6 +155,11 @@ export default class Itemlist extends React.Component {
                         }
                     },
                     addLabel: '오버레이 추가',
+                    isSelected: (idx) => BI().currentScene().overlay.selected === idx,
+                    onClickItemGenerator: (item, value) => () => {
+                        BI().currentScene().overlay.selected = value.index
+                        BI().onChange(true)
+                    },
                     onDblClickGenerator: (item, value, onChange) => (e) => {
                         if (this.propertyDialogRef) {
                             let dialog = this.propertyDialogRef.current
@@ -168,6 +173,8 @@ export default class Itemlist extends React.Component {
                     },
                 })
                 break
+            case '':
+                return <></>
             default:
                 throw new Error('Invalid itemlist mode')
         }
@@ -213,6 +220,7 @@ export default class Itemlist extends React.Component {
                             })}
                         </DndProvider>
                         <Li
+                            display={BI().detectMobileDevice() ? 'none' : null}
                             padding='8'
                             border-bottom='normal'
                             align='center'
@@ -262,6 +270,7 @@ function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style, 
             switch (mode) {
                 case ItemlistType.SCENES:
                     list = BI().info.scene
+                    BI().selectScene(hoverIndex, true)
                     break
                 case ItemlistType.TRANSITIONS:
                     list = BI().info.transition
@@ -380,7 +389,15 @@ class ContextMenu extends React.Component {
 
     onCopy(e) {
         let newValue = cloneDeep(this.state.value)
+        newValue.id = GenerateID()
         newValue.name += ' (복제)'
+
+        if (this.state.mode === ItemlistType.SCENES) {
+            newValue.overlay.forEach((v) => {
+                v.id = GenerateID()
+            })
+        }
+
         this.state.list.push(newValue)
         BI().afterChange()
     }
@@ -393,8 +410,8 @@ class ContextMenu extends React.Component {
         switch (this.state.mode) {
             case ItemlistType.SCENES:
                 if (this.state.list.length === 1) return alert('최소 1개 이상의 장면이 있어야 합니다.')
-                BI().selectScene(0)
-                break
+                BI().deleteScene(this.state.list.indexOf(this.state.value))
+                return
             case ItemlistType.TRANSITIONS:
                 if (this.state.list.length === 1) return alert('최소 1개 이상의 화면전환이 있어야 합니다.')
                 BI().selectTransition(0)
@@ -402,7 +419,7 @@ class ContextMenu extends React.Component {
             default:
                 if (this.state.value.type === OverlayType.WEBCAM) {
                     let conn = Connector.getInstance()
-                    conn.detachDisplayStream(this.state.value.id)
+                    conn.detachStream(this.state.value.id, BI().currentScene().id)
                 }
 
                 break
@@ -422,6 +439,8 @@ class ContextMenu extends React.Component {
     }
 
     show(target, mode, value, dialogOpener, top, left) {
+        if (BI().detectMobileDevice()) return
+
         let list = []
         switch (mode) {
             case ItemlistType.SCENES:

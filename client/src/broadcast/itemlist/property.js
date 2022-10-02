@@ -43,7 +43,7 @@ import {
     faArrowLeft,
     faArrowUp,
 } from '@fortawesome/free-solid-svg-icons'
-import Connector from '../connector'
+import Connector from '../../connector'
 import { ItemlistType } from '.'
 import { TransitionGenerator, TransitionParam, TransitionType } from '../transition'
 
@@ -624,9 +624,9 @@ function ParamList(props) {
                                             props.value && (props.value.params.text_align_vertical = val)
                                             props.onChange && props.onChange(props.value)
                                         }}>
-                                        <option value={OverlayParam.text_align_vertical.TOP}>T</option>
-                                        <option value={OverlayParam.text_align_vertical.MIDDLE}>M</option>
-                                        <option value={OverlayParam.text_align_vertical.BOTTOM}>B</option>
+                                        <option value={OverlayParam.text_align_vertical.TOP}>위</option>
+                                        <option value={OverlayParam.text_align_vertical.MIDDLE}>중간</option>
+                                        <option value={OverlayParam.text_align_vertical.BOTTOM}>아래</option>
                                     </Arg>
                                     <Arg
                                         name='줄 높이'
@@ -730,7 +730,7 @@ function ParamList(props) {
                                 default={{}}
                                 onChange={() => {
                                     let conn = Connector.getInstance()
-                                    conn.attachCameraStream(props.value.id, null, true)
+                                    conn.attachCameraStream(props.value.id, BI().currentScene().id, null, true)
                                 }}>
                                 <FontAwesomeIcon icon={faVideoCamera} /> 카메라 재설정
                             </Arg>
@@ -746,7 +746,7 @@ function ParamList(props) {
                                 default={{}}
                                 onChange={() => {
                                     let conn = Connector.getInstance()
-                                    conn.attachDisplayStream(props.value.id, null, true)
+                                    conn.attachDisplayStream(props.value.id, BI().currentScene().id, null, true)
                                 }}>
                                 <FontAwesomeIcon icon={faDisplay} /> 화면 재설정
                             </Arg>

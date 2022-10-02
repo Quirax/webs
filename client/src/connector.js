@@ -1,6 +1,7 @@
 import { io } from 'socket.io-client'
-import BI from './info'
-import { OverlayType } from './overlay'
+import BI from './broadcast/info'
+import { OverlayType } from './broadcast/overlay'
+import Twitch from './twitch'
 
 const wrtc_cfg = {
     iceServers: [
@@ -21,7 +22,10 @@ export default class Connector {
         this.socket = null
         this.stream = {}
 
-        const attachStream = (id, cb, reset, streamer) => {
+        const attachStream = (oid, scene, cb, reset, streamer) => {
+            const id = `${scene}_${oid}`
+            console.log(id, this.stream[id])
+
             if (!this.stream[id]) this.stream[id] = {}
 
             let _cb = cb
@@ -42,9 +46,11 @@ export default class Connector {
                 })
             }
 
-            if (Connector.isPreview) return
+            if (Connector.isPreview === true) return _cb(this.stream[id].stream)
 
             if (!this.stream[id].stream || this.stream[id].stream === null) {
+                if (scene === BI().getTempScene().id) return
+
                 Object.assign(this.stream[id], {
                     available: false,
                 })
@@ -81,8 +87,6 @@ export default class Connector {
                         .then(async (sdp) => {
                             await this.stream[id].pc.setLocalDescription(new RTCSessionDescription(sdp))
 
-                            console.log(this.stream[id].pc, sdp)
-
                             this.socket.emit('streamSenderOffer', {
                                 sdp,
                                 id,
@@ -92,26 +96,35 @@ export default class Connector {
 
                 getMedia = getMedia.bind(this)
 
-                streamer(getMedia)
-                console.log(this.stream[id])
+                streamer()
+                    .then(getMedia)
+                    .catch((err) => {
+                        console.log('streamer_err', err)
+                        Object.assign(this.stream[id], {
+                            available: true,
+                        })
+                    })
             } else return _cb(this.stream[id].stream)
         }
 
-        this.attachDisplayStream = (id, cb, reset) => {
-            attachStream(id, cb, reset, (cb) => {
-                navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(cb)
+        this.attachDisplayStream = (id, scene, cb, reset) => {
+            attachStream(id, scene, cb, reset, () => {
+                return new Promise((resolve, reject) => {
+                    navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(resolve).catch(reject)
+                })
             })
         }
 
-        this.attachCameraStream = (id, cb, reset) => {
-            attachStream(id, cb, reset, (cb) => {
-                navigator.mediaDevices.getUserMedia({ video: true }).then(cb)
+        this.attachCameraStream = (id, scene, cb, reset) => {
+            attachStream(id, scene, cb, reset, () => {
+                return new Promise((resolve, reject) => {
+                    navigator.mediaDevices.getUserMedia({ video: true }).then(resolve).catch(reject)
+                })
             })
         }
     }
 
     static getInstance() {
-        console.log(Connector.instance)
         if (Connector.instance === null) Connector.instance = new Connector()
         return Connector.instance
     }
@@ -120,9 +133,17 @@ export default class Connector {
         Connector.isPreview = ip
     }
 
-    connect() {
+    connect(uid) {
         if (this.socket) return
-        this.socket = io(process.env.REACT_APP_SERVER)
+        if (!uid) {
+            return
+        }
+
+        this.socket = io(process.env.REACT_APP_SERVER, {
+            query: {
+                uid,
+            },
+        })
         this.socket.emit('isPreview', Connector.isPreview)
 
         this.socket.on('streamConnect', async (data) => {
@@ -151,9 +172,9 @@ export default class Connector {
                 this.stream[id].pc.ontrack = (e) => {
                     this.stream[id].stream = e.streams[0]
 
-                    console.log(e)
+                    console.log(e, id)
 
-                    this.stream[id].callback(this.stream[id].stream)
+                    this.stream[id].callback && this.stream[id].callback(this.stream[id].stream)
                     this.stream[id].available = true
                 }
 
@@ -237,6 +258,10 @@ export default class Connector {
         this.socket.emit('selectScene', idx)
     }
 
+    setDescription(desc) {
+        this.socket.emit('setDescription', desc)
+    }
+
     onChange() {
         if (!BI().info) return
         if (this.socket === null) this.connect()
@@ -252,8 +277,13 @@ export default class Connector {
     start() {
         if (this.isBroadcasting) return
 
-        let bootstrap = (socket, stream) => {
-            socket.emit('destination', process.env.REACT_APP_DESTINATION)
+        let bootstrap = async (socket, stream) => {
+            const twitch = Twitch.getInstance()
+
+            let key = await twitch.getStreamKey()
+            if (!key) return alert('스트림 키를 받을 수 없습니다.')
+
+            socket.emit('destination', 'rtmp://sel04.contribute.live-video.net/app/' + key)
             socket.emit('start')
 
             let mediaRecorder = new MediaRecorder(stream)
@@ -278,8 +308,8 @@ export default class Connector {
 
         let my = this
 
-        navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(function (stream) {
-            bootstrap(my.socket, stream)
+        navigator.mediaDevices.getDisplayMedia({ audio: true, video: true }).then(async (stream) => {
+            await bootstrap(my.socket, stream)
             my.isBroadcasting = true
         })
     }
@@ -294,7 +324,10 @@ export default class Connector {
         this.isBroadcasting = false
     }
 
-    registerElement(type, id, elem) {
+    registerElement(type, oid, scene, elem) {
+        const id = `${scene}_${oid}`
+        console.log(id)
+
         if (this.socket === null) this.connect()
         const socket = this.socket
 
@@ -330,6 +363,19 @@ export default class Connector {
                     const elem = socket[id].elem
 
                     switch (params.type) {
+                        case 'connect':
+                            if (!setTriggered()) break
+                            elem.currentTime = 0
+                            if (!elem.paused) break
+                            socket[id].blockPause = true
+                            try {
+                                await elem.play()
+                            } catch (err) {
+                                console.log(err)
+                                socket[id].isTriggered = false
+                            }
+                            socket[id].blockPause = false
+                            break
                         case 'play':
                             if (!elem.paused) break
                             if (!setTriggered()) break
@@ -394,7 +440,12 @@ export default class Connector {
         }
     }
 
-    unregisterElement(type, id) {
+    unregisterElement(type, oid, scene) {
+        if (scene === BI().getTempScene().id || scene === BI().currentScene().id) return
+
+        const id = `${scene}_${oid}`
+        console.log(id)
+
         if (this.socket === null) this.connect()
         const socket = this.socket
 
@@ -412,15 +463,31 @@ export default class Connector {
         }
     }
 
-    detachStream(id) {
+    detachStream(oid, scene) {
+        if (Connector.isPreview === true) return
+
+        if (scene === BI().getTempScene().id || scene === BI().currentScene().id) return
+
+        const id = `${scene}_${oid}`
+
+        console.log('detachStream', id, this.stream[id])
+
         if (!this.stream[id]) return
 
+        if (this.stream[id].available === false) return
+
         this.stream[id].stream &&
-            this.stream[id].stream.getTracks().forEach((mst) => {
-                mst.stop()
+            this.stream[id].stream.getTracks().forEach((t) => {
+                t.stop()
             })
+        this.stream[id].callback(null)
         this.stream[id].stream = null
         this.stream[id].available = true
+        this.stream[id].pc && this.stream[id].pc.close()
+
+        delete this.stream[id]
+
+        this.socket.emit('disconnectStream', id)
     }
 
     disconnect() {
