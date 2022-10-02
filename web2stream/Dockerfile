@@ -63,15 +63,24 @@ ENV LANG=ko_KR.UTF-8 \
 RUN apt install -y vim
 
 # Copy sources to working directory
-COPY package.json /usr/src/app
-COPY package-lock.json /usr/src/app
+RUN mkdir /usr/src/app/engine
+COPY engine/package.json /usr/src/app/engine
+COPY engine/package-lock.json /usr/src/app/engine
+WORKDIR /usr/src/app/engine
+RUN npm install
 
+RUN mkdir /usr/src/app/web
+COPY web/package.json /usr/src/app/web
+COPY web/package-lock.json /usr/src/app/web
+WORKDIR /usr/src/app/web
 RUN npm install
 
 COPY . /usr/src/app
 
 # Open necessary ports
 EXPOSE 8080
+
+WORKDIR /usr/src/app/web
 
 # Launch
 # WORKDIR /usr/src/app/web

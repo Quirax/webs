@@ -1,4 +1,4 @@
-import logger from './logger'
+import logger from './logger.js'
 
 var args = process.argv.slice(2)
 
