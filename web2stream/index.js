@@ -1,11 +1,8 @@
-import fs from 'fs'
-import { dirname } from 'path'
-import { Writable } from 'stream'
-
 import Puppeteer from 'puppeteer'
 
 import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder'
 import PageVideoStreamWriter from './pageVideoStreamWriter.js'
+import { VIDEO_WRITE_STATUS } from './pageVideoStreamTypes.js'
 
 import os from 'os'
 
@@ -13,10 +10,12 @@ import ffmpeg from 'fluent-ffmpeg'
 
 import { start as PAStart, setDefaultSink, createSink, getInputId, moveInput } from './pulseaudio.js'
 
+import args from './arguments.js'
+
 const defaultOptions = {
     followNewTab: true,
     fps: 30,
-    quality: 75,
+    quality: 80,
     ffmpeg_Path: 'ffmpeg',
     videoFrame: {
         width: 1920,
@@ -28,11 +27,9 @@ const defaultOptions = {
 export class RTMPWriter extends PageVideoStreamWriter {
     configureVideoFile(destinationRTMP) {
         //ffmpegProcessParams (fps, audioofffset, outputname, rtmp)
-
         this.writerPromise = new Promise((resolve) => {
             const cpu = Math.max(1, os.cpus().length - 1)
-            const outputStream = ffmpeg({
-                //source: this.videoMediatorStream,
+            ffmpeg({
                 priority: 20,
             })
                 .input(this.videoMediatorStream)
@@ -40,77 +37,34 @@ export class RTMPWriter extends PageVideoStreamWriter {
                 .inputOptions([
                     '-thread_queue_size 2048',
                     '-fflags +genpts',
-                    //'-itsoffset 00:00:06',
-                    //'-framerate 50',
-                    '-framerate 25',
-                    //'-vf fps=30,tpad=stop=-1=stop_mode=clone'
+                    `-framerate ${this.options.fps}`,
+                    '-use_wallclock_as_timestamps true',
                 ])
                 .input(this.options.outputname + '.monitor')
                 .inputFormat('pulse')
-                .inputOptions(['-thread_queue_size 2048', '-itsoffset 0', '-ar 44100'])
-                /*.inputOptions([
-		    //'-async 5',
-		    '-f',
-		    'pulse',
-		    // '-ac',
-		    // '2',
-		    '-i',
-		    this.options.outputname + '.monitor',
-		    // '-acodec',
-		    // 'aac',
-		    '-thread_queue_size',
-		    '2048',
-		])*/
+                .inputOptions([
+                    '-thread_queue_size 2048',
+                    '-itsoffset 0',
+                    '-ar 44100',
+                    '-use_wallclock_as_timestamps true',
+                ])
                 .videoCodec('libx264')
-                //.size('1280x720')
-                //.aspect(this.options.aspectRatio || '4:3')
-                //.autopad(this.autopad.activation, this.autopad?.color)
-                /*.inputFormat('image2pipe')
-		.inputOptions('-thread_queue_size 2048')
-		.inputOptions('-fflags +genpts')
-		.inputOptions('-itsoffset 00:00:00.5')
-		.inputOptions('-filter:v fps=30')*/
-                .videoCodec('h264')
-                .audioCodec('copy')
-                // .inputFPS(this.options.fps)
-                .outputOptions('-preset ultrafast')
-                //.outputOptions('-crf 51')
-                .outputOptions('-tune zerolatency')
-                .outputOptions('-movflags +faststart')
-                .outputOptions('-pix_fmt yuv420p')
-                //.outputOptions('-profile:v baseline')
-                .outputOptions('-g 40')
-                // .outputOptions('-vb 128k')
-                .outputOptions('-b:v 1M')
-                .outputOptions('-maxrate 2000k')
-                .outputOptions('-bufsize 1M')
-                // .outputOptions('-framerate 1')
-                //.outputFPS(this.options.fps)
-                .outputOptions(`-threads 4`)
-                //.outputOptions('-thread_queue_size 2048')
-                .outputOptions(
-                    '-filter:v ' +
-                        //+ 'loop=loop=-1:size=1:start=0,'
-                        //+ 'format=yuv420p,'
-                        'setpts=0.5*PTS,' +
-                        'scale=w=1280:h=720,' +
-                        'fps=fps=25:start_time=0,' +
-                        'tpad=start_duration=0:color=black:stop=-1:stop_mode=clone'
-                )
-                .outputOptions('-shortest')
-                //.outputOptions('-r:v 25')
+                .audioCodec('aac')
+                .outputOptions(['-vsync 1', `-r:v ${this.options.fps}`])
+                .outputOptions(['-preset ultrafast', '-tune zerolatency', '-movflags +faststart', '-shortest'])
+                .outputOptions(['-b:v 1M', '-maxrate 2000k', '-bufsize 1M'])
+                .outputOptions(`-threads ${cpu}`)
+                .outputOptions([
+                    '-pix_fmt yuv420p',
+                    '-filter:v ' + ['scale=w=1280:h=720'].join(','),
+                    '-filter:a ' + ['asetpts=(N/SR+3)/TB'].join(','),
+                ])
                 .on('progress', (progressDetails) => {
                     this.duration = progressDetails.timemark
                 })
                 .on('stderr', (outputs) => {
                     console.log(outputs)
                 })
-
-            if (this.options.recordDurationLimit) {
-                outputStream.duration(this.options.recordDurationLimit)
-            }
-
-            outputStream
                 .on('error', (e) => {
                     this.handleWriteStreamError(e.message)
                     resolve(false)
@@ -121,18 +75,55 @@ export class RTMPWriter extends PageVideoStreamWriter {
                 .save(destinationRTMP)
         })
     }
+    duplicate() {
+        if (this.screenCastFrames.length > 0) {
+            this.insert({
+                blob: -1,
+                timestamp: Date.now() / 1000,
+            })
+        }
+    }
+    write(data, durationSeconds = 1) {
+        this.status = VIDEO_WRITE_STATUS.IN_PROGRESS
+        const NUMBER_OF_FPS = Math.max(Math.floor(durationSeconds * this.options.fps), 1)
+        if (data !== -1) this.lastBlob = data
+        for (let i = 0; i < NUMBER_OF_FPS; i++) {
+            this.videoMediatorStream.write(this.lastBlob)
+        }
+    }
 }
 
 export class Streamer extends PuppeteerScreenRecorder {
+    constructor(page, options = {}) {
+        super(page, options)
+        this.duplicator = null
+    }
+    setupListeners() {
+        super.setupListeners()
+        this.duplicator = setInterval(() => {
+            this.streamWriter.duplicate()
+        }, 1000 / this.options.fps)
+    }
+
     async startRTMP(rtmp) {
         this.streamWriter = new RTMPWriter(rtmp, this.options)
         return this.startStreamReader()
     }
+    stop() {
+        super.stop()
+        clearInterval(this.duplicator)
+    }
 }
 
 ;(async () => {
-    const OUTPUT_NAME = 'streamtest'
-    const TARGET_URL = 'https://www.youtube.com/watch?v=RVHLH5n_G7A' //'https://qrmoo.mooo.com/preview'
+    // const OUTPUT_NAME = 'streamtest'
+    const OUTPUT_NAME = args.getOutputName()
+    //const TARGET_URL = 'http://corndog.io'
+    //const TARGET_URL = 'https://alwaysjudgeabookbyitscover.com'
+    //const TARGET_URL = 'https://www.youtube.com/watch?v=v2a-eVJFVOc'
+    //const TARGET_URL = 'https://qrmoo.mooo.com/preview'
+    //const TARGET_URL = 'https://twip.kr/widgets/alertbox/g64oGmrzpq'
+    const TARGET_URL = args.getUrl()
 
     const browser = await Puppeteer.launch({
         args: [
@@ -140,13 +131,14 @@ export class Streamer extends PuppeteerScreenRecorder {
             '--autoplay-policy=no-user-gesture-required',
             '--no-sandbox',
             '--audio-service-quit-timeout-ms=-1',
-            '--enable-exclusive-audio',
             '--enable-features=AudioServiceLaunchOnStartup',
+            '--disable-features=AudioServiceOutOfProcess',
         ],
         ignoreDefaultArgs: ['--mute-audio'],
-        // headless: false,
         defaultViewport: null,
     })
+    console.log(`Started at ${process.cwd()}`)
+    console.log(`Chrome is streamed to rtmp server with pid ${browser.process().pid}`)
 
     //initPulseAudio
     let sinkId
@@ -165,19 +157,14 @@ export class Streamer extends PuppeteerScreenRecorder {
         ...defaultOptions,
         outputname: OUTPUT_NAME,
     })
-    await page.goto(TARGET_URL)
+    await page.goto('https://youtube.com/watch?v=g4mHPeMGTJM') // Connect audio first
 
     //executeAfterPageLoaded
     const inputIdList = await getInputId(browser.process().pid)
 
     for (let inputId of inputIdList) await moveInput(inputId, sinkId)
 
-    await streamer.startRTMP()
-    // await streamer.start('./report/video/simple.mp4')
-    console.log(`Chrome is streamed to rtmp server with pid ${browser.process().pid}`)
-    // await keypress()
-    // setTimeout(async () => {
-    //     await streamer.stop()
-    //     await browser.close()
-    // }, 10000)
+    await streamer.startRTMP(args.getRtmpUrl())
+
+    await page.goto(TARGET_URL)
 })()

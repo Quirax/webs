@@ -45,7 +45,7 @@ export const readSinkId = async function (sinkName) {
 }
 
 export const getInputId = async function (chromePid) {
-    let { stdout } = await execAsync('./get_input_index.sh ' + chromePid)
+    let { stdout } = await execAsync('bash ./get_input_index.sh ' + chromePid)
     const inputIdList = stdout.trim().split(' ')
     logger.log('Input id: ' + inputIdList)
     return inputIdList
