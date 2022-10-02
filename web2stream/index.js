@@ -16,7 +16,7 @@ import { start as PAStart, setDefaultSink, createSink, getInputId, moveInput } f
 const defaultOptions = {
     followNewTab: true,
     fps: 30,
-    quality: 100,
+    quality: 75,
     ffmpeg_Path: 'ffmpeg',
     videoFrame: {
         width: 1920,
@@ -32,44 +32,73 @@ export class RTMPWriter extends PageVideoStreamWriter {
         this.writerPromise = new Promise((resolve) => {
             const cpu = Math.max(1, os.cpus().length - 1)
             const outputStream = ffmpeg({
-                source: this.videoMediatorStream,
+                //source: this.videoMediatorStream,
                 priority: 20,
             })
-                .inputOptions([
-                    // '-re',
-                    // '-itsoffset',
-                    // '0',
-                    '-f',
-                    'pulse',
-                    // '-ac',
-                    // '2',
-                    '-i',
-                    this.options.outputname + '.monitor',
-                    // '-acodec',
-                    // 'aac',
-                    '-thread_queue_size',
-                    '2048',
-                ])
+                .input(this.videoMediatorStream)
                 .inputFormat('image2pipe')
-                .inputOptions('-thread_queue_size 2048')
-                .inputOptions('-fflags +genpts')
-                .inputOptions('-itsoffset 00:00:00.5')
-                .inputFPS(35)
+                .inputOptions([
+                    '-thread_queue_size 2048',
+                    '-fflags +genpts',
+                    //'-itsoffset 00:00:06',
+                    //'-framerate 50',
+                    '-framerate 25',
+                    //'-vf fps=30,tpad=stop=-1=stop_mode=clone'
+                ])
+                .input(this.options.outputname + '.monitor')
+                .inputFormat('pulse')
+                .inputOptions(['-thread_queue_size 2048', '-itsoffset 0', '-ar 44100'])
+                /*.inputOptions([
+		    //'-async 5',
+		    '-f',
+		    'pulse',
+		    // '-ac',
+		    // '2',
+		    '-i',
+		    this.options.outputname + '.monitor',
+		    // '-acodec',
+		    // 'aac',
+		    '-thread_queue_size',
+		    '2048',
+		])*/
                 .videoCodec('libx264')
-                .size(this.videoFrameSize)
-                .aspect(this.options.aspectRatio || '4:3')
-                .autopad(this.autopad.activation, this.autopad?.color)
+                //.size('1280x720')
+                //.aspect(this.options.aspectRatio || '4:3')
+                //.autopad(this.autopad.activation, this.autopad?.color)
+                /*.inputFormat('image2pipe')
+		.inputOptions('-thread_queue_size 2048')
+		.inputOptions('-fflags +genpts')
+		.inputOptions('-itsoffset 00:00:00.5')
+		.inputOptions('-filter:v fps=30')*/
+                .videoCodec('h264')
+                .audioCodec('copy')
+                // .inputFPS(this.options.fps)
                 .outputOptions('-preset ultrafast')
+                //.outputOptions('-crf 51')
+                .outputOptions('-tune zerolatency')
+                .outputOptions('-movflags +faststart')
                 .outputOptions('-pix_fmt yuv420p')
-                .outputOptions('-profile:v baseline')
-                .outputOptions('-g 30')
+                //.outputOptions('-profile:v baseline')
+                .outputOptions('-g 40')
                 // .outputOptions('-vb 128k')
-                .outputOptions('-minrate 2M')
-                .outputOptions('-maxrate 6M')
-                .outputOptions('-bufsize 10M')
+                .outputOptions('-b:v 1M')
+                .outputOptions('-maxrate 2000k')
+                .outputOptions('-bufsize 1M')
                 // .outputOptions('-framerate 1')
-                .outputFPS(this.options.fps)
-                .outputOptions(`-threads ${cpu}`)
+                //.outputFPS(this.options.fps)
+                .outputOptions(`-threads 4`)
+                //.outputOptions('-thread_queue_size 2048')
+                .outputOptions(
+                    '-filter:v ' +
+                        //+ 'loop=loop=-1:size=1:start=0,'
+                        //+ 'format=yuv420p,'
+                        'setpts=0.5*PTS,' +
+                        'scale=w=1280:h=720,' +
+                        'fps=fps=25:start_time=0,' +
+                        'tpad=start_duration=0:color=black:stop=-1:stop_mode=clone'
+                )
+                .outputOptions('-shortest')
+                //.outputOptions('-r:v 25')
                 .on('progress', (progressDetails) => {
                     this.duration = progressDetails.timemark
                 })
@@ -103,10 +132,17 @@ export class Streamer extends PuppeteerScreenRecorder {
 
 ;(async () => {
     const OUTPUT_NAME = 'streamtest'
-    const TARGET_URL = 'https://www.youtube.com/watch?v=jrOi3NZI2qw'
+    const TARGET_URL = 'https://www.youtube.com/watch?v=RVHLH5n_G7A' //'https://qrmoo.mooo.com/preview'
 
     const browser = await Puppeteer.launch({
-        args: ['--window-size=1920,1080', '--autoplay-policy=no-user-gesture-required', '--no-sandbox'],
+        args: [
+            '--window-size=1920,1080',
+            '--autoplay-policy=no-user-gesture-required',
+            '--no-sandbox',
+            '--audio-service-quit-timeout-ms=-1',
+            '--enable-exclusive-audio',
+            '--enable-features=AudioServiceLaunchOnStartup',
+        ],
         ignoreDefaultArgs: ['--mute-audio'],
         // headless: false,
         defaultViewport: null,
@@ -129,16 +165,14 @@ export class Streamer extends PuppeteerScreenRecorder {
         ...defaultOptions,
         outputname: OUTPUT_NAME,
     })
-    await page.goto(TARGET_URL, {
-        waitUntil: 'load',
-    })
+    await page.goto(TARGET_URL)
 
     //executeAfterPageLoaded
     const inputIdList = await getInputId(browser.process().pid)
 
     for (let inputId of inputIdList) await moveInput(inputId, sinkId)
 
-    await streamer.startRTMP('')
+    await streamer.startRTMP()
     // await streamer.start('./report/video/simple.mp4')
     console.log(`Chrome is streamed to rtmp server with pid ${browser.process().pid}`)
     // await keypress()

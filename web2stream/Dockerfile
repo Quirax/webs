@@ -24,6 +24,10 @@ RUN usermod -aG pulse,pulse-access root
 # RUN apt-get update
 # RUN apt-get install redis -y
 
+# Install graphic driver
+# RUN apt install -yq libmfx1 libmfx-tools libva-drm2 libva-x11-2 vainfo intel-media-va-driver
+# ENV LIBVA_DRIVER_NAME=iHD
+
 # Install ffmpeg
 RUN apt install ffmpeg -y
 
