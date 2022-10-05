@@ -136,6 +136,7 @@ export class Streamer extends PuppeteerScreenRecorder {
         ],
         ignoreDefaultArgs: ['--mute-audio'],
         defaultViewport: null,
+        executablePath: '/usr/bin/google-chrome-stable',
     })
     console.log(`Started at ${process.cwd()}`)
     console.log(`Chrome is streamed to rtmp server with pid ${browser.process().pid}`)

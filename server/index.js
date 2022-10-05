@@ -5,6 +5,7 @@ import https from 'https'
 import http from 'http'
 import { Server } from 'socket.io'
 import wrtc from 'wrtc'
+import fetch from 'node-fetch'
 
 import './env.js'
 
@@ -63,9 +64,9 @@ let broadcastInfo = null
 const streams = {}
 
 io.on('connect', async (socket) => {
-    const room = 'asdf'
-    const room_preview = room + '_preview'
     const uid = socket.handshake.query.uid
+    const room = uid
+    const room_preview = room + '_preview'
     socket.join(room)
     socket.isPreview = false
 
@@ -261,88 +262,81 @@ io.on('connect', async (socket) => {
         }
     })
 
-    socket.on('destination', async (url) => {
+    socket.on('start', async (dest) => {
         try {
-            if (typeof url != 'string') {
+            if (typeof dest != 'string') {
                 throw `Invalid destination url - type mismatch: xxx`
             }
             var regexValidator = /^rtmp:\/\/[^\s]*$/
-            if (!regexValidator.test(url)) {
+            if (!regexValidator.test(dest)) {
                 throw `Invalid destination url - not rtmp url: xxx`
             }
-            socket._dest = url
-            log(`Set destination to xxx`)
-        } catch (err) {
-            errorHandler(err)
-        }
-    })
 
-    socket.on('start', async () => {
-        try {
-            if (socket._ffmpeg || socket._feeder) throw `Streaming already running.`
-            if (!socket._dest) throw `No destination url available.`
+            const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs`
+            const out_name = `${room}_rtmp`
 
-            log('Start streaming')
-
-            var option =
-                '-re -i - -c:v libx264 -preset veryfast -b:v 6000k -maxrate 6000k -bufsize 6000k -pix_fmt yuv420p -g 50 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv -loglevel repeat+level+error -vf scale=1920:1080'
-
-            option = option.split(' ')
-            option.push(socket._dest)
-
-            socket._ffmpeg = spawn('ffmpeg', option)
-
-            log('Spawned ffmpeg')
-
-            socket._feeder = (data) => {
-                try {
-                    socket._ffmpeg.stdin.write(data)
-                } catch (err) {
-                    errorHandler(err)
-                }
+            const body = {
+                url: `https://qrmoo.mooo.com/preview?id=${uid}`,
+                outputName: out_name,
+                rtmpUrl: dest,
             }
 
-            socket._ffmpeg.stderr.on('data', (d) => {
-                errorHandler(d.toString())
+            log(JSON.stringify(body))
+
+            const r = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(body),
             })
 
-            socket._ffmpeg.on('error', (e) => {
-                errorHandler(`ffmpeg caught an error: ${e}`)
-            })
+            const resp = await r.json()
 
-            socket._ffmpeg.on('exit', (e) => {
-                log(`ffmpeg has been exited: ${e}`)
-                socket.disconnect()
-            })
+            socket._jobId = resp.jobId
 
-            log('Started streaming')
+            log(`Started streaming (jobId = ${resp.jobId}, outputName = ${out_name})`)
         } catch (err) {
             errorHandler(err)
         }
     })
 
-    socket.on('stream', (blob) => {
-        socket._feeder(blob)
+    async function stop() {
+        try {
+            //TODO : 시작 전에 먼저 종료했을 때 제대로 종료되지 않는 문제 해결
+            if (!socket._jobId) return
+
+            const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs/${socket._jobId}/stop`
+
+            const resp = await (
+                await fetch(url, {
+                    method: 'POST',
+                })
+            ).text()
+
+            if (resp !== '"ok"') {
+                errorHandler(resp)
+            }
+        } catch (err) {
+            errorHandler(err)
+        } finally {
+            delete socket._jobId
+            log('Stopped')
+        }
+    }
+
+    socket.on('stop', async () => {
+        try {
+            await stop()
+        } catch (err) {
+            errorHandler(err)
+        }
     })
 
     socket.on('disconnect', async () => {
         try {
-            let ffmpeg = socket._ffmpeg
-            let feeder = socket._feeder
-
-            if (ffmpeg) {
-                try {
-                    ffmpeg.stdin.end()
-                    ffmpeg.kill('SIGINT')
-                    log('Ended ffmpeg')
-                } catch (e) {
-                    errorHandler(`Error while killing ffmpeg - ${e}`)
-                } finally {
-                    delete socket._ffmpeg
-                }
-            }
-
-            if (feeder) delete socket._feeder
+            await stop()
 
             if (socket.isPreview) return
             else

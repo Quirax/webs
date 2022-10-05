@@ -13,6 +13,9 @@ export class VideoOverlay extends Overlay {
 
         const handleRef = React.createRef()
 
+        this.id = null
+        this.sid = null
+
         this.onMouseUp = (e) => {
             handleRef.current && (handleRef.current.dataset.move = 'false')
         }
@@ -72,7 +75,7 @@ export class VideoOverlay extends Overlay {
                             conn.registerElement(
                                 OverlayType.VIDEO,
                                 this.props.value.id,
-                                props.isTemp ? BI().getTempScene().id : BI().currentScene().id,
+                                BI().currentScene().id,
                                 e.target
                             )
                         }}
@@ -112,10 +115,20 @@ export class VideoOverlay extends Overlay {
         window.addEventListener('mouseup', this.onMouseUp)
     }
 
+    componentDidUpdate() {
+        super.componentDidUpdate()
+
+        const sid = this.props.isTemp === true ? BI().getTempScene().id : BI().currentScene().id
+
+        if (this.id !== this.props.value.id || sid !== this.sid) {
+            this.id = this.props.value.id
+            this.sid = sid
+        }
+    }
+
     componentWillUnmount() {
         window.removeEventListener('mouseup', this.onMouseUp)
         let conn = Connector.getInstance()
-        if (this.props.isTemp === false)
-            conn.unregisterElement(OverlayType.VIDEO, this.props.value.id, this.state.sceneID)
+        if (this.props.isTemp === false) conn.unregisterElement(OverlayType.VIDEO, this.props.value.id, this.sid)
     }
 }

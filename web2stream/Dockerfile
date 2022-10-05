@@ -33,21 +33,21 @@ RUN apt install ffmpeg -y
 
 # Install chrome
 RUN apt-get install -y libappindicator1 fonts-liberation libatk-bridge2.0-0 libatspi2.0-0 libgtk-3-0 libnspr4 libnss3 xdg-utils
-# RUN apt-get install -yq \
-#     x11-apps \
-#     x11-xkb-utils \
-#     x11vnc \
-#     xdg-utils \
-#     xfonts-100dpi \
-#     xfonts-75dpi \
-#     xfonts-cyrillic \
-#     xfonts-scalable \
-#     xvfb \
-#     fvwm \
-#     xterm
-# RUN apt-get install --fix-broken -y
-# RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-# RUN dpkg -i google-chrome*.deb
+RUN apt-get install -yq \
+    x11-apps \
+    x11-xkb-utils \
+    x11vnc \
+    xdg-utils \
+    xfonts-100dpi \
+    xfonts-75dpi \
+    xfonts-cyrillic \
+    xfonts-scalable \
+    xvfb \
+    fvwm \
+    xterm
+RUN apt-get install --fix-broken -y
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN dpkg -i google-chrome*.deb
 
 # Hangul support
 RUN apt install -y udev fonts-freefont-ttf tzdata
