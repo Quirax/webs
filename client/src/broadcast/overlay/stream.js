@@ -45,9 +45,11 @@ export class WebcamOverlay extends Overlay {
                     height={props.height * props.ratio}
                     referrer={props.referrer}
                     onMouseEnter={(e) => {
+                        if (props.isPreview) return
                         handleRef.current.style.display = 'inline-block'
                     }}
                     onMouseLeave={(e) => {
+                        if (props.isPreview) return
                         handleRef.current.dataset.handle === 'false' && (handleRef.current.style.display = 'none')
                     }}>
                     <Video
@@ -59,6 +61,7 @@ export class WebcamOverlay extends Overlay {
                         autoPlay
                         loop
                         muted
+                        controls={false}
                         data-muted={true}
                         onClick={(e) => {
                             if (e.target.dataset.muted !== 'true') return

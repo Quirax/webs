@@ -303,13 +303,16 @@ export default class Connector {
 
         socket.emit('registerElement', id)
 
-        // if (socket[id]) return
+        if (socket[id]) {
+            this.unregisterElement(type, oid, scene)
+        }
 
         socket[id] = {
             isTriggered: false,
             blockPause: false,
             timers: [],
             elem: elem,
+            events: {},
         }
 
         function isTriggered(e) {
@@ -383,42 +386,52 @@ export default class Connector {
                     }
                 })
 
-                elem.addEventListener('play', (e) => {
-                    console.log(id, 'emit', e)
-                    if (!isTriggered(e)) return
-                    socket.emit('event_' + id, { type: 'play' })
-                })
-                elem.addEventListener('pause', (e) => {
-                    console.log(id, 'emit', e)
-                    if (!isTriggered(e)) return
-                    const elem = socket[id].elem
-                    if (elem.seeking) return
-                    socket.emit('event_' + id, { type: 'pause' })
-                })
-                elem.addEventListener('ratechange', (e) => {
-                    console.log(id, 'emit', e)
-                    const elem = socket[id].elem
-                    socket.emit('event_' + id, { type: 'ratechange', rate: elem.playbackRate })
-                })
-                elem.addEventListener('seeking', (e) => {
-                    console.log(id, 'emit', e)
-                    if (!isTriggered(e)) return
-                    const elem = socket[id].elem
-                    socket.emit('event_' + id, { type: 'seeking', time: elem.currentTime })
-                })
-                elem.addEventListener('volumechange', (e) => {
-                    console.log(id, 'emit', e)
-                    if (!e.isTrusted) return
-                    const elem = socket[id].elem
-                    socket.emit('event_' + id, { type: 'volumechange', volume: elem.volume, muted: elem.muted })
-                })
+                socket[id].events = {
+                    play: (e) => {
+                        console.log(id, 'emit', e)
+                        if (!isTriggered(e)) return
+                        socket.emit('event_' + id, { type: 'play' })
+                    },
+                    pause: (e) => {
+                        console.log(id, 'emit', e)
+                        if (!isTriggered(e)) return
+                        const elem = socket[id].elem
+                        if (elem.seeking) return
+                        socket.emit('event_' + id, { type: 'pause' })
+                    },
+                    ratechange: (e) => {
+                        console.log(id, 'emit', e)
+                        const elem = socket[id].elem
+                        socket.emit('event_' + id, { type: 'ratechange', rate: elem.playbackRate })
+                    },
+                    seeking: (e) => {
+                        console.log(id, 'emit', e)
+                        if (!isTriggered(e)) return
+                        const elem = socket[id].elem
+                        socket.emit('event_' + id, { type: 'seeking', time: elem.currentTime })
+                    },
+                    volumechange: (e) => {
+                        console.log(id, 'emit', e)
+                        if (!e.isTrusted) return
+                        const elem = socket[id].elem
+                        socket.emit('event_' + id, { type: 'volumechange', volume: elem.volume, muted: elem.muted })
+                    },
+                }
+
+                for (let e in socket[id].events) {
+                    elem.addEventListener(e, socket[id].events[e])
+                }
                 break
             default:
         }
     }
 
     unregisterElement(type, oid, scene) {
-        if (scene === BI().getTempScene().id || scene === BI().currentScene().id) return
+        if (
+            // scene === BI().getTempScene().id ||
+            scene === BI().currentScene().id
+        )
+            return
 
         const id = `${scene}_${oid}`
         console.log(id)
@@ -435,6 +448,10 @@ export default class Connector {
                 socket[id].timers.forEach((v) => {
                     clearInterval(v)
                 })
+
+            for (let e in socket[id].events) {
+                socket[id].elem.addEventListener(e, socket[id].events[e])
+            }
 
             delete socket[id]
         }

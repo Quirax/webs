@@ -57,7 +57,7 @@ export class RTMPWriter extends PageVideoStreamWriter {
                 .outputOptions([
                     '-pix_fmt yuv420p',
                     '-filter:v ' + ['scale=w=1280:h=720'].join(','),
-                    '-filter:a ' + ['asetpts=(N/SR+3)/TB'].join(','),
+                    '-filter:a ' + ['asetpts=(N/SR+1.451)/TB'].join(','),
                 ])
                 .on('progress', (progressDetails) => {
                     this.duration = progressDetails.timemark

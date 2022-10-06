@@ -52,9 +52,11 @@ export class VideoOverlay extends Overlay {
                     height={props.height * props.ratio}
                     referrer={props.referrer}
                     onMouseEnter={(e) => {
+                        if (props.isPreview) return
                         handleRef.current.style.display = 'inline-block'
                     }}
                     onMouseLeave={(e) => {
+                        if (props.isPreview) return
                         handleRef.current.dataset.handle === 'false' && (handleRef.current.style.display = 'none')
                     }}>
                     <Video

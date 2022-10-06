@@ -21,7 +21,7 @@ exports.create = async function (job) {
         return err
     }
     job.jobId = screencaster.pid
-    job.hostUrl = await http.getInstanceIp()
+    // job.hostUrl = await http.getInstanceIp()
     return job
 }
 
