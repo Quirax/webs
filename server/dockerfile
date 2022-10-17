@@ -25,6 +25,11 @@ RUN npm install
 
 # Open necessary ports
 EXPOSE 8080
+EXPOSE 3033
+EXPOSE 3478
+EXPOSE 3478/udp
+EXPOSE 19302
+EXPOSE 19302/udp
 
 # Launch nginx
 CMD ["node", "index.js"]
