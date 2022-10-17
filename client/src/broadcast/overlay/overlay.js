@@ -46,6 +46,7 @@ export class Overlay extends React.Component {
         this.offShift = this.offShift.bind(this)
 
         this.setFocus = () => {
+            if (BI().detectMobileDevice()) return
             BI().currentScene().overlay.selected = this.props.idx
             BI().onChange(true)
         }
@@ -120,10 +121,10 @@ export class Overlay extends React.Component {
                                     e.preventDefault()
                                 }}
                                 onTouchStart={(e) => {
-                                    e.preventDefault()
+                                    // e.preventDefault()
                                 }}
                                 onTouchEnd={(e) => {
-                                    e.preventDefault()
+                                    // e.preventDefault()
                                 }}>
                                 <this.children
                                     referrer={this.childrenRef}
@@ -131,6 +132,7 @@ export class Overlay extends React.Component {
                                     width={this.props.value.transform.width}
                                     ratio={ratio}
                                     isTemp={this.props.isTemp}
+                                    isPreview={this.props.preview || props.preview}
                                 />
                             </Div>
                             <Moveable

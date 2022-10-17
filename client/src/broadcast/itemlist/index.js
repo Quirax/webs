@@ -1,7 +1,7 @@
 import { cloneDeep } from 'lodash'
 import React from 'react'
 import { Div, Ul, Li, Nav, Dialog } from '../../components'
-import Connector from '../connector'
+import Connector from '../../connector'
 import BI, { assignList, GenerateID } from '../info'
 import { OverlayType } from '../overlay'
 import PropertyDialog from './property'
@@ -80,7 +80,7 @@ export default class Itemlist extends React.Component {
                     onAdd: () => {
                         BI().info.scene.push({
                             name: '새 장면',
-                            defaultCategory: 'Just Chatting',
+                            defaultCategory: 509658,
                             id: Math.random().toString(36).substring(2, 11),
                             overlay: [],
                         })
@@ -173,6 +173,8 @@ export default class Itemlist extends React.Component {
                     },
                 })
                 break
+            case '':
+                return <></>
             default:
                 throw new Error('Invalid itemlist mode')
         }
@@ -218,6 +220,7 @@ export default class Itemlist extends React.Component {
                             })}
                         </DndProvider>
                         <Li
+                            display={BI().detectMobileDevice() ? 'none' : null}
                             padding='8'
                             border-bottom='normal'
                             align='center'
@@ -436,6 +439,8 @@ class ContextMenu extends React.Component {
     }
 
     show(target, mode, value, dialogOpener, top, left) {
+        if (BI().detectMobileDevice()) return
+
         let list = []
         switch (mode) {
             case ItemlistType.SCENES:

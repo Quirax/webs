@@ -43,7 +43,7 @@ import {
     faArrowLeft,
     faArrowUp,
 } from '@fortawesome/free-solid-svg-icons'
-import Connector from '../connector'
+import Connector from '../../connector'
 import { ItemlistType } from '.'
 import { TransitionGenerator, TransitionParam, TransitionType } from '../transition'
 
