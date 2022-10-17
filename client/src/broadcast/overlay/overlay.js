@@ -132,6 +132,7 @@ export class Overlay extends React.Component {
                                     width={this.props.value.transform.width}
                                     ratio={ratio}
                                     isTemp={this.props.isTemp}
+                                    isPreview={this.props.preview || props.preview}
                                 />
                             </Div>
                             <Moveable

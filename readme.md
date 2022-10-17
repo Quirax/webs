@@ -71,15 +71,17 @@
         -   [도커(Docker) 사용 중인 컨테이너 이미지 백업 및 복원하기](https://m.blog.naver.com/chandong83/221006388637)
     -   [ffmpeg install within existing Node.js docker image](https://stackoverflow.com/questions/50693091/ffmpeg-install-within-existing-node-js-docker-image)
         -   [jrottenberg/ffmpeg](https://hub.docker.com/r/jrottenberg/ffmpeg)
+-   MediaStream sync with WebRTC
 
-### Deprecated
-
--   Send Canvas stream to server via WebRTC
-    -   [webrtc/samples/canvas-pc/main.js](https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/canvas-pc/js/main.js)
     -   [WebRTC 구현하기(1:N SFU)](https://millo-l.github.io/WebRTC-%EA%B5%AC%ED%98%84%ED%95%98%EA%B8%B0-1-N-SFU/)
     -   [wrtc](https://www.npmjs.com/package/wrtc)
     -   [WebRTC Samples](https://webrtc.github.io/samples/)
-    -   [Canvas to video stream](https://webrtc.github.io/samples/src/content/capture/canvas-video/)
+
+-   [Puppeteer-Screen-Recorder](https://github.com/prasanaworld/puppeteer-screen-recorder) - [stream.PassThrough](https://nodejs.org/api/stream.html#stream_class_stream_passthrough)
+
+### Deprecated
+
+-   [webrtc/samples/canvas-pc/main.js](https://github.com/webrtc/samples/blob/gh-pages/src/content/capture/canvas-pc/js/main.js)
+-   [Canvas to video stream](https://webrtc.github.io/samples/src/content/capture/canvas-video/)
 -   Socket.IO-stream
     -   [How to stream data over socket.io to client](https://stackoverflow.com/questions/48627210/how-to-stream-data-over-socket-io-to-client)
--   [Puppeteer-Screen-Recorder](https://github.com/prasanaworld/puppeteer-screen-recorder) - [stream.PassThrough](https://nodejs.org/api/stream.html#stream_class_stream_passthrough)

@@ -56,16 +56,17 @@ export default class Broadcast extends React.Component {
 
         this.getCanvasRatio = (size) => (this.state.canvasRect.width / 1920) * size
 
-        this.toggleBroadcast = () => {
+        this.toggleBroadcast = async () => {
             let connector = Connector.getInstance()
             connector.connect()
 
             if (this.state.isBroadcasting) connector.stop()
-            else connector.start()
+            else await connector.start()
 
             this.setState({
                 isBroadcasting: !this.state.isBroadcasting,
             })
+            BI().afterChange()
         }
         this.toggleBroadcast = this.toggleBroadcast.bind(this)
 
