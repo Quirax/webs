@@ -6,11 +6,22 @@ import Twitch from './twitch'
 const wrtc_cfg = {
     iceServers: [
         {
-            urls: 'stun:stun.l.google.com:19302',
-            // credential: 'webrtc',
-            // username: 'webrtc',
+            urls: ['stun:meet-jit-si-turnrelay.jitsi.net:443'],
+            username: '',
+            credential: '',
+        },
+        {
+            urls: ['stun:stun.nextcloud.com:443'],
+            username: '',
+            credential: '',
         },
     ],
+    iceTransportPolicy: 'all',
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'require',
+    iceCandidatePoolSize: 0,
+    sdpSemantics: 'unified-plan',
+    extmapAllowMixed: true,
 }
 
 export default class Connector {
