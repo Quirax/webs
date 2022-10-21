@@ -21,25 +21,36 @@ exports.stop = function (req, res) {
     res.json(response)
 }
 
+function doNotFound(res) {
+    res.writeHead(404, { 'Content-Type': 'text/html' })
+    res.end('404 Not Found')
+}
+
 exports.playlist = (req, res) => {
     const jobId = req.params.id
-    const stream = service.playlist(jobId)
-    if (stream) {
-        stream.pipe(res)
-    } else {
-        res.writeHead(404, { 'Content-Type': 'text/html' })
-        res.end('404 Not Found')
+    try {
+        const stream = service.playlist(jobId)
+        if (stream) {
+            stream.pipe(res)
+        } else {
+            doNotFound(res)
+        }
+    } catch (err) {
+        doNotFound(res)
     }
 }
 
 exports.ts = (req, res) => {
     const jobId = req.params.id
     const ts = req.params.ts
-    const stream = service.ts(jobId, ts)
-    if (stream) {
-        stream.pipe(res)
-    } else {
-        res.writeHead(404, { 'Content-Type': 'text/html' })
-        res.end('404 Not Found')
+    try {
+        const stream = service.ts(jobId, ts)
+        if (stream) {
+            stream.pipe(res)
+        } else {
+            doNotFound(res)
+        }
+    } catch (err) {
+        doNotFound(res)
     }
 }

@@ -95,10 +95,10 @@ class RTMPWriter extends PageVideoStreamWriter {
                 .outputOptions([
                     `-segment_list /var/hls/${this.options.outputname}/playlist.m3u8`,
                     '-segment_list_type hls',
-                    '-segment_list_size 10',
+                    '-segment_list_size 6',
                     '-segment_list_flags +live',
                     '-segment_time 10',
-                    '-segment_wrap 10',
+                    '-segment_wrap 6',
                 ])
                 .save(`/var/hls/${this.options.outputname}/out%02d.ts`)
         })

@@ -10,6 +10,14 @@ exports.list = function () {
 
 exports.create = async function (job) {
     logger.log('Starting a screencaster job')
+    if (job.rtmpUrl === '' && Object.values(db).includes(job.outputName)) {
+        logger.log('There is already HLS process for output name: ' + job.outputName)
+
+        let pid = Object.keys(db).find((key) => db[key] === job.outputName)
+        logger.log('Process Pid: ' + pid)
+        job.jobId = pid
+        return job
+    }
     try {
         const ops = getScreencasterOpts(job)
         screencaster = spawn('node', ops, { stdio: ['pipe', 'pipe', 2, 'ipc'], cwd: '../engine' })
@@ -59,7 +67,11 @@ exports.stop = function (jobId) {
             logger.log('Closing job by invoking the stop endpoint') // terminating the Processes succeeded.
         }
     })
-    db[jobId] && (db[jobId] = false)
+    if (db[jobId] && db[jobId] != false) {
+        dir = db[jobId]
+        db[jobId] = false
+        fs.readdirSync(`/var/hls/${dir}`).map((file) => fs.unlinkSync(`/var/hls/${dir}/${file}`))
+    }
     //make sure we cancel the timeout
     return 'ok'
 }
