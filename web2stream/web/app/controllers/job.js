@@ -1,22 +1,45 @@
 const service = require('../services/job')
-const logger = require('../logger');
+const logger = require('../logger')
 
-exports.list = function(req, res){
-  const response = service.list();
-  res.json(response);
+exports.list = function (req, res) {
+    const response = service.list()
+    res.json(response)
 }
 
-exports.create = async function(req, res) {
-  logger.log("jobService::create()");
-  const job = req.body;
-  const response = await service.create(job);
-  logger.log("This is the response: " + JSON.stringify(response));
-  res.json(response);
+exports.create = async function (req, res) {
+    logger.log('jobService::create()')
+    const job = req.body
+    const response = await service.create(job)
+    logger.log('This is the response: ' + JSON.stringify(response))
+    res.json(response)
 }
 
-exports.stop = function(req, res) {
-  const jobId = req.params.id;
-  const response = service.stop(jobId);
-  logger.log("This is the response: " + response)
-  res.json(response);
+exports.stop = function (req, res) {
+    const jobId = req.params.id
+    const response = service.stop(jobId)
+    logger.log('This is the response: ' + response)
+    res.json(response)
+}
+
+exports.playlist = (req, res) => {
+    const jobId = req.params.id
+    const stream = service.playlist(jobId)
+    if (stream) {
+        stream.pipe(res)
+    } else {
+        res.writeHead(404, { 'Content-Type': 'text/html' })
+        res.end('404 Not Found')
+    }
+}
+
+exports.ts = (req, res) => {
+    const jobId = req.params.id
+    const ts = req.params.ts
+    const stream = service.ts(jobId, ts)
+    if (stream) {
+        stream.pipe(res)
+    } else {
+        res.writeHead(404, { 'Content-Type': 'text/html' })
+        res.end('404 Not Found')
+    }
 }

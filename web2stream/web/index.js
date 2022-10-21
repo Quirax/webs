@@ -40,6 +40,8 @@ router.get('/', function (req, res) {
 router.get('/jobs', jobController.list)
 router.post('/jobs', jobController.create)
 router.post('/jobs/:id/stop', jobController.stop)
+router.get('/jobs/:id/playlist.m3u8', jobController.playlist)
+router.get('/jobs/:id/:ts(out\\d+.ts)', jobController.ts)
 //more job routes here
 
 // REGISTER OUR ROUTES -------------------------------
