@@ -7,7 +7,7 @@ import { TextOverlay } from './text'
 import { ShapeOverlay } from './shape'
 import { ImageOverlay } from './image'
 import { VideoOverlay } from './video'
-import { WebcamOverlay, DisplayOverlay } from './stream'
+import { WebcamOverlay, DisplayOverlay, BrowserOverlay } from './stream'
 import getTransitionEffect from '../transition'
 import { useSpring, animated } from 'react-spring'
 import { CANVAS_RECT } from '../index'
@@ -23,6 +23,7 @@ export const OverlayType = {
     VIDEO: 'video',
     WEBCAM: 'webcam',
     DISPLAY: 'display',
+    BROWSER: 'browser',
 }
 
 Object.freeze(OverlayType)
@@ -145,6 +146,11 @@ export const OverlayGenerator = (name, type) => {
         case OverlayType.WEBCAM:
         case OverlayType.DISPLAY:
             break
+        case OverlayType.BROWSER:
+            Object.assign(obj.params, {
+                src: '',
+            })
+            break
         default:
             throw new Error('Invalid overlay type')
     }
@@ -243,6 +249,8 @@ function OverlayElems(props) {
                         return <WebcamOverlay key={i} idx={i} value={v} isTemp={props.isTemp} />
                     case OverlayType.DISPLAY:
                         return <DisplayOverlay key={i} idx={i} value={v} isTemp={props.isTemp} />
+                    case OverlayType.BROWSER:
+                        return <BrowserOverlay key={i} idx={i} value={v} isTemp={props.isTemp} />
                     default:
                 }
                 return <></>

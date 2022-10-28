@@ -31,7 +31,8 @@ export default class Connector {
     constructor() {
         this.isBroadcasting = false
         this.socket = null
-        this.stream = {}
+        this.stream = {} // scene_objid: stream, available, callback
+        this.browser = {} // target_url: jobId
 
         const attachStream = (oid, scene, cb, reset, streamer) => {
             const id = `${scene}_${oid}`
@@ -131,6 +132,29 @@ export default class Connector {
                 return new Promise((resolve, reject) => {
                     navigator.mediaDevices.getUserMedia({ video: true }).then(resolve).catch(reject)
                 })
+            })
+        }
+
+        function assignBrowser(url, hls_url) {
+            Connector.instance.browser[url] = hls_url
+        }
+
+        this.attachBrowser = (oid, scene, url) => {
+            if (!scene) return
+
+            return new Promise((resolve) => {
+                if (!Connector.instance.browser[url]) {
+                    const id = `${scene}_${oid}`
+                    this.socket.emit('streamBrowser', id, url)
+                    assignBrowser(url, '')
+                    this.socket.once(`streamBrowser_${id}`, (jobId) => {
+                        const hls_url = `${process.env.REACT_APP_SERVER}/hls/${jobId}/playlist.m3u8`
+                        assignBrowser(url, hls_url)
+                        resolve(hls_url)
+                    })
+                } else {
+                    resolve(this.browser[url])
+                }
             })
         }
     }
@@ -254,9 +278,11 @@ export default class Connector {
     }
 
     getBroadcastInfo() {
-        if (this.socket === null) this.connect()
+        console.log(this.socket)
+        if (this.socket === null) return
         this.socket.emit('getBroadcastInfo')
         this.socket.on('getBroadcastInfo', (info) => {
+            console.log(info)
             BI().setInfo(info)
         })
         this.socket.on('selectScene', (idx) => {
@@ -343,6 +369,7 @@ export default class Connector {
             case OverlayType.DISPLAY:
             case OverlayType.VIDEO:
             case OverlayType.WEBCAM:
+            case OverlayType.BROWSER:
                 socket.on('event_' + id, async (params) => {
                     const elem = socket[id].elem
 
@@ -493,6 +520,23 @@ export default class Connector {
         delete this.stream[id]
 
         this.socket.emit('disconnectStream', id)
+    }
+
+    detachBrowser = (oid, scene, url) => {
+        const conn = Connector.instance
+        return new Promise((resolve, reject) => {
+            if (!conn.browser[url] || conn.browser[url] === '')
+                return reject(`No browser instance for url "${url}" found`)
+
+            const id = `${scene}_${oid}`
+            this.socket.emit('stopBrowser', id, url)
+            this.socket.once(`stopBrowser_${id}`, (result) => {
+                if (result !== true) return reject(`Failed to stop browser instance for url "${url}"`)
+
+                delete conn.browser[url]
+                resolve()
+            })
+        })
     }
 
     disconnect() {

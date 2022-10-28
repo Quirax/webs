@@ -50,6 +50,50 @@ app.use(function (req, res, next) {
     next()
 })
 
+let router = Express.Router() // get an instance of the express Router
+
+function doNotFound(res) {
+    res.writeHead(404, { 'Content-Type': 'text/html' })
+    res.end('404 Not Found')
+}
+
+router.get('/:id/playlist.m3u8', async (req, res) => {
+    const jobId = req.params.id
+
+    const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs/${jobId}/playlist.m3u8`
+
+    try {
+        const resp = await fetch(url, {
+            method: 'GET',
+        })
+        if (resp.status === 404) {
+            doNotFound(res)
+        } else resp.body.pipe(res)
+    } catch (err) {
+        console.log(err)
+    }
+})
+
+router.get('/:id/:ts(out\\d+.ts)', async (req, res) => {
+    const jobId = req.params.id
+    const ts = req.params.ts
+
+    const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs/${jobId}/${ts}`
+
+    try {
+        const resp = await fetch(url, {
+            method: 'GET',
+        })
+        if (resp.status === 404) {
+            doNotFound(res)
+        } else resp.body.pipe(res)
+    } catch (err) {
+        console.log(err)
+    }
+})
+
+app.use('/hls', router)
+
 const server = https.createServer(
     process.env.HOST === 'localhost'
         ? {
@@ -73,6 +117,7 @@ let io = new Server(server, {
 let broadcastInfo = null
 
 const streams = {}
+const browsers = {}
 
 io.on('connect', async (socket) => {
     const uid = socket.handshake.query.uid
@@ -82,6 +127,7 @@ io.on('connect', async (socket) => {
     socket.isPreview = false
 
     if (!streams[room]) streams[room] = {}
+    if (!browsers[room]) browsers[room] = {}
 
     let log = (message) => {
         console.log(`[${socket.id}][ log ] ${message}`)
@@ -273,6 +319,31 @@ io.on('connect', async (socket) => {
         }
     })
 
+    async function start(target, out_name, dest) {
+        const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs`
+
+        const body = {
+            url: target,
+            outputName: out_name,
+            rtmpUrl: dest,
+        }
+
+        log(JSON.stringify(body))
+
+        const r = await fetch(url, {
+            method: 'POST',
+            headers: {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        })
+
+        const resp = await r.json()
+
+        return resp.jobId
+    }
+
     socket.on('start', async (dest) => {
         try {
             if (typeof dest != 'string') {
@@ -283,42 +354,48 @@ io.on('connect', async (socket) => {
                 throw `Invalid destination url - not rtmp url: xxx`
             }
 
-            const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs`
             const out_name = `${room}_rtmp`
 
-            const body = {
-                url: `https://qrmoo.mooo.com/preview?id=${uid}`,
-                outputName: out_name,
-                rtmpUrl: dest,
-            }
+            socket._jobId = await start(`https://qrmoo.mooo.com/preview?id=${uid}`, `${room}_rtmp`, dest)
 
-            log(JSON.stringify(body))
-
-            const r = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(body),
-            })
-
-            const resp = await r.json()
-
-            socket._jobId = resp.jobId
-
-            log(`Started streaming (jobId = ${resp.jobId}, outputName = ${out_name})`)
+            log(`Started streaming (jobId = ${socket._jobId}, outputName = ${out_name})`)
         } catch (err) {
             errorHandler(err)
         }
     })
 
-    async function stop() {
+    socket.on('streamBrowser', async (id, url) => {
+        try {
+            if (typeof url != 'string') {
+                throw `Invalid destination url - type mismatch: xxx`
+            }
+
+            if (browsers[room][url] && browsers[room][url].jobId !== -1) {
+                return socket.emit(`streamBrowser_${id}`, browsers[room][url].jobId)
+            }
+
+            const out_name = `${room}_${id}`
+
+            const jobId = await start(url, out_name, '')
+
+            browsers[room][url] = {
+                jobId: -1,
+                emitter: setTimeout(() => {
+                    browsers[room][url].jobId = jobId
+                    socket.emit(`streamBrowser_${id}`, jobId)
+                }, 30000),
+            }
+
+            log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
+        } catch (err) {
+            errorHandler(err)
+        }
+    })
+
+    async function stop(jobId) {
         try {
             //TODO : 시작 전에 먼저 종료했을 때 제대로 종료되지 않는 문제 해결
-            if (!socket._jobId) return
-
-            const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs/${socket._jobId}/stop`
+            const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs/${jobId}/stop`
 
             const resp = await (
                 await fetch(url, {
@@ -331,31 +408,57 @@ io.on('connect', async (socket) => {
             }
         } catch (err) {
             errorHandler(err)
-        } finally {
-            delete socket._jobId
-            log('Stopped')
         }
     }
 
     socket.on('stop', async () => {
         try {
-            await stop()
+            if (!socket._jobId) return
+
+            await stop(socket._jobId)
         } catch (err) {
             errorHandler(err)
+        } finally {
+            delete socket._jobId
+            log('Stopped')
+        }
+    })
+
+    socket.on('stopBrowser', async (id, url) => {
+        try {
+            if (!browsers[room][url]) return socket.emit(`stopBrowser_${id}`, false)
+
+            await stop(browsers[room][url].jobId)
+            clearTimeout(browsers[room][url].emitter)
+            delete browsers[room][url]
+
+            socket.emit(`stopBrowser_${id}`, true)
+        } catch (err) {
+            errorHandler(err)
+            socket.emit(`stopBrowser_${id}`, false)
+        } finally {
+            log(`Stopped ${jobId}`)
         }
     })
 
     socket.on('disconnect', async () => {
         try {
-            await stop()
+            if (socket._jobId) await stop(socket._jobId)
 
             if (socket.isPreview) return
-            else
+            else {
                 for (let id in streams[room]) {
                     streams[room][id].sender && streams[room][id].sender.close()
                     streams[room][id].receiver && streams[room][id].receiver.close()
                     delete streams[room][id]
                 }
+
+                for (let id in browsers[room]) {
+                    await stop(browsers[room][id].jobId)
+                    clearTimeout(browsers[room][id].emitter)
+                    delete browsers[room][id]
+                }
+            }
         } catch (err) {
             errorHandler(err)
         } finally {

@@ -31,6 +31,7 @@ exports.playlist = (req, res) => {
     try {
         const stream = service.playlist(jobId)
         if (stream) {
+            stream.on('error', doNotFound(res))
             stream.pipe(res)
         } else {
             doNotFound(res)
@@ -46,6 +47,7 @@ exports.ts = (req, res) => {
     try {
         const stream = service.ts(jobId, ts)
         if (stream) {
+            stream.on('error', doNotFound(res))
             stream.pipe(res)
         } else {
             doNotFound(res)
