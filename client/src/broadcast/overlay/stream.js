@@ -299,11 +299,10 @@ export class BrowserOverlay extends WebcamOverlay {
 
         this.overlayType = OverlayType.BROWSER
 
-        this.url = 'about:blank' // TODO: make it blank
+        this.url = 'about:blank'
 
         this.jobId = -1
 
-        // TODO: [-] url -> jobId
         this.attach = (jobId) => {
             if (jobId === '') return
 
@@ -322,11 +321,9 @@ export class BrowserOverlay extends WebcamOverlay {
 
         let conn = Connector.getInstance()
 
-        // TODO: [-] use broadcast value
         if (this.jobId !== -1) {
             if (this.url !== '' && this.url !== this.props.value.params.src) {
                 this.url = this.props.value.params.src
-                // TODO: [-] send message to server
                 conn.messageBrowser(this.props.value.id, this.sid, this.jobId, { cmd: 'goto', url: this.url })
             }
 
@@ -339,12 +336,8 @@ export class BrowserOverlay extends WebcamOverlay {
                     width: Math.floor(this.videoRef.current.clientWidth / ratio),
                 })
         }
-
-        // TODO: [-] check when overlay resolution changed
-        // TODO: [-] send message to server
     }
 
-    // TODO: [-] url -> jobId
     attachStream() {
         let conn = Connector.getInstance()
         this.attach('')
@@ -352,7 +345,6 @@ export class BrowserOverlay extends WebcamOverlay {
         conn.attachBrowser(this.props.value.id, this.sid, this.url)?.then((jobId) => this.attach(jobId))
     }
 
-    // TODO: [-] url -> jobId
     detachStream() {
         let conn = Connector.getInstance()
         console.log(this.props.value.id, this.sid, this.jobId)

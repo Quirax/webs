@@ -13,7 +13,6 @@ exports.create = async function (job) {
     if (job.rtmpUrl === '' && Object.values(db).includes(job.outputName)) {
         logger.log('There is already HLS process for output name: ' + job.outputName)
 
-        // TODO: [-] modify db's struct
         let pid = Object.keys(db).find((key) => db[key].name === job.outputName)
         logger.log('Process Pid: ' + pid)
         job.jobId = pid
@@ -29,7 +28,6 @@ exports.create = async function (job) {
         logger.log('Failed badly to start the process ' + err)
         return err
     }
-    // TODO: [-] modify db's struct
     if (job.rtmpUrl === '')
         db[screencaster.pid] = {
             name: job.outputName,
@@ -74,7 +72,6 @@ exports.stop = function (jobId) {
             logger.log('Closing job by invoking the stop endpoint') // terminating the Processes succeeded.
         }
     })
-    // TODO: [-] modify db's struct
     if (db[jobId]) {
         dir = db[jobId].name
         delete db[jobId]
@@ -85,7 +82,6 @@ exports.stop = function (jobId) {
 }
 
 exports.playlist = (jobId) => {
-    // TODO: [-] modify db's struct
     if (!db[jobId]) {
         logger.log('There is no stream for job id = ' + jobId)
         return undefined
@@ -94,7 +90,6 @@ exports.playlist = (jobId) => {
 }
 
 exports.ts = (jobId, ts) => {
-    // TODO: [-] modify db's struct
     if (!db[jobId]) {
         logger.log('There is no stream for job id = ' + jobId)
         return undefined
@@ -102,7 +97,6 @@ exports.ts = (jobId, ts) => {
     return fs.createReadStream(`/var/hls/${db[jobId].name}/${ts}`)
 }
 
-// TODO: [-] add browser message controller
 exports.message = (jobId, message) => {
     if (!db[jobId]) {
         logger.log('There is no stream for job id = ' + jobId)

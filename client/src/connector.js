@@ -135,7 +135,6 @@ export default class Connector {
             })
         }
 
-        // TODO: [-] url -> jobId
         function assignBrowser(jobId, url, hls_url) {
             Connector.instance.browser[jobId] = {
                 url: url,
@@ -143,7 +142,6 @@ export default class Connector {
             }
         }
 
-        // TODO: [-] url -> jobId
         this.attachBrowser = (oid, scene, url) => {
             if (!scene) return
 
@@ -530,7 +528,6 @@ export default class Connector {
         this.socket.emit('disconnectStream', id)
     }
 
-    // TODO: [-] add browser message connector
     messageBrowser = (oid, scene, jobId, message) => {
         const conn = Connector.instance
         if (!conn.browser[jobId]) throw new Error(`No browser instance for jobId "${jobId}" found`)
@@ -544,7 +541,6 @@ export default class Connector {
         this.socket.emit('browserMessage', id, jobId, message)
     }
 
-    // TODO: [-] url -> jobId
     detachBrowser = (oid, scene, jobId) => {
         const conn = Connector.instance
         return new Promise((resolve, reject) => {

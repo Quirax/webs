@@ -364,7 +364,6 @@ io.on('connect', async (socket) => {
         }
     })
 
-    // TODO: [-] url -> jobId
     socket.on('streamBrowser', async (id, url) => {
         try {
             if (typeof url != 'string') {
@@ -374,8 +373,7 @@ io.on('connect', async (socket) => {
             let jobId = Object.keys(browsers[room]).find((key) => browsers[room][key] === url)
 
             if (jobId) {
-                // TODO: [-] url -> jobId
-                if (typeof browsers[room][jobId] !== 'number') socket.emit(`streamBrowser_${id}`, jobId) // TODO: [-] isNumber
+                if (typeof browsers[room][jobId] !== 'number') socket.emit(`streamBrowser_${id}`, jobId)
 
                 return
             }
@@ -396,8 +394,6 @@ io.on('connect', async (socket) => {
         }
     })
 
-    // TODO: [-] add browser message connector
-    // TODO: [-] url -> jobId
     socket.on('browserMessage', async (id, jobId, message) => {
         try {
             if (!browsers[room][jobId]) return socket.emit(`browserMessage_${id}`, false)
@@ -462,13 +458,12 @@ io.on('connect', async (socket) => {
         }
     })
 
-    // TODO: [-] url -> jobId
     socket.on('stopBrowser', async (id, jobId) => {
         try {
             if (!browsers[room][jobId]) return socket.emit(`stopBrowser_${id}`, false)
 
             await stop(jobId)
-            typeof browsers[room][jobId] === 'number' && clearTimeout(browsers[room][jobId]) // TODO: [-] isNumber
+            typeof browsers[room][jobId] === 'number' && clearTimeout(browsers[room][jobId])
             delete browsers[room][jobId]
 
             log(`Stopped ${jobId}`)
@@ -481,7 +476,6 @@ io.on('connect', async (socket) => {
         }
     })
 
-    // TODO: [-] url -> jobId
     socket.on('disconnect', async () => {
         try {
             if (socket._jobId) await stop(socket._jobId)
@@ -496,7 +490,7 @@ io.on('connect', async (socket) => {
 
                 for (let id in browsers[room]) {
                     await stop(id)
-                    typeof browsers[room][id] === 'number' && clearTimeout(browsers[room][id]) // TODO: [-] isNumber
+                    typeof browsers[room][id] === 'number' && clearTimeout(browsers[room][id])
                     delete browsers[room][id]
                 }
             }

@@ -63,7 +63,6 @@ exports.ts = (req, res) => {
     }
 }
 
-// TODO: [-] add browser message controller
 exports.message = (req, res) => {
     const jobId = req.params.id
     const message = req.body
