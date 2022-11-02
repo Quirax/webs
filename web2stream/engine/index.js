@@ -12,6 +12,9 @@ import { start as PAStart, setDefaultSink, createSink, getInputId, moveInput } f
 
 import args from './arguments.js'
 
+import { PassThrough } from 'stream'
+import fs from 'fs'
+
 const defaultOptions = {
     followNewTab: true,
     fps: 30,
@@ -24,47 +27,47 @@ const defaultOptions = {
     aspectRatio: '16:9',
 }
 
-export class RTMPWriter extends PageVideoStreamWriter {
+class RTMPWriter extends PageVideoStreamWriter {
+    getDestinationStream() {
+        const cpu = Math.max(1, os.cpus().length - 1)
+        return ffmpeg({
+            priority: 20,
+        })
+            .input(this.videoMediatorStream)
+            .inputFormat('image2pipe')
+            .inputOptions([
+                '-thread_queue_size 2048',
+                '-fflags +genpts',
+                `-framerate ${this.options.fps}`,
+                '-use_wallclock_as_timestamps true',
+            ])
+            .input(this.options.outputname + '.monitor')
+            .inputFormat('pulse')
+            .inputOptions(['-thread_queue_size 2048', '-itsoffset 0', '-ar 44100', '-use_wallclock_as_timestamps true'])
+            .videoCodec('libx264')
+            .audioCodec('aac')
+            .outputOptions(['-vsync 1', `-r:v ${this.options.fps}`])
+            .outputOptions(['-preset ultrafast', '-tune zerolatency', '-movflags +faststart', '-shortest'])
+            .outputOptions(['-b:v 1M', '-maxrate 2000k', '-bufsize 1M'])
+            .outputOptions(`-threads ${cpu}`)
+            .outputOptions([
+                '-pix_fmt yuv420p',
+                '-filter:v ' + ['scale=w=1280:h=720'].join(','),
+                '-filter:a ' + ['asetpts=(N/SR+1.451)/TB'].join(','),
+            ])
+            .on('progress', (progressDetails) => {
+                this.duration = progressDetails.timemark
+            })
+        // .on('stderr', (outputs) => {
+        //     console.log(outputs)
+        // })
+    }
+
     configureVideoFile(destinationRTMP) {
+        if (!destinationRTMP) return this.configureVideoHLS()
         //ffmpegProcessParams (fps, audioofffset, outputname, rtmp)
         this.writerPromise = new Promise((resolve) => {
-            const cpu = Math.max(1, os.cpus().length - 1)
-            ffmpeg({
-                priority: 20,
-            })
-                .input(this.videoMediatorStream)
-                .inputFormat('image2pipe')
-                .inputOptions([
-                    '-thread_queue_size 2048',
-                    '-fflags +genpts',
-                    `-framerate ${this.options.fps}`,
-                    '-use_wallclock_as_timestamps true',
-                ])
-                .input(this.options.outputname + '.monitor')
-                .inputFormat('pulse')
-                .inputOptions([
-                    '-thread_queue_size 2048',
-                    '-itsoffset 0',
-                    '-ar 44100',
-                    '-use_wallclock_as_timestamps true',
-                ])
-                .videoCodec('libx264')
-                .audioCodec('aac')
-                .outputOptions(['-vsync 1', `-r:v ${this.options.fps}`])
-                .outputOptions(['-preset ultrafast', '-tune zerolatency', '-movflags +faststart', '-shortest'])
-                .outputOptions(['-b:v 1M', '-maxrate 2000k', '-bufsize 1M'])
-                .outputOptions(`-threads ${cpu}`)
-                .outputOptions([
-                    '-pix_fmt yuv420p',
-                    '-filter:v ' + ['scale=w=1280:h=720'].join(','),
-                    '-filter:a ' + ['asetpts=(N/SR+1.451)/TB'].join(','),
-                ])
-                .on('progress', (progressDetails) => {
-                    this.duration = progressDetails.timemark
-                })
-                .on('stderr', (outputs) => {
-                    console.log(outputs)
-                })
+            this.getDestinationStream()
                 .on('error', (e) => {
                     this.handleWriteStreamError(e.message)
                     resolve(false)
@@ -73,6 +76,32 @@ export class RTMPWriter extends PageVideoStreamWriter {
                 .toFormat('flv')
                 .outputOptions('-flvflags no_duration_filesize')
                 .save(destinationRTMP)
+        })
+    }
+    configureVideoHLS() {
+        this.writerPromise = new Promise((resolve) => {
+            const outputStream = this.getDestinationStream()
+            outputStream
+                .on('error', (e) => {
+                    this.handleWriteStreamError(e.message)
+                    //writableStream.emit('error', e)
+                    resolve(false)
+                })
+                .on('end', () => {
+                    writableStream.end()
+                    resolve(true)
+                })
+                .toFormat('ssegment')
+                .outputOptions([
+                    `-x264opts keyint=${this.options.fps * 2}:min-keyint=${this.options.fps * 2}`,
+                    `-segment_list /var/hls/${this.options.outputname}/playlist.m3u8`,
+                    '-segment_list_type m3u8',
+                    '-segment_list_size 5',
+                    '-segment_list_flags +live',
+                    '-segment_time 2',
+                    '-segment_wrap 6',
+                ])
+                .save(`/var/hls/${this.options.outputname}/out%02d.ts`)
         })
     }
     duplicate() {
@@ -93,11 +122,12 @@ export class RTMPWriter extends PageVideoStreamWriter {
     }
 }
 
-export class Streamer extends PuppeteerScreenRecorder {
+class Streamer extends PuppeteerScreenRecorder {
     constructor(page, options = {}) {
         super(page, options)
         this.duplicator = null
     }
+
     setupListeners() {
         super.setupListeners()
         this.duplicator = setInterval(() => {
@@ -109,20 +139,25 @@ export class Streamer extends PuppeteerScreenRecorder {
         this.streamWriter = new RTMPWriter(rtmp, this.options)
         return this.startStreamReader()
     }
-    stop() {
-        super.stop()
+
+    async stop() {
+        await super.stop()
         clearInterval(this.duplicator)
     }
 }
 
+function isValidHttpUrl(string) {
+    let url
+    try {
+        url = new URL(string)
+    } catch (_) {
+        return false
+    }
+    return url.protocol === 'http:' || url.protocol === 'https:'
+}
+
 ;(async () => {
-    // const OUTPUT_NAME = 'streamtest'
     const OUTPUT_NAME = args.getOutputName()
-    //const TARGET_URL = 'http://corndog.io'
-    //const TARGET_URL = 'https://alwaysjudgeabookbyitscover.com'
-    //const TARGET_URL = 'https://www.youtube.com/watch?v=v2a-eVJFVOc'
-    //const TARGET_URL = 'https://qrmoo.mooo.com/preview'
-    //const TARGET_URL = 'https://twip.kr/widgets/alertbox/g64oGmrzpq'
     const TARGET_URL = args.getUrl()
 
     const browser = await Puppeteer.launch({
@@ -160,12 +195,39 @@ export class Streamer extends PuppeteerScreenRecorder {
     })
     await page.goto('https://youtube.com/watch?v=g4mHPeMGTJM') // Connect audio first
 
+    process.on('message', async (msg) => {
+        try {
+            switch (msg.cmd) {
+                case 'viewport':
+                    await page.setViewport({ height: msg.height, width: msg.width })
+                    process.send && process.send({ event: 'viewport', height: msg.height, width: msg.width })
+                    break
+                case 'goto':
+                    if (!isValidHttpUrl(msg.url)) {
+                        process.send && process.send({ event: 'error', desc: 'invalid url' })
+                        break
+                    }
+                    await page.goto(msg.url)
+                    process.send && process.send({ event: 'goto', url: msg.url })
+                    break
+                default:
+            }
+        } catch (err) {
+            process.send && process.send({ event: 'error', desc: err })
+        }
+    })
+
     //executeAfterPageLoaded
     const inputIdList = await getInputId(browser.process().pid)
 
     for (let inputId of inputIdList) await moveInput(inputId, sinkId)
 
-    await streamer.startRTMP(args.getRtmpUrl())
+    let rtmp_url = args.getRtmpUrl()
+    if (rtmp_url) streamer.startRTMP(rtmp_url)
+    else {
+        if (!fs.existsSync(`/var/hls/${OUTPUT_NAME}`)) fs.mkdirSync(`/var/hls/${OUTPUT_NAME}`, { recursive: true })
+        streamer.startRTMP(undefined)
+    }
 
     await page.goto(TARGET_URL)
 })()

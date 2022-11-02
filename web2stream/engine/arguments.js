@@ -25,8 +25,7 @@ export default {
         const rtmpUrl = args[2]
         logger.log('Rtmp Url: ' + rtmpUrl)
         if (rtmpUrl == null || rtmpUrl === '') {
-            logger.log('Exiting, rtmp url is not defined in the params')
-            process.exit(1)
+            return undefined
         }
         return rtmpUrl
     },

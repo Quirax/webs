@@ -6,11 +6,22 @@ import Twitch from './twitch'
 const wrtc_cfg = {
     iceServers: [
         {
-            urls: 'stun:stun.l.google.com:19302',
-            // credential: 'webrtc',
-            // username: 'webrtc',
+            urls: ['stun:meet-jit-si-turnrelay.jitsi.net:443'],
+            username: '',
+            credential: '',
+        },
+        {
+            urls: ['stun:stun.nextcloud.com:443'],
+            username: '',
+            credential: '',
         },
     ],
+    iceTransportPolicy: 'all',
+    bundlePolicy: 'max-bundle',
+    rtcpMuxPolicy: 'require',
+    iceCandidatePoolSize: 0,
+    sdpSemantics: 'unified-plan',
+    extmapAllowMixed: true,
 }
 
 export default class Connector {
@@ -20,7 +31,8 @@ export default class Connector {
     constructor() {
         this.isBroadcasting = false
         this.socket = null
-        this.stream = {}
+        this.stream = {} // scene_objid: stream, available, callback
+        this.browser = {} // target_url: jobId
 
         const attachStream = (oid, scene, cb, reset, streamer) => {
             const id = `${scene}_${oid}`
@@ -120,6 +132,34 @@ export default class Connector {
                 return new Promise((resolve, reject) => {
                     navigator.mediaDevices.getUserMedia({ video: true }).then(resolve).catch(reject)
                 })
+            })
+        }
+
+        function assignBrowser(jobId, url, hls_url) {
+            Connector.instance.browser[jobId] = {
+                url: url,
+                // hls_url: hls_url,
+            }
+        }
+
+        this.attachBrowser = (oid, scene, url) => {
+            if (!scene) return
+
+            return new Promise((resolve) => {
+                const browser = Connector.instance.browser
+                let jobId = Object.keys(browser).find((key) => browser[key].url === url)
+
+                if (!jobId) {
+                    const id = `${scene}_${oid}`
+                    this.socket.emit('streamBrowser', id, url)
+                    this.socket.once(`streamBrowser_${id}`, (jobId) => {
+                        assignBrowser(jobId, url)
+                        resolve(jobId)
+                    })
+                } else {
+                    let { hls_url } = browser[jobId]
+                    resolve(jobId, hls_url)
+                }
             })
         }
     }
@@ -243,9 +283,11 @@ export default class Connector {
     }
 
     getBroadcastInfo() {
-        if (this.socket === null) this.connect()
+        console.log(this.socket)
+        if (this.socket === null) return
         this.socket.emit('getBroadcastInfo')
         this.socket.on('getBroadcastInfo', (info) => {
+            console.log(info)
             BI().setInfo(info)
         })
         this.socket.on('selectScene', (idx) => {
@@ -328,10 +370,12 @@ export default class Connector {
             return true
         }
 
+        // TODO: change into mappers
         switch (type) {
             case OverlayType.DISPLAY:
             case OverlayType.VIDEO:
             case OverlayType.WEBCAM:
+            case OverlayType.BROWSER: // TODO: add resolution change callback
                 socket.on('event_' + id, async (params) => {
                     const elem = socket[id].elem
 
@@ -482,6 +526,35 @@ export default class Connector {
         delete this.stream[id]
 
         this.socket.emit('disconnectStream', id)
+    }
+
+    messageBrowser = (oid, scene, jobId, message) => {
+        const conn = Connector.instance
+        if (!conn.browser[jobId]) throw new Error(`No browser instance for jobId "${jobId}" found`)
+
+        const id = `${scene}_${oid}`
+
+        if (message.cmd === 'goto') {
+            conn.browser[jobId].url = message.url
+        }
+
+        this.socket.emit('browserMessage', id, jobId, message)
+    }
+
+    detachBrowser = (oid, scene, jobId) => {
+        const conn = Connector.instance
+        return new Promise((resolve, reject) => {
+            if (!conn.browser[jobId]) return reject(`No browser instance for jobId "${jobId}" found`)
+
+            const id = `${scene}_${oid}`
+            this.socket.emit('stopBrowser', id, jobId)
+            this.socket.once(`stopBrowser_${id}`, (result) => {
+                if (result !== true) return reject(`Failed to stop browser instance for jobId "${jobId}"`)
+
+                delete conn.browser[jobId]
+                resolve()
+            })
+        })
     }
 
     disconnect() {
