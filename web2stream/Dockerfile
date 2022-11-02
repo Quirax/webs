@@ -80,6 +80,8 @@ COPY . /usr/src/app
 # Open necessary ports
 EXPOSE 8080
 
+RUN mkdir /var/hls
+
 WORKDIR /usr/src/app/web
 
 # Launch

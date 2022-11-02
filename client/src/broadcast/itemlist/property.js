@@ -43,6 +43,7 @@ import {
     faArrowLeft,
     faArrowUp,
 } from '@fortawesome/free-solid-svg-icons'
+import { faChrome } from '@fortawesome/free-brands-svg-icons'
 import Connector from '../../connector'
 import { ItemlistType } from '.'
 import { TransitionGenerator, TransitionParam, TransitionType } from '../transition'
@@ -228,6 +229,16 @@ export default class PropertyDialog extends React.Component {
                                         this.leaveFocus(e)
                                     }}>
                                     <FontAwesomeIcon icon={faDisplay} /> 화면공유
+                                </Button>
+                                <Button
+                                    width='100%'
+                                    onClick={(e) => {
+                                        this.state.onChange(
+                                            OverlayGenerator('새 웹 브라우저 오버레이', OverlayType.BROWSER)
+                                        )
+                                        this.leaveFocus(e)
+                                    }}>
+                                    <FontAwesomeIcon icon={faChrome} /> 웹 브라우저
                                 </Button>
                             </Div>
                             <Div padding='8'>
@@ -718,6 +729,21 @@ function ParamList(props) {
                                 </option>
                             </Arg>
                             {props.value?.params.src_type === OverlayParam.src_type.UPLOAD ? uploadOption : urlOption}
+                        </Params>
+                    )
+                    break
+                case OverlayType.BROWSER:
+                    preCommonParams = (
+                        <Params>
+                            <Arg
+                                name='URL'
+                                type={ArgTypes.TEXT}
+                                default={props.value?.params.src}
+                                onChange={(val) => {
+                                    props.value && (props.value.params.src = val)
+                                    props.onChange && props.onChange(props.value)
+                                }}
+                            />
                         </Params>
                     )
                     break
