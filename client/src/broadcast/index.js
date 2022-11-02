@@ -2,7 +2,7 @@ import React from 'react'
 import { Header, Main, Div, Footer, Article, CommonProps } from '../components'
 import './index.scss'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
+import { faMicrophone, faMicrophoneSlash, faUserAlt } from '@fortawesome/free-solid-svg-icons'
 import Connector from '../connector'
 import OverlayContainer from './overlay'
 import Itemlist, { ItemlistType } from './itemlist'
@@ -19,6 +19,7 @@ export default class Broadcast extends React.Component {
         this.state = {
             canvasRect: { height: 1080, width: 1920 },
             isBroadcasting: false,
+            isMic: false,
             mode: '',
         }
 
@@ -69,6 +70,24 @@ export default class Broadcast extends React.Component {
             BI().afterChange()
         }
         this.toggleBroadcast = this.toggleBroadcast.bind(this)
+
+        this.toggleMic = async () => {
+            let connector = Connector.getInstance()
+            connector.connect()
+
+            if (this.state.isMic) {
+                connector.detachMic()
+                this.setState({
+                    isMic: false,
+                })
+            } else
+                await connector.attachMicStream((stream) => {
+                    this.setState({
+                        isMic: true,
+                    })
+                })
+        }
+        this.toggleMic = this.toggleMic.bind(this)
 
         this.changeMode = (mode) => {
             BI().afterChange()
@@ -121,6 +140,7 @@ export default class Broadcast extends React.Component {
         if (this.props.preview) {
             return (
                 <CommonProps>
+                    <Microphoner />
                     <Containers
                         ratio={this.getCanvasRatio(1)}
                         referrer={this.workplaceRef}
@@ -136,6 +156,8 @@ export default class Broadcast extends React.Component {
                     saveScene={this.saveScene}
                     toggleBroadcast={this.toggleBroadcast}
                     isBroadcasting={this.state.isBroadcasting}
+                    toggleMic={this.toggleMic}
+                    isMic={this.state.isMic}
                     mode={this.state.mode}
                     onClickTitle={this.onClickTitle}
                 />
@@ -166,6 +188,28 @@ export default class Broadcast extends React.Component {
                 </Div>
             </CommonProps>
         )
+    }
+}
+
+class Microphoner extends React.Component {
+    state = {}
+
+    constructor() {
+        super()
+
+        this.AudioRef = React.createRef()
+    }
+
+    async componentDidMount() {
+        const connector = Connector.getInstance()
+
+        await connector.attachMicStream((stream) => {
+            this.AudioRef.current && (this.AudioRef.current.srcObject = stream)
+        })
+    }
+
+    render() {
+        return <audio alt='mic' ref={this.AudioRef} autoPlay muted={false} />
     }
 }
 
@@ -270,6 +314,9 @@ class Toolbar extends React.Component {
                     />
                 </Div>
                 <Div fixsize padding-right='8'>
+                    <button onClick={this.props.toggleMic}>
+                        <FontAwesomeIcon icon={this.props.isMic ? faMicrophone : faMicrophoneSlash} />
+                    </button>
                     <button onClick={this.props.toggleBroadcast}>
                         {this.props.isBroadcasting ? '방송 종료' : '방송 시작'}
                     </button>

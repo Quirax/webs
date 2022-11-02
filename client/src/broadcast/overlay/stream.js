@@ -260,6 +260,9 @@ export class BrowserOverlay extends WebcamOverlay {
                         onLoadedMetadata={(e) => {
                             if (props.isTemp === true) return
                             let conn = Connector.getInstance()
+                            console.log('unregisterBrowser')
+                            conn.unregisterElement(this.overlayType, this.props.value.id, BI().currentScene().id, true)
+                            console.log('registerBrowser')
                             conn.registerElement(
                                 this.overlayType,
                                 this.props.value.id,
