@@ -31,7 +31,10 @@ exports.playlist = (req, res) => {
     try {
         const stream = service.playlist(jobId)
         if (stream) {
-            stream.on('error', doNotFound(res))
+            stream.on('error', () => {
+                stream.unpipe(res)
+                doNotFound(res)
+            })
             stream.pipe(res)
         } else {
             doNotFound(res)
@@ -47,12 +50,27 @@ exports.ts = (req, res) => {
     try {
         const stream = service.ts(jobId, ts)
         if (stream) {
-            stream.on('error', doNotFound(res))
+            stream.on('error', () => {
+                stream.unpipe(res)
+                doNotFound(res)
+            })
             stream.pipe(res)
         } else {
             doNotFound(res)
         }
     } catch (err) {
         doNotFound(res)
+    }
+}
+
+// TODO: [-] add browser message controller
+exports.message = (req, res) => {
+    const jobId = req.params.id
+    const message = req.body
+
+    if (!service.message(jobId, message)) {
+        doNotFound(res)
+    } else {
+        res.json('"ok"')
     }
 }

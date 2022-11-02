@@ -364,31 +364,69 @@ io.on('connect', async (socket) => {
         }
     })
 
+    // TODO: [-] url -> jobId
     socket.on('streamBrowser', async (id, url) => {
         try {
             if (typeof url != 'string') {
                 throw `Invalid destination url - type mismatch: xxx`
             }
 
-            if (browsers[room][url] && browsers[room][url].jobId !== -1) {
-                return socket.emit(`streamBrowser_${id}`, browsers[room][url].jobId)
+            let jobId = Object.keys(browsers[room]).find((key) => browsers[room][key] === url)
+
+            if (jobId) {
+                // TODO: [-] url -> jobId
+                if (typeof browsers[room][jobId] !== 'number') socket.emit(`streamBrowser_${id}`, jobId) // TODO: [-] isNumber
+
+                return
             }
 
             const out_name = `${room}_${id}`
 
-            const jobId = await start(url, out_name, '')
+            jobId = await start(url, out_name, '')
 
-            browsers[room][url] = {
-                jobId: -1,
-                emitter: setTimeout(() => {
-                    browsers[room][url].jobId = jobId
-                    socket.emit(`streamBrowser_${id}`, jobId)
-                }, 30000),
-            }
+            browsers[room][jobId] = setTimeout(() => {
+                browsers[room][jobId] = url
+                socket.emit(`streamBrowser_${id}`, jobId)
+                log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
+            }, 13000)
 
-            log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
+            log(`Waiting for browser (jobId = ${jobId}, outputName = ${out_name})`)
         } catch (err) {
             errorHandler(err)
+        }
+    })
+
+    // TODO: [-] add browser message connector
+    // TODO: [-] url -> jobId
+    socket.on('browserMessage', async (id, jobId, message) => {
+        try {
+            if (!browsers[room][jobId]) return socket.emit(`browserMessage_${id}`, false)
+
+            const url = `http://${process.env.W2S_HOST}:${process.env.W2S_PORT}/api/jobs/${jobId}/message`
+
+            const resp = await (
+                await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(message),
+                })
+            ).text()
+
+            if (resp !== '"ok"') {
+                errorHandler(resp)
+                return socket.emit(`browserMessage_${id}`, false)
+            }
+
+            log(`Sent to browser session (id = ${jobId}): ${JSON.stringify(message)}`)
+
+            socket.emit(`browserMessage_${id}`, true)
+        } catch (err) {
+            errorHandler(err)
+            socket.emit(`browserMessage_${id}`, false)
+        } finally {
         }
     })
 
@@ -424,23 +462,26 @@ io.on('connect', async (socket) => {
         }
     })
 
-    socket.on('stopBrowser', async (id, url) => {
+    // TODO: [-] url -> jobId
+    socket.on('stopBrowser', async (id, jobId) => {
         try {
-            if (!browsers[room][url]) return socket.emit(`stopBrowser_${id}`, false)
+            if (!browsers[room][jobId]) return socket.emit(`stopBrowser_${id}`, false)
 
-            await stop(browsers[room][url].jobId)
-            clearTimeout(browsers[room][url].emitter)
-            delete browsers[room][url]
+            await stop(jobId)
+            typeof browsers[room][jobId] === 'number' && clearTimeout(browsers[room][jobId]) // TODO: [-] isNumber
+            delete browsers[room][jobId]
+
+            log(`Stopped ${jobId}`)
 
             socket.emit(`stopBrowser_${id}`, true)
         } catch (err) {
             errorHandler(err)
             socket.emit(`stopBrowser_${id}`, false)
         } finally {
-            log(`Stopped ${jobId}`)
         }
     })
 
+    // TODO: [-] url -> jobId
     socket.on('disconnect', async () => {
         try {
             if (socket._jobId) await stop(socket._jobId)
@@ -454,8 +495,8 @@ io.on('connect', async (socket) => {
                 }
 
                 for (let id in browsers[room]) {
-                    await stop(browsers[room][id].jobId)
-                    clearTimeout(browsers[room][id].emitter)
+                    await stop(id)
+                    typeof browsers[room][id] === 'number' && clearTimeout(browsers[room][id]) // TODO: [-] isNumber
                     delete browsers[room][id]
                 }
             }

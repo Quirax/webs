@@ -135,25 +135,32 @@ export default class Connector {
             })
         }
 
-        function assignBrowser(url, hls_url) {
-            Connector.instance.browser[url] = hls_url
+        // TODO: [-] url -> jobId
+        function assignBrowser(jobId, url, hls_url) {
+            Connector.instance.browser[jobId] = {
+                url: url,
+                // hls_url: hls_url,
+            }
         }
 
+        // TODO: [-] url -> jobId
         this.attachBrowser = (oid, scene, url) => {
             if (!scene) return
 
             return new Promise((resolve) => {
-                if (!Connector.instance.browser[url]) {
+                const browser = Connector.instance.browser
+                let jobId = Object.keys(browser).find((key) => browser[key].url === url)
+
+                if (!jobId) {
                     const id = `${scene}_${oid}`
                     this.socket.emit('streamBrowser', id, url)
-                    assignBrowser(url, '')
                     this.socket.once(`streamBrowser_${id}`, (jobId) => {
-                        const hls_url = `${process.env.REACT_APP_SERVER}/hls/${jobId}/playlist.m3u8`
-                        assignBrowser(url, hls_url)
-                        resolve(hls_url)
+                        assignBrowser(jobId, url)
+                        resolve(jobId)
                     })
                 } else {
-                    resolve(this.browser[url])
+                    let { hls_url } = browser[jobId]
+                    resolve(jobId, hls_url)
                 }
             })
         }
@@ -365,11 +372,12 @@ export default class Connector {
             return true
         }
 
+        // TODO: change into mappers
         switch (type) {
             case OverlayType.DISPLAY:
             case OverlayType.VIDEO:
             case OverlayType.WEBCAM:
-            case OverlayType.BROWSER:
+            case OverlayType.BROWSER: // TODO: add resolution change callback
                 socket.on('event_' + id, async (params) => {
                     const elem = socket[id].elem
 
@@ -522,18 +530,32 @@ export default class Connector {
         this.socket.emit('disconnectStream', id)
     }
 
-    detachBrowser = (oid, scene, url) => {
+    // TODO: [-] add browser message connector
+    messageBrowser = (oid, scene, jobId, message) => {
+        const conn = Connector.instance
+        if (!conn.browser[jobId]) throw new Error(`No browser instance for jobId "${jobId}" found`)
+
+        const id = `${scene}_${oid}`
+
+        if (message.cmd === 'goto') {
+            conn.browser[jobId].url = message.url
+        }
+
+        this.socket.emit('browserMessage', id, jobId, message)
+    }
+
+    // TODO: [-] url -> jobId
+    detachBrowser = (oid, scene, jobId) => {
         const conn = Connector.instance
         return new Promise((resolve, reject) => {
-            if (!conn.browser[url] || conn.browser[url] === '')
-                return reject(`No browser instance for url "${url}" found`)
+            if (!conn.browser[jobId]) return reject(`No browser instance for jobId "${jobId}" found`)
 
             const id = `${scene}_${oid}`
-            this.socket.emit('stopBrowser', id, url)
+            this.socket.emit('stopBrowser', id, jobId)
             this.socket.once(`stopBrowser_${id}`, (result) => {
-                if (result !== true) return reject(`Failed to stop browser instance for url "${url}"`)
+                if (result !== true) return reject(`Failed to stop browser instance for jobId "${jobId}"`)
 
-                delete conn.browser[url]
+                delete conn.browser[jobId]
                 resolve()
             })
         })

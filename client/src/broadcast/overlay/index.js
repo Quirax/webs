@@ -250,7 +250,14 @@ function OverlayElems(props) {
                     case OverlayType.DISPLAY:
                         return <DisplayOverlay key={i} idx={i} value={v} isTemp={props.isTemp} />
                     case OverlayType.BROWSER:
-                        return <BrowserOverlay key={i} idx={i} value={v} isTemp={props.isTemp} />
+                        return (
+                            <OVERLAY_PROPS.Consumer key={i}>
+                                {({ ratio }) => (
+                                    <BrowserOverlay idx={i} value={v} isTemp={props.isTemp} ratio={ratio} />
+                                )}
+                            </OVERLAY_PROPS.Consumer>
+                        )
+
                     default:
                 }
                 return <></>

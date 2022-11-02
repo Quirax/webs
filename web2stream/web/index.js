@@ -42,6 +42,8 @@ router.post('/jobs', jobController.create)
 router.post('/jobs/:id/stop', jobController.stop)
 router.get('/jobs/:id/playlist.m3u8', jobController.playlist)
 router.get('/jobs/:id/:ts(out\\d+.ts)', jobController.ts)
+router.post('/jobs/:id/message', jobController.message)
+// TODO: [-] add browser message controller
 //more job routes here
 
 // REGISTER OUR ROUTES -------------------------------

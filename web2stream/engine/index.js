@@ -93,11 +93,12 @@ class RTMPWriter extends PageVideoStreamWriter {
                 })
                 .toFormat('ssegment')
                 .outputOptions([
+                    `-x264opts keyint=${this.options.fps * 2}:min-keyint=${this.options.fps * 2}`,
                     `-segment_list /var/hls/${this.options.outputname}/playlist.m3u8`,
-                    '-segment_list_type hls',
-                    '-segment_list_size 6',
+                    '-segment_list_type m3u8',
+                    '-segment_list_size 5',
                     '-segment_list_flags +live',
-                    '-segment_time 10',
+                    '-segment_time 2',
                     '-segment_wrap 6',
                 ])
                 .save(`/var/hls/${this.options.outputname}/out%02d.ts`)
@@ -145,6 +146,16 @@ class Streamer extends PuppeteerScreenRecorder {
     }
 }
 
+function isValidHttpUrl(string) {
+    let url
+    try {
+        url = new URL(string)
+    } catch (_) {
+        return false
+    }
+    return url.protocol === 'http:' || url.protocol === 'https:'
+}
+
 ;(async () => {
     const OUTPUT_NAME = args.getOutputName()
     const TARGET_URL = args.getUrl()
@@ -190,6 +201,14 @@ class Streamer extends PuppeteerScreenRecorder {
                 case 'viewport':
                     await page.setViewport({ height: msg.height, width: msg.width })
                     process.send && process.send({ event: 'viewport', height: msg.height, width: msg.width })
+                    break
+                case 'goto':
+                    if (!isValidHttpUrl(msg.url)) {
+                        process.send && process.send({ event: 'error', desc: 'invalid url' })
+                        break
+                    }
+                    await page.goto(msg.url)
+                    process.send && process.send({ event: 'goto', url: msg.url })
                     break
                 default:
             }

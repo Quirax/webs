@@ -238,6 +238,20 @@ export class BrowserOverlay extends WebcamOverlay {
                         loop
                         muted
                         controls={false}
+                        hlsConfig={{
+                            maxLoadingDelay: 4,
+                            minAutoBitrate: 0,
+                            lowLatencyMode: true,
+                        }}
+                        style={{
+                            // position: 'absolute',
+                            // minWidth: '100%',
+                            // minHeight: '100%',
+                            // top: '50%',
+                            // left: '50%',
+                            // transform: 'translate(-50%, -50%)',
+                            objectFit: 'fill',
+                        }}
                         data-muted={true}
                         onClick={(e) => {
                             if (e.target.dataset.muted !== 'true') return
@@ -252,6 +266,7 @@ export class BrowserOverlay extends WebcamOverlay {
                                 BI().currentScene().id,
                                 e.target
                             )
+                            e.target.currentTime = e.target.duration - 2
                         }}
                     />
                     <Div
@@ -284,11 +299,20 @@ export class BrowserOverlay extends WebcamOverlay {
 
         this.overlayType = OverlayType.BROWSER
 
-        this.url = 'https://twip.kr/widgets/alertbox/g64oGmrzpq' // TODO: make it blank
+        this.url = 'about:blank' // TODO: make it blank
 
-        this.attach = (url) => {
+        this.jobId = -1
+
+        // TODO: [-] url -> jobId
+        this.attach = (jobId) => {
+            if (jobId === '') return
+
+            const hls_url = `${process.env.REACT_APP_SERVER}/hls/${jobId}/playlist.m3u8`
+            console.log(jobId, hls_url)
+            this.jobId = jobId
+
             this.setState({
-                src: url,
+                src: hls_url,
             })
         }
     }
@@ -296,24 +320,44 @@ export class BrowserOverlay extends WebcamOverlay {
     componentDidUpdate() {
         super.componentDidUpdate()
 
-        // TODO: use broadcast value
-        // if (this.url !== this.props.value.src) {
-        //     this.url = this.props.value.src
-        //     this.detachStream()
-        //     this.attachStream()
-        // }
+        let conn = Connector.getInstance()
+
+        // TODO: [-] use broadcast value
+        if (this.jobId !== -1) {
+            if (this.url !== '' && this.url !== this.props.value.params.src) {
+                this.url = this.props.value.params.src
+                // TODO: [-] send message to server
+                conn.messageBrowser(this.props.value.id, this.sid, this.jobId, { cmd: 'goto', url: this.url })
+            }
+
+            let ratio = this.props.ratio || 1
+
+            this.videoRef.current &&
+                conn.messageBrowser(this.props.value.id, this.sid, this.jobId, {
+                    cmd: 'viewport',
+                    height: Math.floor(this.videoRef.current.clientHeight / ratio),
+                    width: Math.floor(this.videoRef.current.clientWidth / ratio),
+                })
+        }
+
+        // TODO: [-] check when overlay resolution changed
+        // TODO: [-] send message to server
     }
 
+    // TODO: [-] url -> jobId
     attachStream() {
         let conn = Connector.getInstance()
         this.attach('')
-        conn.attachBrowser(this.props.value.id, this.sid, this.url)?.then((hls_url) => this.attach(hls_url)) // TODO: assign to video ref
+        if (this.url === '') return
+        conn.attachBrowser(this.props.value.id, this.sid, this.url)?.then((jobId) => this.attach(jobId))
     }
 
+    // TODO: [-] url -> jobId
     detachStream() {
         let conn = Connector.getInstance()
-        console.log(this.props.value.id, this.sid)
-        conn.detachBrowser(this.props.value.id, this.sid, this.url)?.then(
+        console.log(this.props.value.id, this.sid, this.jobId)
+        if (this.jobId === -1) return
+        conn.detachBrowser(this.props.value.id, this.sid, this.jobId)?.then(
             () => this.attach(''),
             (err) => console.log(err)
         )
