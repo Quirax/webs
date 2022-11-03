@@ -149,6 +149,11 @@ io.on('connect', async (socket) => {
         return console.error(e)
     }
 
+    log(`Got broadcast info of client (uid = ${uid})`)
+
+    log('Sending boradcast info: ' + broadcastInfo._id)
+    socket.emit('getBroadcastInfo', broadcastInfo)
+
     socket.on('isPreview', (ip) => {
         if (!ip) return
         socket.isPreview = true
@@ -160,6 +165,7 @@ io.on('connect', async (socket) => {
     })
 
     socket.on('getBroadcastInfo', () => {
+        log('Sending boradcast info: ' + broadcastInfo._id)
         socket.emit('getBroadcastInfo', broadcastInfo)
     })
 
@@ -386,7 +392,7 @@ io.on('connect', async (socket) => {
                 browsers[room][jobId] = url
                 socket.emit(`streamBrowser_${id}`, jobId)
                 log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
-            }, 13000)
+            }, 15000)
 
             log(`Waiting for browser (jobId = ${jobId}, outputName = ${out_name})`)
         } catch (err) {
