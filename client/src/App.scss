@@ -126,13 +126,13 @@ $border: (
 
         & > div {
             // @broadcast/itemlist/index.js > Itemlist
+            $nav-width: 256px;
+
             display: flex;
             user-select: none;
 
             & > nav {
                 // @broadcast/itemlist/index.js > Itemlist
-                $nav-width: 256px;
-
                 display: flex;
                 flex-direction: column;
                 @include flex-justify(space-between);
@@ -175,14 +175,136 @@ $border: (
             }
 
             & > dialog {
-                // @broadcast/itemlist/property.js > PropertyDialog
+                z-index: 10;
+                position: fixed;
 
-                &:last-child {
+                &:first-of-type {
+                    // @broadcast/itemlist/property.js > PropertyDialog
+                    top: $header-size - $border-width;
+                    left: $nav-width;
+                    border: map-get($map: $border, $key: 'normal');
+                    background: map-get($map: $color, $key: 'light');
+                    overflow-y: auto;
+                    height: calc(100% - #{$header-size - $border-width});
+
+                    & > div {
+                        & > div {
+                            padding: 8px;
+
+                            button {
+                                display: block;
+                                background-color: map-get($map: $color, $key: 'base');
+                                border: map-get($map: $border, $key: 'normal');
+                                padding: 8px;
+                                border-radius: $border-radius;
+                                cursor: pointer;
+                                width: $nav-width;
+
+                                &:hover {
+                                    background-color: map-get($map: $color, $key: 'dark');
+                                    color: map-get($map: $color, $key: 'darktext');
+                                }
+                            }
+                        }
+
+                        &.overlay > div {
+                            border-bottom: map-get($map: $border, $key: 'narrow');
+
+                            & details {
+                                // @broadcast/itemlist/property.js > Details
+                                padding: 8px 0;
+                                border-top: map-get($map: $border, $key: 'narrow');
+                                border-bottom: map-get($map: $border, $key: 'narrow');
+                                margin: -1px 0;
+                                cursor: default;
+
+                                & > div {
+                                    margin-top: 8px;
+                                }
+                            }
+
+                            table {
+                                // @broadcast/itemlist/property.js > Params
+                                width: 100%;
+
+                                td {
+                                    // @broadcast/itemlist/property.js > Arg
+                                    padding: 8px;
+
+                                    &:first-child {
+                                        text-align: right;
+                                    }
+
+                                    &:only-child {
+                                        text-align: center;
+                                    }
+
+                                    input[type='number'] {
+                                        width: 56px;
+                                        text-align: right;
+                                    }
+
+                                    input.buttons {
+                                        display: none;
+                                    }
+
+                                    label {
+                                        padding: 8px;
+                                        border: map-get($map: $border, $key: 'narrow');
+                                        margin-right: -1px;
+                                        display: inline-block;
+                                        width: 32px;
+                                        text-align: center;
+
+                                        &.checked {
+                                            background-color: map-get($map: $color, $key: 'dark');
+                                            color: map-get($map: $color, $key: 'darktext');
+                                        }
+                                    }
+
+                                    textarea {
+                                        width: 100%;
+                                        resize: none;
+                                    }
+
+                                    button {
+                                        display: block;
+                                        background-color: map-get($map: $color, $key: 'base');
+                                        border: map-get($map: $border, $key: 'normal');
+                                        padding: 8px;
+                                        border-radius: $border-radius;
+                                        cursor: pointer;
+                                        width: 100%;
+                                        margin: 0;
+
+                                        &:hover {
+                                            background-color: map-get($map: $color, $key: 'dark');
+                                            color: map-get($map: $color, $key: 'darktext');
+                                        }
+                                    }
+                                }
+                            }
+
+                            &:last-child {
+                                border-bottom: none;
+
+                                button {
+                                    display: inline-block;
+                                    width: calc(50% - 4px);
+
+                                    &:first-child {
+                                        margin-right: 8px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                &:last-of-type {
                     // @broadcast/itemlist/index.js > ContextMenu
-                    position: fixed;
                     border: map-get($map: $border, $key: 'normal');
                     background-color: white;
-                    z-index: 10;
 
                     & > div {
                         padding: 8px;
@@ -279,7 +401,7 @@ $border: (
                         // @broadcast/index.js > Status
                         display: flex;
                         flex-direction: column;
-                        @include flex-justify(start);
+                        @include flex-justify(flex-start);
                         text-align: right;
                         font-size: 11pt;
                     }
