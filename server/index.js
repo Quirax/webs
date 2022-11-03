@@ -378,23 +378,28 @@ io.on('connect', async (socket) => {
                 throw `Invalid destination url - type mismatch: xxx`
             }
 
-            let jobId = Object.keys(browsers[room]).find((key) => browsers[room][key] === url)
+            const out_name = `${room}_${id}`
+
+            let jobId = Object.keys(browsers[room]).find(
+                (key) => browsers[room][key] === out_name || browsers[room][key].for === out_name
+            )
 
             if (jobId) {
-                if (typeof browsers[room][jobId] !== 'number') socket.emit(`streamBrowser_${id}`, jobId)
+                if (typeof browsers[room][jobId] !== 'object') socket.emit(`streamBrowser_${id}`, jobId)
 
                 return
             }
 
-            const out_name = `${room}_${id}`
-
             jobId = await start(url, out_name, '')
 
-            browsers[room][jobId] = setTimeout(() => {
-                browsers[room][jobId] = url
-                socket.emit(`streamBrowser_${id}`, jobId)
-                log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
-            }, 15000)
+            browsers[room][jobId] = {
+                timer: setTimeout(() => {
+                    browsers[room][jobId] = out_name
+                    socket.emit(`streamBrowser_${id}`, jobId)
+                    log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
+                }, 15000),
+                for: out_name,
+            }
 
             log(`Waiting for browser (jobId = ${jobId}, outputName = ${out_name})`)
         } catch (err) {
@@ -471,7 +476,7 @@ io.on('connect', async (socket) => {
             if (!browsers[room][jobId]) return socket.emit(`stopBrowser_${id}`, false)
 
             await stop(jobId)
-            typeof browsers[room][jobId] === 'number' && clearTimeout(browsers[room][jobId])
+            typeof browsers[room][jobId] === 'object' && clearTimeout(browsers[room][jobId].timer)
             delete browsers[room][jobId]
 
             log(`Stopped ${jobId}`)
