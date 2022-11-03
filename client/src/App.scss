@@ -31,6 +31,11 @@ $border: (
             $map: $color,
             $key: 'dark',
         ),
+    'narrow': 1px solid
+        map-get(
+            $map: $color,
+            $key: 'dark',
+        ),
     'none': none,
 );
 // TO HERE
@@ -41,6 +46,7 @@ $border: (
     $canvas-margin-color: #222;
 
     & > header {
+        // @broadcast/index.js > Toolbar
         display: flex;
         @include fixsize();
         @include flex-justify(space-between);
@@ -110,6 +116,7 @@ $border: (
     }
 
     & > div {
+        // @broadcast/index.js > Broadcast
         $header-size: $header-height + ($header-padding * 2) + $border-width;
         $footer-size: $footer-height + ($header-padding * 2) + $border-width;
 
@@ -117,12 +124,91 @@ $border: (
         height: calc(100% - #{$header-size});
         width: 100%;
 
+        & > div {
+            // @broadcast/itemlist/index.js > Itemlist
+            display: flex;
+            user-select: none;
+
+            & > nav {
+                // @broadcast/itemlist/index.js > Itemlist
+                $nav-width: 256px;
+
+                display: flex;
+                flex-direction: column;
+                @include flex-justify(space-between);
+                @include fixsize();
+                width: $nav-width;
+                border-right: map-get($map: $border, $key: 'normal');
+                overflow-y: auto;
+                background-color: map-get($map: $color, $key: 'light');
+
+                li {
+                    // @broadcast/itemlist/index.js > Item
+                    // @broadcast/itemlist/index.js > Itemlist
+                    padding: 8px;
+                    border-bottom: map-get($map: $border, $key: 'narrow');
+                    text-align: left;
+                    cursor: default;
+                }
+
+                & > ul:first-child > li {
+                    &:last-child {
+                        // @broadcast/itemlist/index.js > Itemlist
+                        text-align: center;
+                        background-color: map-get($map: $color, $key: 'base');
+                    }
+
+                    &.selected {
+                        // @broadcast/itemlist/index.js > Item
+                        background-color: map-get($map: $color, $key: 'dark');
+                        color: map-get($map: $color, $key: 'darktext');
+                    }
+                }
+
+                & > ul:last-child > li {
+                    // @broadcast/itemlist/index.js > Itemlist
+                    border-bottom: none;
+                    text-align: center;
+                    border-top: map-get($map: $border, $key: 'narrow');
+                    background-color: map-get($map: $color, $key: 'base');
+                }
+            }
+
+            & > dialog {
+                // @broadcast/itemlist/property.js > PropertyDialog
+
+                &:last-child {
+                    // @broadcast/itemlist/index.js > ContextMenu
+                    position: fixed;
+                    border: map-get($map: $border, $key: 'normal');
+                    background-color: white;
+                    z-index: 10;
+
+                    & > div {
+                        padding: 8px;
+                        border-top: map-get($map: $border, $key: 'narrow');
+                        cursor: default;
+
+                        &:hover {
+                            background-color: map-get($map: $color, $key: 'light');
+                        }
+
+                        &:first-child {
+                            border: none;
+                        }
+                    }
+                }
+            }
+        }
+
         & > main {
+            // @broadcast/index.js > Broadcast
             display: flex;
             flex-direction: column;
             width: 100%;
 
             & > article {
+                // @broadcast/index.js > Broadcast
                 position: relative;
                 text-align: center;
                 height: calc(100% - #{$footer-size});
@@ -130,15 +216,19 @@ $border: (
                 background-color: $canvas-margin-color;
 
                 & > div {
+                    // @broadcast/index.js > Containers
                     background-color: black;
                     position: absolute;
                     display: inline-block;
                     aspect-ratio: 16/9;
                     overflow: hidden;
+
+                    // @broadcast/overlay/index.js > ?
                 }
             }
 
             & > footer {
+                // @broadcast/index.js > Broadcast
                 display: flex;
                 @include fixsize();
                 @include flex-justify(space-between);
@@ -149,6 +239,7 @@ $border: (
 
                 & > div {
                     &:first-child {
+                        // @broadcast/index.js > Description
                         $category-image-height: 48px;
                         $category-image-padding: 4px;
 
@@ -185,6 +276,7 @@ $border: (
                     }
 
                     &:last-child {
+                        // @broadcast/index.js > Status
                         display: flex;
                         flex-direction: column;
                         @include flex-justify(start);
