@@ -1,5 +1,4 @@
 import React from 'react'
-import { Img } from '../../components'
 import { Overlay, HexToRGB } from './overlay'
 import { OverlayParam } from '.'
 
@@ -23,14 +22,13 @@ export class ImageOverlay extends Overlay {
             }
 
             return (
-                <Img
+                <img
                     alt=''
                     src={src}
-                    referrer={props.referrer}
-                    border='none'
-                    height={props.height * props.ratio}
-                    width={props.width * props.ratio}
+                    ref={props.referrer}
                     style={{
+                        height: props.height * props.ratio,
+                        width: props.width * props.ratio,
                         opacity: params.opacity,
                         borderRadius: `${params.radius * props.ratio}px`,
                         borderColor: `rgba(${bc.r}, ${bc.g}, ${bc.b}, ${params.border_opacity})`,

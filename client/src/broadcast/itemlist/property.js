@@ -1,19 +1,4 @@
 import React from 'react'
-import {
-    Div,
-    Form,
-    P,
-    Button,
-    Dialog,
-    Details as DetailsView,
-    Summary,
-    TR,
-    TD,
-    Input,
-    Label,
-    Textarea,
-    Table,
-} from '../../components'
 import BI from '../info'
 import { OverlayGenerator, OverlayParam, OverlayType } from '../overlay'
 import { cloneDeep } from 'lodash'
@@ -47,6 +32,7 @@ import { faChrome } from '@fortawesome/free-brands-svg-icons'
 import Connector from '../../connector'
 import { ItemlistType } from '.'
 import { TransitionGenerator, TransitionParam, TransitionType } from '../transition'
+import ReactTextareaAutosize from 'react-textarea-autosize'
 
 export default class PropertyDialog extends React.Component {
     constructor() {
@@ -124,9 +110,9 @@ export default class PropertyDialog extends React.Component {
 
         if (this.state.value) {
             formContent = (
-                <Form>
-                    <Div padding='8'>
-                        <P>
+                <div className='overlay'>
+                    <div>
+                        <p>
                             이름:{' '}
                             <input
                                 type='text'
@@ -137,9 +123,9 @@ export default class PropertyDialog extends React.Component {
                                     this.state.onChange(v)
                                 }}
                             />
-                        </P>
-                    </Div>
-                    <Div padding='8' border-top='normal' border-bottom='normal'>
+                        </p>
+                    </div>
+                    <div>
                         <ParamList
                             type={this.state.type}
                             value={this.state.value}
@@ -147,19 +133,17 @@ export default class PropertyDialog extends React.Component {
                                 this.state.onChange(val)
                             }}
                         />
-                    </Div>
-                    <Div>
-                        <Button
-                            width='50%'
+                    </div>
+                    <div>
+                        <button
                             onClick={(e) => {
                                 this.state.onChange(this.state.value)
                                 BI().afterChange()
                                 this.leaveFocus(e)
                             }}>
                             저장
-                        </Button>
-                        <Button
-                            width='50%'
+                        </button>
+                        <button
                             onClick={(e) => {
                                 console.log(this.state.originalValue)
                                 this.state.onChange(this.state.originalValue)
@@ -167,9 +151,9 @@ export default class PropertyDialog extends React.Component {
                                 this.leaveFocus(e)
                             }}>
                             취소
-                        </Button>
-                    </Div>
-                </Form>
+                        </button>
+                    </div>
+                </div>
             )
         } else {
             switch (this.state.type) {
@@ -177,51 +161,45 @@ export default class PropertyDialog extends React.Component {
                     // HACK : 오버레이 추가
 
                     formContent = (
-                        <Form>
-                            <Div padding='8'>어떤 오버레이를 만드시겠습니까?</Div>
-                            <Div padding='8'>
-                                <Button
-                                    width='100%'
+                        <div>
+                            <div>어떤 오버레이를 만드시겠습니까?</div>
+                            <div>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(OverlayGenerator('새 텍스트 오버레이', OverlayType.TEXT))
                                         this.leaveFocus(e)
                                     }}>
                                     <FontAwesomeIcon icon={faFont} /> 텍스트
-                                </Button>
-                                <Button
-                                    width='100%'
+                                </button>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(OverlayGenerator('새 도형 오버레이', OverlayType.SHAPE))
                                         this.leaveFocus(e)
                                     }}>
                                     <FontAwesomeIcon icon={faShapes} /> 도형
-                                </Button>
-                                <Button
-                                    width='100%'
+                                </button>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(OverlayGenerator('새 이미지 오버레이', OverlayType.IMAGE))
                                         this.leaveFocus(e)
                                     }}>
                                     <FontAwesomeIcon icon={faImage} /> 이미지
-                                </Button>
-                                <Button
-                                    width='100%'
+                                </button>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(OverlayGenerator('새 동영상 오버레이', OverlayType.VIDEO))
                                         this.leaveFocus(e)
                                     }}>
                                     <FontAwesomeIcon icon={faFilm} /> 동영상
-                                </Button>
-                                <Button
-                                    width='100%'
+                                </button>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(OverlayGenerator('새 웹캠 오버레이', OverlayType.WEBCAM))
                                         this.leaveFocus(e)
                                     }}>
                                     <FontAwesomeIcon icon={faVideoCamera} /> 웹캠
-                                </Button>
-                                <Button
-                                    width='100%'
+                                </button>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(
                                             OverlayGenerator('새 화면공유 오버레이', OverlayType.DISPLAY)
@@ -229,9 +207,8 @@ export default class PropertyDialog extends React.Component {
                                         this.leaveFocus(e)
                                     }}>
                                     <FontAwesomeIcon icon={faDisplay} /> 화면공유
-                                </Button>
-                                <Button
-                                    width='100%'
+                                </button>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(
                                             OverlayGenerator('새 웹 브라우저 오버레이', OverlayType.BROWSER)
@@ -239,62 +216,57 @@ export default class PropertyDialog extends React.Component {
                                         this.leaveFocus(e)
                                     }}>
                                     <FontAwesomeIcon icon={faChrome} /> 웹 브라우저
-                                </Button>
-                            </Div>
-                            <Div padding='8'>
-                                <Button
-                                    width='100%'
+                                </button>
+                            </div>
+                            <div>
+                                <button
                                     onClick={(e) => {
                                         this.leaveFocus(e)
                                     }}>
                                     취소
-                                </Button>
-                            </Div>
-                        </Form>
+                                </button>
+                            </div>
+                        </div>
                     )
                     break
                 case ItemlistType.TRANSITIONS:
                     // HACK : 장면 전환 추가
 
                     formContent = (
-                        <Form>
-                            <Div padding='8'>어떤 장면 전환을 만드시겠습니까?</Div>
-                            <Div padding='8'>
-                                <Button
-                                    width='100%'
+                        <div>
+                            <div>어떤 장면 전환을 만드시겠습니까?</div>
+                            <div>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(TransitionGenerator('새 기본 전환', TransitionType.PLAIN))
                                         this.leaveFocus(e)
                                     }}>
                                     기본 전환 (효과 없음)
-                                </Button>
-                                <Button
-                                    width='100%'
+                                </button>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(TransitionGenerator('새 밀어내기', TransitionType.SLIDE))
                                         this.leaveFocus(e)
                                     }}>
                                     밀어내기
-                                </Button>
-                                <Button
-                                    width='100%'
+                                </button>
+                                <button
                                     onClick={(e) => {
                                         this.state.onChange(TransitionGenerator('새 밝기변화', TransitionType.FADE))
                                         this.leaveFocus(e)
                                     }}>
                                     밝기변화
-                                </Button>
-                            </Div>
-                            <Div padding='8'>
-                                <Button
-                                    width='100%'
+                                </button>
+                            </div>
+                            <div>
+                                <button
                                     onClick={(e) => {
                                         this.leaveFocus(e)
                                     }}>
                                     취소
-                                </Button>
-                            </Div>
-                        </Form>
+                                </button>
+                            </div>
+                        </div>
                     )
 
                     break
@@ -303,21 +275,9 @@ export default class PropertyDialog extends React.Component {
         }
 
         return (
-            <Dialog
-                position='fixed'
-                top={64}
-                left={256}
-                border='normal'
-                background='white'
-                open={this.state.open}
-                z-index={10}
-                onMouseDown={this.setFocus}
-                style={{
-                    overflowY: 'auto',
-                }}
-                height={document.body.clientHeight - 64}>
+            <dialog open={this.state.open} onMouseDown={this.setFocus}>
                 {formContent}
-            </Dialog>
+            </dialog>
         )
     }
 }
@@ -861,14 +821,7 @@ function ParamList(props) {
 
 function Details(props) {
     return (
-        <DetailsView
-            padding-top='8'
-            padding-bottom='8'
-            border-top='normal'
-            border-bottom='normal'
-            margin-top='-1'
-            margin-bottom='-1'
-            cursor='default'
+        <details
             onToggle={(e) => {
                 if (!e.target.open) return
 
@@ -878,34 +831,29 @@ function Details(props) {
                     d.open = false
                 })
             }}>
-            <Summary>{props.title}</Summary>
-            <Div margin-top='8'>{props.children}</Div>
-        </DetailsView>
+            <summary>{props.title}</summary>
+            <div>{props.children}</div>
+        </details>
     )
 }
 
 function Params(props) {
     return (
-        <Table width='100%'>
+        <table>
             <tbody>{props.children}</tbody>
-        </Table>
+        </table>
     )
 }
 
 class Arg extends React.Component {
+    // TODO: Redesign
     render() {
         let value = this.props.default
 
         return (
-            <TR>
-                {this.props.name ? (
-                    <TD padding='8' align='right'>
-                        {this.props.name}
-                    </TD>
-                ) : (
-                    <></>
-                )}
-                <TD padding='8' align={this.props.name ? 'left' : 'center'} colSpan={this.props.name ? null : 2}>
+            <tr>
+                {this.props.name ? <td>{this.props.name}</td> : <></>}
+                <td colSpan={this.props.name ? null : 2}>
                     {this.props.prefix ? this.props.prefix + ' ' : ''}
                     {(() => {
                         switch (this.props.type) {
@@ -990,14 +938,12 @@ class Arg extends React.Component {
                                 )
                             case ArgTypes.NUMBER:
                                 return (
-                                    <Input
+                                    <input
                                         type='number'
                                         value={value || 0}
                                         step={this.props.step}
                                         min={this.props.min}
                                         max={this.props.max}
-                                        width='56'
-                                        align='right'
                                         disabled={this.props.disabled}
                                         onChange={(e) => {
                                             this.props.onChange && this.props.onChange(e.target.value)
@@ -1026,13 +972,9 @@ class Arg extends React.Component {
                                 )
                             case ArgTypes.TEXTAREA:
                                 return (
-                                    <Textarea
+                                    <ReactTextareaAutosize
                                         value={value || ''}
-                                        width='100%'
                                         autoresize='true'
-                                        style={{
-                                            resize: 'none',
-                                        }}
                                         minrows={3}
                                         disabled={this.props.disabled}
                                         onChange={(e) => {
@@ -1042,22 +984,21 @@ class Arg extends React.Component {
                                 )
                             case ArgTypes.BUTTON:
                                 return (
-                                    <Button
-                                        width='100%'
+                                    <button
                                         disabled={this.props.disabled}
                                         onClick={(e) => {
                                             this.props.onChange && this.props.onChange()
                                         }}>
                                         {this.props.children}
-                                    </Button>
+                                    </button>
                                 )
                             default:
                                 return <></>
                         }
                     })()}
                     {this.props.unit ? ' ' + this.props.unit : ''}
-                </TD>
-            </TR>
+                </td>
+            </tr>
         )
     }
 }
@@ -1081,7 +1022,7 @@ function ArgButton(props) {
 
     return (
         <>
-            <Input
+            <input
                 type={props.multiple ? 'checkbox' : 'radio'}
                 name={props.radioName}
                 id={radioID}
@@ -1090,20 +1031,11 @@ function ArgButton(props) {
                 onChange={(e) => {
                     props.onChange(props.multiple ? e.target.checked : props.value)
                 }}
-                display='none'
+                className='buttons'
             />
-            <Label
-                htmlFor={radioID}
-                name={props.radioName}
-                padding='8'
-                border='normal'
-                margin-right='-1'
-                display='inline-block'
-                width='32'
-                align='center'
-                background={props.checked ? 'black' : ''}>
+            <label htmlFor={radioID} name={props.radioName} className={props.checked ? 'checked' : ''}>
                 {props.label || ''}
-            </Label>
+            </label>
         </>
     )
 }

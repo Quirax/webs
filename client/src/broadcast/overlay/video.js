@@ -1,5 +1,4 @@
 import React from 'react'
-import { Div, Video } from '../../components'
 import { Overlay, HexToRGB } from './overlay'
 import { OverlayParam, OverlayType } from '.'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -37,7 +36,7 @@ export class VideoOverlay extends Overlay {
             }
 
             return (
-                <Div
+                <div
                     style={{
                         opacity: params.opacity,
                         // FIXME: force to keep ratio of video source
@@ -47,10 +46,10 @@ export class VideoOverlay extends Overlay {
                         borderStyle: params.border_style,
                         margin: `${params.margin * props.ratio}px`,
                         padding: `${params.padding * props.ratio}px`,
+                        height: props.height * props.ratio,
+                        width: props.width * props.ratio,
                     }}
-                    width={props.width * props.ratio}
-                    height={props.height * props.ratio}
-                    referrer={props.referrer}
+                    ref={props.referrer}
                     onMouseEnter={(e) => {
                         if (props.isPreview) return
                         handleRef.current.style.display = 'inline-block'
@@ -59,9 +58,7 @@ export class VideoOverlay extends Overlay {
                         if (props.isPreview) return
                         handleRef.current.dataset.handle === 'false' && (handleRef.current.style.display = 'none')
                     }}>
-                    <Video
-                        width='100%'
-                        height='100%'
+                    <video
                         alt=''
                         src={src}
                         autoPlay
@@ -82,16 +79,9 @@ export class VideoOverlay extends Overlay {
                             )
                         }}
                     />
-                    <Div
-                        referrer={handleRef}
-                        position='absolute'
-                        top='16'
-                        left='16'
-                        display='none'
-                        background='white'
-                        padding='16'
-                        border-radius='8'
-                        border='normal'
+                    <div
+                        ref={handleRef}
+                        className='video-handle'
                         data-handle='false'
                         data-move='false'
                         onMouseEnter={(e) => {
@@ -105,8 +95,8 @@ export class VideoOverlay extends Overlay {
                             handleRef.current.dataset.move === 'false' && (handleRef.current.dataset.handle = 'false')
                         }}>
                         <FontAwesomeIcon icon={faArrowsUpDownLeftRight} />
-                    </Div>
-                </Div>
+                    </div>
+                </div>
             )
         }
     }

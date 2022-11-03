@@ -149,6 +149,11 @@ io.on('connect', async (socket) => {
         return console.error(e)
     }
 
+    log(`Got broadcast info of client (uid = ${uid})`)
+
+    log('Sending boradcast info: ' + broadcastInfo._id)
+    socket.emit('getBroadcastInfo', broadcastInfo)
+
     socket.on('isPreview', (ip) => {
         if (!ip) return
         socket.isPreview = true
@@ -160,6 +165,7 @@ io.on('connect', async (socket) => {
     })
 
     socket.on('getBroadcastInfo', () => {
+        log('Sending boradcast info: ' + broadcastInfo._id)
         socket.emit('getBroadcastInfo', broadcastInfo)
     })
 
@@ -181,15 +187,17 @@ io.on('connect', async (socket) => {
         }
     })
 
-    socket.on('setDescription', async ({ category_id, title }) => {
+    socket.on('setDescription', ({ category_id, title }) => {
         broadcastInfo.category = category_id
         broadcastInfo.title = title
 
-        try {
-            await db.save(broadcastInfo)
-        } catch (e) {
-            console.error(e)
-        }
+        setTimeout(async () => {
+            try {
+                await db.save(broadcastInfo)
+            } catch (e) {
+                console.error(e)
+            }
+        }, 100)
     })
 
     socket.on('selectScene', async (idx) => {
@@ -370,23 +378,28 @@ io.on('connect', async (socket) => {
                 throw `Invalid destination url - type mismatch: xxx`
             }
 
-            let jobId = Object.keys(browsers[room]).find((key) => browsers[room][key] === url)
+            const out_name = `${room}_${id}`
+
+            let jobId = Object.keys(browsers[room]).find(
+                (key) => browsers[room][key] === out_name || browsers[room][key].for === out_name
+            )
 
             if (jobId) {
-                if (typeof browsers[room][jobId] !== 'number') socket.emit(`streamBrowser_${id}`, jobId)
+                if (typeof browsers[room][jobId] !== 'object') socket.emit(`streamBrowser_${id}`, jobId)
 
                 return
             }
 
-            const out_name = `${room}_${id}`
-
             jobId = await start(url, out_name, '')
 
-            browsers[room][jobId] = setTimeout(() => {
-                browsers[room][jobId] = url
-                socket.emit(`streamBrowser_${id}`, jobId)
-                log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
-            }, 13000)
+            browsers[room][jobId] = {
+                timer: setTimeout(() => {
+                    browsers[room][jobId] = out_name
+                    socket.emit(`streamBrowser_${id}`, jobId)
+                    log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
+                }, 15000),
+                for: out_name,
+            }
 
             log(`Waiting for browser (jobId = ${jobId}, outputName = ${out_name})`)
         } catch (err) {
@@ -463,7 +476,7 @@ io.on('connect', async (socket) => {
             if (!browsers[room][jobId]) return socket.emit(`stopBrowser_${id}`, false)
 
             await stop(jobId)
-            typeof browsers[room][jobId] === 'number' && clearTimeout(browsers[room][jobId])
+            typeof browsers[room][jobId] === 'object' && clearTimeout(browsers[room][jobId].timer)
             delete browsers[room][jobId]
 
             log(`Stopped ${jobId}`)

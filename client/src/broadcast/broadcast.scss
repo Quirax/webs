@@ -1,0 +1,403 @@
+@import '../common.scss';
+
+#root {
+    $header-height: 48px;
+    $header-padding: 8px;
+    $canvas-margin-color: #222;
+
+    & > header {
+        // @broadcast/index.js > Toolbar
+        display: flex;
+        @include fixsize();
+        @include flex-justify(space-between);
+        @include flex-align(center);
+        border-bottom: map-get($map: $border, $key: 'normal');
+        height: $header-height;
+        padding: $header-padding;
+        background-color: map-get($map: $color, $key: 'base');
+
+        & > div {
+            display: flex;
+            @include fixsize();
+            @include flex-align(center);
+            padding: 0 8px;
+
+            &:first-child {
+                h1,
+                input {
+                    margin: 0;
+                    padding: 0;
+                    height: $header-height;
+                    font-size: $header-height / 1.25;
+                }
+
+                h1 {
+                    cursor: pointer;
+                    line-height: $header-height;
+                }
+
+                input {
+                    font-weight: bold;
+                    line-height: $header-height - $border-width;
+                    background-color: transparent;
+                    width: 100%;
+                    border: none;
+                    border-bottom: map-get($map: $border, $key: 'normal');
+                    background-color: map-get($map: $color, $key: 'light');
+                }
+            }
+
+            button {
+                background-color: map-get($map: $color, $key: 'light');
+                margin-left: 8px;
+                height: $header-height;
+                font-size: $header-height / 2;
+                line-height: $header-height;
+                aspect-ratio: 1;
+                padding: 0;
+            }
+
+            &:last-child {
+                button > img {
+                    aspect-ratio: 1;
+                    height: $header-height - ($border-width * 2);
+                    border-radius: $border-radius;
+                }
+            }
+        }
+    }
+
+    & > div {
+        // @broadcast/index.js > Broadcast
+        $header-size: $header-height + ($header-padding * 2) + $border-width;
+        $footer-size: $footer-height + ($header-padding * 2) + $border-width;
+
+        display: flex;
+        height: calc(100% - #{$header-size});
+        width: 100%;
+
+        & > div {
+            // @broadcast/itemlist/index.js > Itemlist
+            $nav-width: 256px;
+
+            display: flex;
+            user-select: none;
+
+            & > nav {
+                // @broadcast/itemlist/index.js > Itemlist
+                display: flex;
+                flex-direction: column;
+                @include flex-justify(space-between);
+                @include fixsize();
+                width: $nav-width;
+                border-right: map-get($map: $border, $key: 'normal');
+                overflow-y: auto;
+                background-color: map-get($map: $color, $key: 'light');
+
+                li {
+                    // @broadcast/itemlist/index.js > Item
+                    // @broadcast/itemlist/index.js > Itemlist
+                    padding: 8px;
+                    border-bottom: map-get($map: $border, $key: 'narrow');
+                    text-align: left;
+                    cursor: default;
+                }
+
+                & > ul:first-child > li {
+                    &:last-child {
+                        // @broadcast/itemlist/index.js > Itemlist
+                        text-align: center;
+                        background-color: map-get($map: $color, $key: 'base');
+                    }
+
+                    &.selected {
+                        // @broadcast/itemlist/index.js > Item
+                        background-color: map-get($map: $color, $key: 'dark');
+                        color: map-get($map: $color, $key: 'darktext');
+                    }
+                }
+
+                & > ul:last-child > li {
+                    // @broadcast/itemlist/index.js > Itemlist
+                    border-bottom: none;
+                    text-align: center;
+                    border-top: map-get($map: $border, $key: 'narrow');
+                    background-color: map-get($map: $color, $key: 'base');
+                }
+            }
+
+            & > dialog {
+                z-index: 10;
+                position: fixed;
+
+                &:first-of-type {
+                    // @broadcast/itemlist/property.js > PropertyDialog
+                    top: $header-size - $border-width;
+                    left: $nav-width;
+                    border: map-get($map: $border, $key: 'normal');
+                    background: map-get($map: $color, $key: 'light');
+                    overflow-y: auto;
+                    height: calc(100% - #{$header-size - $border-width});
+
+                    & > div {
+                        & > div {
+                            padding: 8px;
+
+                            button {
+                                display: block;
+                                width: $nav-width;
+                            }
+                        }
+
+                        &.overlay > div {
+                            border-bottom: map-get($map: $border, $key: 'narrow');
+
+                            & details {
+                                // @broadcast/itemlist/property.js > Details
+                                padding: 8px 0;
+                                border-top: map-get($map: $border, $key: 'narrow');
+                                border-bottom: map-get($map: $border, $key: 'narrow');
+                                margin: -1px 0;
+                                cursor: default;
+
+                                & > div {
+                                    margin-top: 8px;
+                                }
+                            }
+
+                            table {
+                                // @broadcast/itemlist/property.js > Params
+                                width: 100%;
+
+                                td {
+                                    // @broadcast/itemlist/property.js > Arg
+                                    padding: 8px;
+
+                                    &:first-child {
+                                        text-align: right;
+                                    }
+
+                                    &:only-child {
+                                        text-align: center;
+                                    }
+
+                                    input[type='number'] {
+                                        width: 56px;
+                                        text-align: right;
+                                    }
+
+                                    input.buttons {
+                                        display: none;
+                                    }
+
+                                    label {
+                                        padding: 8px;
+                                        border: map-get($map: $border, $key: 'narrow');
+                                        margin-right: -1px;
+                                        display: inline-block;
+                                        width: 32px;
+                                        text-align: center;
+
+                                        &.checked {
+                                            background-color: map-get($map: $color, $key: 'dark');
+                                            color: map-get($map: $color, $key: 'darktext');
+                                        }
+                                    }
+
+                                    textarea {
+                                        width: 100%;
+                                        resize: none;
+                                    }
+
+                                    button {
+                                        display: block;
+                                        width: 100%;
+                                    }
+                                }
+                            }
+
+                            &:last-child {
+                                border-bottom: none;
+
+                                button {
+                                    width: calc(50% - 4px);
+
+                                    &:first-child {
+                                        margin-right: 8px;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                &:last-of-type {
+                    // @broadcast/itemlist/index.js > ContextMenu
+                    border: map-get($map: $border, $key: 'normal');
+                    background-color: white;
+
+                    & > div {
+                        padding: 8px;
+                        border-top: map-get($map: $border, $key: 'narrow');
+                        cursor: default;
+
+                        &:hover {
+                            background-color: map-get($map: $color, $key: 'light');
+                        }
+
+                        &:first-child {
+                            border: none;
+                        }
+                    }
+                }
+            }
+        }
+
+        & > main {
+            // @broadcast/index.js > Broadcast
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+
+            & > article {
+                // @broadcast/index.js > Broadcast
+                position: relative;
+                text-align: center;
+                height: calc(100% - #{$footer-size});
+                overflow: hidden;
+                background-color: $canvas-margin-color;
+
+                & > div {
+                    // @broadcast/index.js > Containers
+                    background-color: black;
+                    position: absolute;
+                    display: inline-block;
+                    aspect-ratio: 16/9;
+                    overflow: hidden;
+
+                    & > div {
+                        // @broadcast/overlay/index.js > OverlayContainer
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        overflow: hidden;
+
+                        & > ol > li > div {
+                            // @broadcast/overlay/overlay.js > Overlay
+                            display: inline-block;
+                            position: absolute;
+
+                            * {
+                                border: none;
+                            }
+
+                            video {
+                                width: 100%;
+                                height: 100%;
+                            }
+
+                            div.video-handle {
+                                position: absolute;
+                                top: 16px;
+                                left: 16px;
+                                display: none;
+                                background-color: white;
+                                padding: 16px;
+                                border-radius: $border-radius;
+                                border: map-get($map: $border, $key: 'narrow');
+                            }
+                        }
+                    }
+                }
+            }
+
+            & > footer {
+                // @broadcast/index.js > Broadcast
+                display: flex;
+                @include fixsize();
+                @include flex-justify(space-between);
+                height: $footer-height;
+                padding: $footer-padding;
+                border-top: map-get($map: $border, $key: 'normal');
+                background-color: map-get($map: $color, $key: 'base');
+
+                & > div {
+                    &:first-child {
+                        // @broadcast/index.js > Description
+                        $category-image-height: 48px;
+                        $category-image-padding: 4px;
+
+                        display: flex;
+                        @include flex-align(center);
+
+                        & img {
+                            height: $category-image-height;
+                            border: map-get($map: $border, $key: 'normal');
+                            margin-right: 8px;
+                            vertical-align: middle;
+                        }
+
+                        & > div {
+                            display: flex;
+                            flex-direction: column;
+                            @include flex-justify(center);
+
+                            $input-height: $footer-height / 2;
+
+                            & input {
+                                margin: 0;
+                                padding: 0;
+                                height: $input-height;
+                                font-size: $input-height / 1.25;
+                                line-height: $input-height - $border-width;
+                                background-color: transparent;
+                                width: 100%;
+                                border: none;
+                                border-bottom: map-get($map: $border, $key: 'normal');
+                                background-color: map-get($map: $color, $key: 'light');
+                            }
+                        }
+                    }
+
+                    &:last-child {
+                        // @broadcast/index.js > Status
+                        display: flex;
+                        flex-direction: column;
+                        @include flex-justify(flex-start);
+                        text-align: right;
+                        font-size: 11pt;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.autosuggest-suggestionsContainerOpen {
+    position: fixed;
+    bottom: #{$footer-padding + $footer-height / 2};
+    border: map-get($map: $border, $key: 'normal');
+    background-color: white;
+    max-height: 300px;
+    width: 250px;
+    overflow-y: scroll;
+}
+
+.autosuggest-suggestion {
+    line-height: 1.2;
+    padding: 8px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    border: map-get($map: $border, $key: 'normal');
+
+    &.autosuggest-highlighted {
+        background-color: map-get($map: $color, $key: 'dark');
+        color: map-get($map: $color, $key: 'darktext');
+    }
+
+    &:first-child {
+        border: none;
+    }
+}

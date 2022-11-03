@@ -1,6 +1,5 @@
 import { cloneDeep } from 'lodash'
 import React from 'react'
-import { Div, Ul, Li, Nav, Dialog } from '../../components'
 import Connector from '../../connector'
 import BI, { assignList, GenerateID } from '../info'
 import { OverlayType } from '../overlay'
@@ -52,16 +51,7 @@ export default class Itemlist extends React.Component {
                 Object.assign(state, {
                     list: BI().info?.scene || [],
                     addLabel: '장면 추가',
-                    bottomItem: (
-                        <Li
-                            padding='8'
-                            border-top='normal'
-                            align='center'
-                            cursor='default'
-                            onClick={onClickBottomItem.bind(this)}>
-                            장면 전환 설정
-                        </Li>
-                    ),
+                    bottomItem: <li onClick={onClickBottomItem.bind(this)}>장면 전환 설정</li>,
                     onDblClickGenerator: (item, value, onChange) => (e) => {
                         BI().selectScene(value.index)
 
@@ -72,10 +62,10 @@ export default class Itemlist extends React.Component {
                     },
                     isSelected: (idx) => BI().isCurrentScene(idx),
                     onClickItemGenerator: (item, value) => () => {
-                        BI().selectScene(value.index)
-
                         const conn = Connector.getInstance()
                         conn.selectScene(value.index)
+
+                        BI().selectScene(value.index)
                     },
                     onAdd: () => {
                         BI().info.scene.push({
@@ -110,16 +100,7 @@ export default class Itemlist extends React.Component {
                         }
                     },
                     addLabel: '장면 전환 추가',
-                    bottomItem: (
-                        <Li
-                            padding='8'
-                            border-top='normal'
-                            align='center'
-                            cursor='default'
-                            onClick={onClickBottomItem.bind(this)}>
-                            장면 설정
-                        </Li>
-                    ),
+                    bottomItem: <li onClick={onClickBottomItem.bind(this)}>장면 설정</li>,
                     isSelected: (idx) => BI().isCurrentTransition(idx),
                     onClickItemGenerator: (item, value) => () => {
                         BI().selectTransition(value.index)
@@ -180,20 +161,9 @@ export default class Itemlist extends React.Component {
         }
 
         return (
-            <Div
-                flex
-                style={{
-                    userSelect: 'none',
-                }}>
-                <Nav
-                    flex
-                    flex-direction='column'
-                    flex-justify='space-between'
-                    fixsize
-                    width='256'
-                    border-right='normal'
-                    style={{ overflowY: 'auto' }}>
-                    <Ul>
+            <div>
+                <nav>
+                    <ul>
                         <DndProvider backend={HTML5Backend}>
                             {state.list.map((v, i) => {
                                 let selected = state.isSelected(i)
@@ -211,34 +181,30 @@ export default class Itemlist extends React.Component {
                                             Object.assign(v, val)
                                             BI().onChange()
                                         }}
-                                        style={{
-                                            backgroundColor: selected === true ? 'blue' : null,
-                                        }}
+                                        className={selected === true ? 'selected' : null}
                                         onChangeMode={this.props.changeMode}
                                     />
                                 )
                             })}
                         </DndProvider>
-                        <Li
-                            display={BI().detectMobileDevice() ? 'none' : null}
-                            padding='8'
-                            border-bottom='normal'
-                            align='center'
-                            cursor='default'
+                        <li
+                            style={{
+                                display: BI().detectMobileDevice() ? 'none' : null,
+                            }}
                             onClick={state.onAdd.bind(this)}>
                             {state.addLabel}
-                        </Li>
-                    </Ul>
-                    <Ul>{state.bottomItem}</Ul>
-                </Nav>
+                        </li>
+                    </ul>
+                    <ul>{state.bottomItem}</ul>
+                </nav>
                 <PropertyDialog ref={this.propertyDialogRef} />
                 <ContextMenu ref={this.contextMenuRef} />
-            </Div>
+            </div>
         )
     }
 }
 
-function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style, onClickItemGenerator }) {
+function Item({ onDblClickGenerator, menu, value, onChange, mode, index, className, onClickItemGenerator }) {
     const ref = React.useRef(null)
     const [{ handlerId }, drop] = useDrop({
         accept: 'Item',
@@ -345,22 +311,18 @@ function Item({ onDblClickGenerator, menu, value, onChange, mode, index, style, 
     const opacity = draggingId === value.id ? 0 : 1
 
     return (
-        <Li
-            referrer={ref}
-            padding='8'
-            border-bottom='normal'
-            cursor='default'
-            selected={value.selected}
+        <li
+            ref={ref}
             onContextMenu={onContextMenu}
+            className={className}
             style={{
-                ...style,
                 opacity,
             }}
             data-handler-id={handlerId}
             onDoubleClick={onDblClick}
             onClick={onClick}>
             {value.name}
-        </Li>
+        </li>
     )
 }
 
@@ -469,27 +431,19 @@ class ContextMenu extends React.Component {
 
     render() {
         return (
-            <Dialog
-                position='fixed'
-                {...(() => {
-                    if (this.state.top < document.body.clientHeight * (3 / 4)) return { top: this.state.top }
-                    else return { bottom: document.body.clientHeight - this.state.top }
-                })()}
-                left={this.state.left}
-                border='normal'
-                background='white'
-                open={this.state.open}
-                z-index={10}>
-                <Div onClick={this.onCopy.bind(this)} padding='8' hover='hover' cursor='default'>
-                    복제
-                </Div>
-                <Div onClick={this.onUpdate.bind(this)} padding='8' border-top='normal' hover='hover' cursor='default'>
-                    수정
-                </Div>
-                <Div onClick={this.onDelete.bind(this)} padding='8' border-top='normal' hover='hover' cursor='default'>
-                    삭제
-                </Div>
-            </Dialog>
+            <dialog
+                style={{
+                    left: this.state.left,
+                    ...(() => {
+                        if (this.state.top < document.body.clientHeight * (3 / 4)) return { top: this.state.top }
+                        else return { bottom: document.body.clientHeight - this.state.top }
+                    })(),
+                }}
+                open={this.state.open}>
+                <div onClick={this.onCopy.bind(this)}>복제</div>
+                <div onClick={this.onUpdate.bind(this)}>수정</div>
+                <div onClick={this.onDelete.bind(this)}>삭제</div>
+            </dialog>
         )
     }
 }

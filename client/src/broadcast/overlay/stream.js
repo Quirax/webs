@@ -1,5 +1,4 @@
 import React from 'react'
-import { Div, Video } from '../../components'
 import { Overlay, HexToRGB } from './overlay'
 import { OverlayType } from '.'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -31,7 +30,7 @@ export class WebcamOverlay extends Overlay {
             // let src = params.src
 
             return (
-                <Div
+                <div
                     style={{
                         opacity: params.opacity,
                         // FIXME: force to keep ratio of video source
@@ -41,10 +40,10 @@ export class WebcamOverlay extends Overlay {
                         borderStyle: params.border_style,
                         margin: `${params.margin * props.ratio}px`,
                         padding: `${params.padding * props.ratio}px`,
+                        height: props.height * props.ratio,
+                        width: props.width * props.ratio,
                     }}
-                    width={props.width * props.ratio}
-                    height={props.height * props.ratio}
-                    referrer={props.referrer}
+                    ref={props.referrer}
                     onMouseEnter={(e) => {
                         if (props.isPreview) return
                         handleRef.current.style.display = 'inline-block'
@@ -53,12 +52,12 @@ export class WebcamOverlay extends Overlay {
                         if (props.isPreview) return
                         handleRef.current.dataset.handle === 'false' && (handleRef.current.style.display = 'none')
                     }}>
-                    <Video
+                    <video
                         width='100%'
                         height='100%'
                         alt=''
                         // srcObject={this.state.stream}
-                        referrer={videoRef}
+                        ref={videoRef}
                         autoPlay
                         loop
                         muted
@@ -79,16 +78,9 @@ export class WebcamOverlay extends Overlay {
                             )
                         }}
                     />
-                    <Div
-                        referrer={handleRef}
-                        position='absolute'
-                        top='16'
-                        left='16'
-                        display='none'
-                        background='white'
-                        padding='16'
-                        border-radius='8'
-                        border='normal'
+                    <div
+                        ref={handleRef}
+                        className='video-handle'
                         data-handle='false'
                         data-move='false'
                         onMouseEnter={(e) => {
@@ -102,8 +94,8 @@ export class WebcamOverlay extends Overlay {
                             handleRef.current.dataset.move === 'false' && (handleRef.current.dataset.handle = 'false')
                         }}>
                         <FontAwesomeIcon icon={faArrowsUpDownLeftRight} />
-                    </Div>
-                </Div>
+                    </div>
+                </div>
             )
         }
 
@@ -206,7 +198,7 @@ export class BrowserOverlay extends WebcamOverlay {
             // let src = params.src
 
             return (
-                <Div
+                <div
                     style={{
                         opacity: params.opacity,
                         // FIXME: force to keep ratio of video source
@@ -216,10 +208,10 @@ export class BrowserOverlay extends WebcamOverlay {
                         borderStyle: params.border_style,
                         margin: `${params.margin * props.ratio}px`,
                         padding: `${params.padding * props.ratio}px`,
+                        height: props.height * props.ratio,
+                        width: props.width * props.ratio,
                     }}
-                    width={props.width * props.ratio}
-                    height={props.height * props.ratio}
-                    referrer={props.referrer}
+                    ref={props.referrer}
                     onMouseEnter={(e) => {
                         if (props.isPreview) return
                         handleRef.current.style.display = 'inline-block'
@@ -260,6 +252,9 @@ export class BrowserOverlay extends WebcamOverlay {
                         onLoadedMetadata={(e) => {
                             if (props.isTemp === true) return
                             let conn = Connector.getInstance()
+                            console.log('unregisterBrowser')
+                            conn.unregisterElement(this.overlayType, this.props.value.id, BI().currentScene().id, true)
+                            console.log('registerBrowser')
                             conn.registerElement(
                                 this.overlayType,
                                 this.props.value.id,
@@ -269,16 +264,9 @@ export class BrowserOverlay extends WebcamOverlay {
                             e.target.currentTime = e.target.duration - 2
                         }}
                     />
-                    <Div
-                        referrer={handleRef}
-                        position='absolute'
-                        top='16'
-                        left='16'
-                        display='none'
-                        background='white'
-                        padding='16'
-                        border-radius='8'
-                        border='normal'
+                    <div
+                        ref={handleRef}
+                        className='video-handle'
                         data-handle='false'
                         data-move='false'
                         onMouseEnter={(e) => {
@@ -286,14 +274,14 @@ export class BrowserOverlay extends WebcamOverlay {
                         }}
                         onMouseDown={(e) => {
                             handleRef.current.dataset.move = 'true'
-                            console.log('mousedown', handleRef.current?.dataset.move)
+                            console.log('mousedown', handleRef.current.dataset.move)
                         }}
                         onMouseLeave={(e) => {
                             handleRef.current.dataset.move === 'false' && (handleRef.current.dataset.handle = 'false')
                         }}>
                         <FontAwesomeIcon icon={faArrowsUpDownLeftRight} />
-                    </Div>
-                </Div>
+                    </div>
+                </div>
             )
         }
 
