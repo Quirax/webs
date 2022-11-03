@@ -138,6 +138,7 @@ export default class Broadcast extends React.Component {
 
     render() {
         if (this.props.preview) {
+            // TODO: Redesign
             return (
                 <CommonProps>
                     <Microphoner />
@@ -150,6 +151,7 @@ export default class Broadcast extends React.Component {
                 </CommonProps>
             )
         }
+        // TODO: Redesign
         return (
             <CommonProps>
                 <Toolbar
@@ -266,6 +268,10 @@ class Containers extends React.Component {
 }
 
 class Toolbar extends React.Component {
+    state = {
+        profile_img: '',
+    }
+
     constructor() {
         super()
 
@@ -274,12 +280,16 @@ class Toolbar extends React.Component {
         })
     }
 
+    componentDidMount() {}
+
     render() {
         function CurrentScene({ mode, saveScene, onClickTitle }) {
             switch (mode) {
                 case ItemlistType.TRANSITIONS:
+                    // TODO: Redesign
                     return <h1 onClick={onClickTitle}>장면 전환</h1>
                 case ItemlistType.OVERLAYS:
+                    // TODO: Redesign
                     return (
                         <>
                             <input
@@ -300,10 +310,14 @@ class Toolbar extends React.Component {
                         </>
                     )
                 default:
+                    // TODO: Redesign
                     return <h1 onClick={onClickTitle}>{BI().currentScene().name}</h1>
             }
         }
 
+        const twitch = Twitch.getInstance()
+
+        // TODO: Redesign
         return (
             <Header flex fixsize flex-justify='space-between' flex-align='center' border-bottom='normal' height='64'>
                 <Div flex fixsize padding-left='8'>
@@ -313,13 +327,26 @@ class Toolbar extends React.Component {
                         onClickTitle={this.props.onClickTitle}
                     />
                 </Div>
-                <Div fixsize padding-right='8'>
+                <Div fixsize padding-right='8' flex flex-align='center'>
                     <button onClick={this.props.toggleMic}>
                         <FontAwesomeIcon icon={this.props.isMic ? faMicrophone : faMicrophoneSlash} />
                     </button>
                     <button onClick={this.props.toggleBroadcast}>
                         {this.props.isBroadcasting ? '방송 종료' : '방송 시작'}
                     </button>
+                    {/* TODO: [ ] user profile picture */}
+                    <img
+                        style={{
+                            aspectRatio: 1,
+                            height: '48px',
+                            borderRadius: '32px',
+                        }}
+                        src={
+                            twitch.user.profile_image_url ||
+                            'https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png'
+                        }
+                        alt='twitch profile'
+                    />
                 </Div>
             </Header>
         )
@@ -331,6 +358,7 @@ class Description extends React.Component {
         category: '',
         suggestions: [],
         title: '',
+        category_image: 'https://static-cdn.jtvnw.net/ttv-static/404_boxart-52x72.jpg',
     }
 
     constructor() {
@@ -428,44 +456,61 @@ class Description extends React.Component {
                     title: BI().info.title,
                 })
             }
+            this.setState({
+                category_image: suggestion.box_art_url,
+            })
             BI().afterChange()
         }
 
         this.render = () => {
+            // TODO: Redesign
             return (
-                <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
-                    <input
-                        type='text'
-                        placeholder='방송제목'
-                        value={this.state.title || ''}
-                        onChange={onChangeTitle}
-                        onBlur={onBlurTitle}
-                    />
-                    <Autosuggest
-                        suggestions={this.state.suggestions}
-                        onSuggestionsFetchRequested={onFetchReq}
-                        onSuggestionsClearRequested={onClearReq}
-                        getSuggestionValue={getSuggestion}
-                        renderSuggestion={renderSuggestion}
-                        onSuggestionSelected={onSelected}
-                        highlightFirstSuggestion={true}
-                        inputProps={{
-                            placeholder: '카테고리',
-                            value: this.state.category,
-                            onChange: onChangeCategory,
-                        }}
-                        theme={{
-                            suggestionsContainerOpen: {
-                                position: 'fixed',
-                                bottom: `${8 + 16 * 1.2 + 2 + 2}px`,
-                                border: '1px solid black',
-                                backgroundColor: 'white',
-                                maxHeight: '300px',
-                                width: '250px',
-                                overflowY: 'scroll',
-                            },
+                <Div flex flex-align='center' padding-left='8'>
+                    <img
+                        src={this.state.category_image}
+                        alt={this.state.category}
+                        style={{
+                            height: '40px',
+                            padding: '4px',
+                            border: '1px solid black',
+                            marginRight: '8px',
+                            verticalAlign: 'middle',
                         }}
                     />
+                    <Div flex flex-direction='column' flex-justify='center'>
+                        <input
+                            type='text'
+                            placeholder='방송제목'
+                            value={this.state.title || ''}
+                            onChange={onChangeTitle}
+                            onBlur={onBlurTitle}
+                        />
+                        <Autosuggest
+                            suggestions={this.state.suggestions}
+                            onSuggestionsFetchRequested={onFetchReq}
+                            onSuggestionsClearRequested={onClearReq}
+                            getSuggestionValue={getSuggestion}
+                            renderSuggestion={renderSuggestion}
+                            onSuggestionSelected={onSelected}
+                            highlightFirstSuggestion={true}
+                            inputProps={{
+                                placeholder: '카테고리',
+                                value: this.state.category,
+                                onChange: onChangeCategory,
+                            }}
+                            theme={{
+                                suggestionsContainerOpen: {
+                                    position: 'fixed',
+                                    bottom: `${8 + 16 * 1.2 + 2 + 2}px`,
+                                    border: '1px solid black',
+                                    backgroundColor: 'white',
+                                    maxHeight: '300px',
+                                    width: '250px',
+                                    overflowY: 'scroll',
+                                },
+                            }}
+                        />
+                    </Div>
                 </Div>
             )
         }
@@ -483,8 +528,13 @@ class Description extends React.Component {
             conn.setDescription(desc)
             ;(async () => {
                 const twitch = Twitch.getInstance()
+                const category = await twitch.getCategoryWithID(desc.category_id)
+                console.log(category)
                 this.setState({
-                    category: (await twitch.getCategoryWithID(desc.category_id)).name || '',
+                    category: category.name || '',
+                    category_image:
+                        category.box_art_url.replace('{width}', '52').replace('{height}', '72') ||
+                        'https://static-cdn.jtvnw.net/ttv-static/404_boxart-52x72.jpg',
                     title: desc.title,
                 })
                 await twitch.setDescription(desc)
@@ -573,9 +623,9 @@ class Status extends React.Component {
             minutes = Math.floor((timeElapsed % 3600) / 60),
             seconds = Math.floor((timeElapsed % 3600) % 60)
 
+        // TODO: Redesign
         return (
             <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
-                {/* FIXME: 방송 시 방송 통계와 동기화 */}
                 <div
                     style={{
                         color: this.state.timeStarted && 'red',
