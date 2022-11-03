@@ -345,7 +345,39 @@ $border: (
                     aspect-ratio: 16/9;
                     overflow: hidden;
 
-                    // @broadcast/overlay/index.js > ?
+                    & > div {
+                        // @broadcast/overlay/index.js > OverlayContainer
+                        position: absolute;
+                        height: 100%;
+                        width: 100%;
+                        overflow: hidden;
+
+                        & > ol > li > div {
+                            // @broadcast/overlay/overlay.js > Overlay
+                            display: inline-block;
+                            position: absolute;
+
+                            * {
+                                border: none;
+                            }
+
+                            video {
+                                width: 100%;
+                                height: 100%;
+                            }
+
+                            div.video-handle {
+                                position: absolute;
+                                top: 16px;
+                                left: 16px;
+                                display: none;
+                                background-color: white;
+                                padding: 16px;
+                                border-radius: $border-radius;
+                                border: map-get($map: $border, $key: 'narrow');
+                            }
+                        }
+                    }
                 }
             }
 

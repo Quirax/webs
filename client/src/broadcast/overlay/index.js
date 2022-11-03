@@ -1,6 +1,5 @@
 import React from 'react'
 import BI, { GenerateID } from '../info'
-import { Ol } from '../../components'
 
 // HACK : 오버레이 추가
 import { TextOverlay } from './text'
@@ -10,7 +9,6 @@ import { VideoOverlay } from './video'
 import { WebcamOverlay, DisplayOverlay, BrowserOverlay } from './stream'
 import getTransitionEffect from '../transition'
 import { useSpring, animated } from 'react-spring'
-import { CANVAS_RECT } from '../index'
 
 export const OVERLAY_PROPS = React.createContext()
 
@@ -177,6 +175,7 @@ export default function OverlayContainer(props) {
 
     console.log(getTransitionEffect(BI().currentTransition()))
 
+    // TODO: [1] restyle
     return (
         <OVERLAY_PROPS.Provider
             value={{
@@ -184,48 +183,11 @@ export default function OverlayContainer(props) {
                 preview: props.preview,
                 isTemp: props.isTemp,
             }}>
-            <CANVAS_RECT.Consumer>
-                {({ width }) => (
-                    <animated.div
-                        className='overlayContainer'
-                        style={{
-                            position: 'absolute',
-                            height: '100%',
-                            width: '100%',
-                            overflow: 'hidden',
-                            // width: props.preview ? 1920 : width,
-                            // display: 'inline-block',
-                            // aspectRatio: '16/9',
-                            // top: props.preview ? 0 : '50%',
-                            // left: props.preview ? 0 : '50%',
-                            // transform: !props.preview && 'translate(-50%, -50%)',
-                            ...styles,
-                        }}
-                        ref={props.referrer}>
-                        {/* <Div
-                            // background='white'
-                            position='absolute'
-                            width={props.preview ? 1920 : width}
-                            // max-height={this.props.preview ? null : '100%'}
-                            display='inline-block'
-                            aspect-ratio='16/9'
-                            top={props.preview ? 0 : '50%'}
-                            left={props.preview ? 0 : '50%'}
-                            style={
-                                props.preview
-                                    ? null
-                                    : {
-                                          transform: 'translate(-50%, -50%)',
-                                      }
-                            }
-                            referrer={props.referrer}> */}
-                        <Ol>
-                            <OverlayElems overlay={overlayList} isTemp={props.isTemp} />
-                        </Ol>
-                        {/* </Div> */}
-                    </animated.div>
-                )}
-            </CANVAS_RECT.Consumer>
+            <animated.div className='overlayContainer' style={styles} ref={props.referrer}>
+                <ol>
+                    <OverlayElems overlay={overlayList} isTemp={props.isTemp} />
+                </ol>
+            </animated.div>
         </OVERLAY_PROPS.Provider>
     )
 }

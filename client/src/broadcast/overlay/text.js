@@ -1,5 +1,4 @@
 import React from 'react'
-import { Div, Span } from '../../components'
 import { Overlay, HexToRGB } from './overlay'
 import { OverlayParam } from '.'
 
@@ -42,15 +41,14 @@ export class TextOverlay extends Overlay {
             }
 
             return (
-                <Div
-                    referrer={props.referrer}
-                    flex
-                    border='none'
-                    height={props.height * props.ratio}
-                    width={props.width * props.ratio}
-                    flex-direction='column'
-                    flex-justify={fj}
+                <div
+                    ref={props.referrer}
                     style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: fj,
+                        height: props.height * props.ratio,
+                        width: props.width * props.ratio,
                         backgroundColor: `rgba(${bgc.r}, ${bgc.g}, ${bgc.b}, ${params.background_opacity})`,
                         opacity: params.opacity,
                         borderRadius: `${params.radius * props.ratio}px`,
@@ -60,7 +58,7 @@ export class TextOverlay extends Overlay {
                         margin: `${params.margin * props.ratio}px`,
                         padding: `${params.padding * props.ratio}px`,
                     }}>
-                    <Span
+                    <span
                         style={{
                             // FIXME: fontFamily: params.font_family,
                             fontSize: `${params.font_size * props.ratio}pt`, // TODO: 화면 크기가 작을 때 폰트 크기가 너무 작으면 제대로 렌더링되지 않는 문제 해결
@@ -86,8 +84,8 @@ export class TextOverlay extends Overlay {
                                 </>
                             )
                         })}
-                    </Span>
-                </Div>
+                    </span>
+                </div>
             )
         }
     }

@@ -137,6 +137,7 @@ export default class Component extends React.Component {
         }
     }
 
+    // TODO: Redesign
     render() {
         return (
             <COMMON_PROPS.Consumer>
