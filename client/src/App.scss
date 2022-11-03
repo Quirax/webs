@@ -17,10 +17,13 @@ $color: (
     'light': #dfe996,
     'base': #bfd22d,
     'dark': #606916,
+    'darktext': white,
 );
 
 $border-radius: 8px;
 $border-width: 2px;
+$footer-height: 48px;
+$footer-padding: 8px;
 
 $border: (
     'normal': $border-width solid
@@ -33,16 +36,18 @@ $border: (
 // TO HERE
 
 #root {
-    & > header {
-        $header-height: 48px;
+    $header-height: 48px;
+    $header-padding: 8px;
+    $canvas-margin-color: #222;
 
+    & > header {
         display: flex;
         @include fixsize();
         @include flex-justify(space-between);
         @include flex-align(center);
         border-bottom: map-get($map: $border, $key: 'normal');
         height: $header-height;
-        padding: 8px;
+        padding: $header-padding;
         background-color: map-get($map: $color, $key: 'base');
 
         & > div {
@@ -74,9 +79,6 @@ $border: (
                     border-bottom: map-get($map: $border, $key: 'normal');
                     background-color: map-get($map: $color, $key: 'light');
                 }
-
-                button {
-                }
             }
 
             button {
@@ -105,5 +107,120 @@ $border: (
                 }
             }
         }
+    }
+
+    & > div {
+        $header-size: $header-height + ($header-padding * 2) + $border-width;
+        $footer-size: $footer-height + ($header-padding * 2) + $border-width;
+
+        display: flex;
+        height: calc(100% - #{$header-size});
+        width: 100%;
+
+        & > main {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+
+            & > article {
+                position: relative;
+                text-align: center;
+                height: calc(100% - #{$footer-size});
+                overflow: hidden;
+                background-color: $canvas-margin-color;
+
+                & > div {
+                    background-color: black;
+                    position: absolute;
+                    display: inline-block;
+                    aspect-ratio: 16/9;
+                    overflow: hidden;
+                }
+            }
+
+            & > footer {
+                display: flex;
+                @include fixsize();
+                @include flex-justify(space-between);
+                height: $footer-height;
+                padding: $footer-padding;
+                border-top: map-get($map: $border, $key: 'normal');
+                background-color: map-get($map: $color, $key: 'base');
+
+                & > div {
+                    &:first-child {
+                        $category-image-height: 48px;
+                        $category-image-padding: 4px;
+
+                        display: flex;
+                        @include flex-align(center);
+
+                        & img {
+                            height: $category-image-height;
+                            border: map-get($map: $border, $key: 'normal');
+                            margin-right: 8px;
+                            vertical-align: middle;
+                        }
+
+                        & > div {
+                            display: flex;
+                            flex-direction: column;
+                            @include flex-justify(center);
+
+                            $input-height: $footer-height / 2;
+
+                            & input {
+                                margin: 0;
+                                padding: 0;
+                                height: $input-height;
+                                font-size: $input-height / 1.25;
+                                line-height: $input-height - $border-width;
+                                background-color: transparent;
+                                width: 100%;
+                                border: none;
+                                border-bottom: map-get($map: $border, $key: 'normal');
+                                background-color: map-get($map: $color, $key: 'light');
+                            }
+                        }
+                    }
+
+                    &:last-child {
+                        display: flex;
+                        flex-direction: column;
+                        @include flex-justify(start);
+                        text-align: right;
+                        font-size: 11pt;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.autosuggest-suggestionsContainerOpen {
+    position: fixed;
+    bottom: #{$footer-padding + $footer-height / 2};
+    border: map-get($map: $border, $key: 'normal');
+    background-color: white;
+    max-height: 300px;
+    width: 250px;
+    overflow-y: scroll;
+}
+
+.autosuggest-suggestion {
+    line-height: 1.2;
+    padding: 8px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    border: map-get($map: $border, $key: 'normal');
+
+    &.autosuggest-highlighted {
+        background-color: map-get($map: $color, $key: 'dark');
+        color: map-get($map: $color, $key: 'darktext');
+    }
+
+    &:first-child {
+        border: none;
     }
 }

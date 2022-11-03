@@ -1,5 +1,4 @@
 import React from 'react'
-import { Header, Main, Div, Footer, Article, CommonProps } from '../components'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import {
     faFloppyDisk,
@@ -145,9 +144,8 @@ export default class Broadcast extends React.Component {
 
     render() {
         if (this.props.preview) {
-            // TODO: Redesign
             return (
-                <CommonProps>
+                <>
                     <Microphoner />
                     <Containers
                         ratio={this.getCanvasRatio(1)}
@@ -155,12 +153,12 @@ export default class Broadcast extends React.Component {
                         tempReferrer={this.tempWorkplaceRef}
                         preview
                     />
-                </CommonProps>
+                </>
             )
         }
-        // TODO: Redesign
+
         return (
-            <CommonProps>
+            <>
                 <Toolbar
                     saveScene={this.saveScene}
                     toggleBroadcast={this.toggleBroadcast}
@@ -170,17 +168,10 @@ export default class Broadcast extends React.Component {
                     mode={this.state.mode}
                     onClickTitle={this.onClickTitle}
                 />
-                <Div flex height='calc(100% - 65px)' width='100%'>
+                <div>
                     <Itemlist mode={this.state.mode} changeMode={this.changeMode} />
-                    <Main flex flex-direction='column' width='100%'>
-                        <Article
-                            position='relative'
-                            align='center'
-                            height='calc(100% - 65px)'
-                            style={{
-                                overflow: 'hidden',
-                                backgroundColor: 'gray',
-                            }}>
+                    <main>
+                        <article>
                             <CANVAS_RECT.Provider value={this.state.canvasRect}>
                                 <Containers
                                     ratio={this.getCanvasRatio(1)}
@@ -188,14 +179,14 @@ export default class Broadcast extends React.Component {
                                     preview={this.props.preview}
                                 />
                             </CANVAS_RECT.Provider>
-                        </Article>
-                        <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
+                        </article>
+                        <footer>
                             <Description mode={this.state.mode} />
                             <Status />
-                        </Footer>
-                    </Main>
-                </Div>
-            </CommonProps>
+                        </footer>
+                    </main>
+                </div>
+            </>
         )
     }
 }
@@ -239,18 +230,13 @@ class Containers extends React.Component {
         return (
             <CANVAS_RECT.Consumer>
                 {({ width }) => (
-                    <Div
+                    <div
                         className='overlayContainer'
-                        background='black'
-                        position='absolute'
-                        width={width}
-                        display='inline-block'
-                        aspect-ratio='16/9'
-                        top={this.props.preview ? 0 : '50%'}
-                        left={this.props.preview ? 0 : '50%'}
-                        referrer={this.props.referrer}
+                        ref={this.props.referrer}
                         style={{
-                            overflow: 'hidden',
+                            width: width,
+                            top: this.props.preview ? 0 : '50%',
+                            left: this.props.preview ? 0 : '50%',
                             transform: !this.props.preview && 'translate(-50%, -50%)',
                         }}>
                         <OverlayContainer
@@ -267,7 +253,7 @@ class Containers extends React.Component {
                             preview={this.props.preview}
                             isTransition={this.state.isTransition}
                         />
-                    </Div>
+                    </div>
                 )}
             </CANVAS_RECT.Consumer>
         )
@@ -290,7 +276,6 @@ class Toolbar extends React.Component {
     componentDidMount() {}
 
     render() {
-        // TODO: [2] redesign
         function getWidth(s) {
             let i, b, c
             for (b = i = 0; !isNaN((c = s.charCodeAt(i++))); b += c >> 7 ? 2 : 1);
@@ -433,28 +418,8 @@ class Description extends React.Component {
         const getSuggestion = (suggestion) => suggestion.name
 
         const renderSuggestion = (suggestion, { isHighlighted }) => (
-            <div
-                style={{
-                    backgroundColor: isHighlighted ? 'blue' : null,
-                    color: isHighlighted ? 'white' : null,
-                    lineHeight: 1.2,
-                    padding: '8px',
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                    whiteSpace: 'nowrap',
-                    borderTop: suggestion.id === this.state.suggestions[0].id ? null : '1px solid black',
-                }}>
-                <img
-                    src={suggestion.box_art_url}
-                    alt={suggestion.name}
-                    style={{
-                        height: '48px',
-                        padding: '4px',
-                        border: '1px solid black',
-                        marginRight: '8px',
-                        verticalAlign: 'middle',
-                    }}
-                />
+            <div className={['autosuggest-suggestion', isHighlighted ? 'autosuggest-highlighted' : null].join(' ')}>
+                <img src={suggestion.box_art_url} alt={suggestion.name} />
                 {suggestion.name}
             </div>
         )
@@ -478,21 +443,10 @@ class Description extends React.Component {
         }
 
         this.render = () => {
-            // TODO: Redesign
             return (
-                <Div flex flex-align='center' padding-left='8'>
-                    <img
-                        src={this.state.category_image}
-                        alt={this.state.category}
-                        style={{
-                            height: '40px',
-                            padding: '4px',
-                            border: '1px solid black',
-                            marginRight: '8px',
-                            verticalAlign: 'middle',
-                        }}
-                    />
-                    <Div flex flex-direction='column' flex-justify='center'>
+                <div>
+                    <img src={this.state.category_image} alt={this.state.category} />
+                    <div>
                         <input
                             type='text'
                             placeholder='방송제목'
@@ -514,19 +468,11 @@ class Description extends React.Component {
                                 onChange: onChangeCategory,
                             }}
                             theme={{
-                                suggestionsContainerOpen: {
-                                    position: 'fixed',
-                                    bottom: `${8 + 16 * 1.2 + 2 + 2}px`,
-                                    border: '1px solid black',
-                                    backgroundColor: 'white',
-                                    maxHeight: '300px',
-                                    width: '250px',
-                                    overflowY: 'scroll',
-                                },
+                                suggestionsContainerOpen: 'autosuggest-suggestionsContainerOpen',
                             }}
                         />
-                    </Div>
-                </Div>
+                    </div>
+                </div>
             )
         }
 
@@ -638,9 +584,8 @@ class Status extends React.Component {
             minutes = Math.floor((timeElapsed % 3600) / 60),
             seconds = Math.floor((timeElapsed % 3600) % 60)
 
-        // TODO: Redesign
         return (
-            <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
+            <div>
                 <div
                     style={{
                         color: this.state.timeStarted && 'red',
@@ -654,7 +599,7 @@ class Status extends React.Component {
                         String(seconds).padStart(2, '0'),
                     ].join(':')}
                 </div>
-            </Div>
+            </div>
         )
     }
 }
