@@ -1,8 +1,15 @@
 import React from 'react'
 import { Header, Main, Div, Footer, Article, CommonProps } from '../components'
-import './index.scss'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faMicrophone, faMicrophoneSlash, faUserAlt } from '@fortawesome/free-solid-svg-icons'
+import {
+    faFloppyDisk,
+    faMicrophone,
+    faMicrophoneSlash,
+    faPlay,
+    faStop,
+    faTrash,
+    faUserAlt,
+} from '@fortawesome/free-solid-svg-icons'
 import Connector from '../connector'
 import OverlayContainer from './overlay'
 import Itemlist, { ItemlistType } from './itemlist'
@@ -283,72 +290,80 @@ class Toolbar extends React.Component {
     componentDidMount() {}
 
     render() {
+        // TODO: [2] redesign
+        function getWidth(s) {
+            let i, b, c
+            for (b = i = 0; !isNaN((c = s.charCodeAt(i++))); b += c >> 7 ? 2 : 1);
+            return b + 2
+        }
         function CurrentScene({ mode, saveScene, onClickTitle }) {
             switch (mode) {
                 case ItemlistType.TRANSITIONS:
-                    // TODO: Redesign
                     return <h1 onClick={onClickTitle}>장면 전환</h1>
                 case ItemlistType.OVERLAYS:
-                    // TODO: Redesign
+                    const placeholder = '장면 이름'
                     return (
                         <>
                             <input
                                 type='text'
                                 defaultValue={BI().currentScene().name}
+                                placeholder={placeholder}
+                                style={{
+                                    width: `${getWidth(BI().currentScene().name || placeholder)}ch`,
+                                }}
                                 onChange={(e) => {
                                     BI().currentScene().name = e.target.value
+                                    e.target.style.width = `${getWidth(e.target.value || placeholder)}ch`
                                 }}
                             />
-                            <button onClick={saveScene}>저장</button>
+                            <button onClick={saveScene}>
+                                <FontAwesomeIcon icon={faFloppyDisk} />
+                            </button>
                             <button
                                 onClick={() => {
                                     BI().deleteScene(BI().info.scene.indexOf(BI().currentScene()))
                                     saveScene()
                                 }}>
-                                삭제
+                                <FontAwesomeIcon icon={faTrash} />
                             </button>
                         </>
                     )
                 default:
-                    // TODO: Redesign
                     return <h1 onClick={onClickTitle}>{BI().currentScene().name}</h1>
             }
         }
 
         const twitch = Twitch.getInstance()
 
-        // TODO: Redesign
         return (
-            <Header flex fixsize flex-justify='space-between' flex-align='center' border-bottom='normal' height='64'>
-                <Div flex fixsize padding-left='8'>
+            <header>
+                <div>
                     <CurrentScene
                         mode={this.props.mode}
                         saveScene={this.props.saveScene}
                         onClickTitle={this.props.onClickTitle}
                     />
-                </Div>
-                <Div fixsize padding-right='8' flex flex-align='center'>
+                </div>
+                <div>
                     <button onClick={this.props.toggleMic}>
                         <FontAwesomeIcon icon={this.props.isMic ? faMicrophone : faMicrophoneSlash} />
                     </button>
-                    <button onClick={this.props.toggleBroadcast}>
-                        {this.props.isBroadcasting ? '방송 종료' : '방송 시작'}
+                    <button
+                        onClick={this.props.toggleBroadcast}
+                        alt={this.props.isBroadcasting ? '방송 중지' : '방송 시작'}>
+                        <FontAwesomeIcon icon={this.props.isBroadcasting ? faStop : faPlay} />
                     </button>
-                    {/* TODO: [ ] user profile picture */}
-                    <img
-                        style={{
-                            aspectRatio: 1,
-                            height: '48px',
-                            borderRadius: '32px',
-                        }}
-                        src={
-                            twitch.user.profile_image_url ||
-                            'https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png'
-                        }
-                        alt='twitch profile'
-                    />
-                </Div>
-            </Header>
+                    <button>
+                        <img
+                            src={
+                                twitch.user.profile_image_url ||
+                                'https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png'
+                            }
+                            alt='twitch profile'
+                        />
+                    </button>
+                </div>
+            </header>
         )
     }
 }

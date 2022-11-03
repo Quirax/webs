@@ -2,22 +2,12 @@ $border: (
     'normal': 1px solid black,
     'none': none,
 );
-$bc: ( // name: (backgruound, color)
-    'white': (
-        white,
-        black,
-    ),
-    'black': (
-        black,
-        white,
-    ),
-    'selected': (
-        blue,
-        white,
-    ),'hover': (
-        #88f,
-        black,
-    ),
+$bc: (
+    // name: (backgruound, color)
+    'white': (white, black),
+    'black': (black, white),
+    'selected': (blue, white),
+    'hover': (#88f, black)
 );
 
 $sides: ('left', 'right', 'top', 'bottom', '');
@@ -84,7 +74,8 @@ $vertical-align: ('middle');
 @each $n, $bx in $bc {
     $b: nth($bx, 1);
     $c: nth($bx, 2);
-    .background-#{$n},.hover-#{$n}:hover {
+    .background-#{$n},
+    .hover-#{$n}:hover {
         background: #{$b};
         color: #{$c};
     }
@@ -101,5 +92,41 @@ $vertical-align: ('middle');
                 border-#{$p}: $b;
             }
         }
+    }
+}
+
+html,
+body {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    line-height: 1rem;
+    overflow: hidden;
+}
+
+#root {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+}
+
+ul,
+ol {
+    padding: 0;
+    list-style: none;
+    margin: 0;
+}
+
+menu,
+dialog,
+p {
+    padding: 0;
+    margin: 0;
+    border: none;
+}
+
+@media (orientation: portrait) {
+    nav {
+        width: 100%;
     }
 }
