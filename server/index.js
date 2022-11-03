@@ -187,15 +187,17 @@ io.on('connect', async (socket) => {
         }
     })
 
-    socket.on('setDescription', async ({ category_id, title }) => {
+    socket.on('setDescription', ({ category_id, title }) => {
         broadcastInfo.category = category_id
         broadcastInfo.title = title
 
-        try {
-            await db.save(broadcastInfo)
-        } catch (e) {
-            console.error(e)
-        }
+        setTimeout(async () => {
+            try {
+                await db.save(broadcastInfo)
+            } catch (e) {
+                console.error(e)
+            }
+        }, 100)
     })
 
     socket.on('selectScene', async (idx) => {
