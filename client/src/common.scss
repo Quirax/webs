@@ -1,99 +1,40 @@
-$border: (
-    'normal': 1px solid black,
-    'none': none,
-);
-$bc: (
-    // name: (backgruound, color)
-    'white': (white, black),
-    'black': (black, white),
-    'selected': (blue, white),
-    'hover': (#88f, black)
-);
-
-$sides: ('left', 'right', 'top', 'bottom', '');
-$align: ('center', 'right');
-$vertical-align: ('middle');
-
-.inline-block {
-    display: inline-block;
-}
-
-.table {
-    display: table;
-
-    & > * {
-        display: table-cell;
-    }
-}
-
-.none {
-    display: none;
-}
-
-.block {
-    display: block;
-}
-
-@each $p in $sides {
-    @if $p != '' {
-        .arrow-#{$p} {
-            @each $q in $sides {
-                @if ($q != '' and $q != $p) {
-                    border-#{$q}: 8px solid transparent;
-                }
-            }
-            border-#{$p}: 8px solid black;
-        }
-    }
-}
-
-.flex {
-    display: flex;
-}
-
-.grid {
-    display: grid;
-}
-
-.fixsize {
+@mixin fixsize {
     flex: none;
 }
 
-@each $a in $align {
-    .align-#{$a} {
-        text-align: #{$a};
-    }
+@mixin flex-justify($v) {
+    justify-content: $v;
 }
 
-@each $va in $vertical-align {
-    .align-#{$va} {
-        vertical-align: #{$va};
-    }
+@mixin flex-align($v) {
+    align-items: $v;
 }
 
-@each $n, $bx in $bc {
-    $b: nth($bx, 1);
-    $c: nth($bx, 2);
-    .background-#{$n},
-    .hover-#{$n}:hover {
-        background: #{$b};
-        color: #{$c};
-    }
-}
+$color: (
+    'light': #dfe996,
+    'base': #bfd22d,
+    'dark': #606916,
+    'darktext': white,
+);
 
-@each $n, $b in $border {
-    @each $p in $sides {
-        @if $p == '' {
-            .border-#{$n} {
-                border: $b;
-            }
-        } @else {
-            .border-#{$n}-#{$p} {
-                border-#{$p}: $b;
-            }
-        }
-    }
-}
+$border-radius: 8px;
+$border-width: 2px;
+$footer-height: 48px;
+$footer-padding: 8px;
+
+$border: (
+    'normal': $border-width solid
+        map-get(
+            $map: $color,
+            $key: 'dark',
+        ),
+    'narrow': 1px solid
+        map-get(
+            $map: $color,
+            $key: 'dark',
+        ),
+    'none': none,
+);
 
 html,
 body {
@@ -131,5 +72,18 @@ p {
     }
 }
 
-$footer-height: 48px;
-$footer-padding: 8px;
+button {
+    display: inline-block;
+    background-color: map-get($map: $color, $key: 'base');
+    border: map-get($map: $border, $key: 'normal');
+    padding: 8px;
+    border-radius: $border-radius;
+    cursor: pointer;
+    margin: 0;
+    text-align: center;
+
+    &:hover {
+        background-color: map-get($map: $color, $key: 'dark');
+        color: map-get($map: $color, $key: 'darktext');
+    }
+}

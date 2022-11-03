@@ -1,4 +1,3 @@
-import './App.scss'
 import Broadcast from './broadcast'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import Landing from './landing'

@@ -1,44 +1,4 @@
-@import './common.scss';
-
-// FROM HERE to common.scss
-@mixin fixsize {
-    flex: none;
-}
-
-@mixin flex-justify($v) {
-    justify-content: $v;
-}
-
-@mixin flex-align($v) {
-    align-items: $v;
-}
-
-$color: (
-    'light': #dfe996,
-    'base': #bfd22d,
-    'dark': #606916,
-    'darktext': white,
-);
-
-$border-radius: 8px;
-$border-width: 2px;
-$footer-height: 48px;
-$footer-padding: 8px;
-
-$border: (
-    'normal': $border-width solid
-        map-get(
-            $map: $color,
-            $key: 'dark',
-        ),
-    'narrow': 1px solid
-        map-get(
-            $map: $color,
-            $key: 'dark',
-        ),
-    'none': none,
-);
-// TO HERE
+@import '../common.scss';
 
 #root {
     $header-height: 48px;
@@ -89,27 +49,19 @@ $border: (
 
             button {
                 background-color: map-get($map: $color, $key: 'light');
-                padding: 0;
-                margin: 0;
                 margin-left: 8px;
                 height: $header-height;
                 font-size: $header-height / 2;
-                display: inline-block;
-                border: map-get($map: $border, $key: 'normal');
-                border-radius: $border-radius;
                 line-height: $header-height;
-                text-align: center;
-                cursor: pointer;
                 aspect-ratio: 1;
+                padding: 0;
             }
 
             &:last-child {
-                button {
-                    & > img {
-                        aspect-ratio: 1;
-                        height: $header-height - ($border-width * 2);
-                        border-radius: $border-radius;
-                    }
+                button > img {
+                    aspect-ratio: 1;
+                    height: $header-height - ($border-width * 2);
+                    border-radius: $border-radius;
                 }
             }
         }
@@ -193,17 +145,7 @@ $border: (
 
                             button {
                                 display: block;
-                                background-color: map-get($map: $color, $key: 'base');
-                                border: map-get($map: $border, $key: 'normal');
-                                padding: 8px;
-                                border-radius: $border-radius;
-                                cursor: pointer;
                                 width: $nav-width;
-
-                                &:hover {
-                                    background-color: map-get($map: $color, $key: 'dark');
-                                    color: map-get($map: $color, $key: 'darktext');
-                                }
                             }
                         }
 
@@ -269,18 +211,7 @@ $border: (
 
                                     button {
                                         display: block;
-                                        background-color: map-get($map: $color, $key: 'base');
-                                        border: map-get($map: $border, $key: 'normal');
-                                        padding: 8px;
-                                        border-radius: $border-radius;
-                                        cursor: pointer;
                                         width: 100%;
-                                        margin: 0;
-
-                                        &:hover {
-                                            background-color: map-get($map: $color, $key: 'dark');
-                                            color: map-get($map: $color, $key: 'darktext');
-                                        }
                                     }
                                 }
                             }
@@ -289,7 +220,6 @@ $border: (
                                 border-bottom: none;
 
                                 button {
-                                    display: inline-block;
                                     width: calc(50% - 4px);
 
                                     &:first-child {
@@ -328,6 +258,7 @@ $border: (
             display: flex;
             flex-direction: column;
             width: 100%;
+            height: 100%;
 
             & > article {
                 // @broadcast/index.js > Broadcast
