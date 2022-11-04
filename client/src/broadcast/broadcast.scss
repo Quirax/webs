@@ -67,7 +67,7 @@
         }
     }
 
-    & > div {
+    & > div:not(.overlayContainer) {
         // @broadcast/index.js > Broadcast
         $header-size: $header-height + ($header-padding * 2) + $border-width;
         $footer-size: $footer-height + ($header-padding * 2) + $border-width;
@@ -217,6 +217,7 @@
                             }
 
                             &:last-child {
+                                display: inline-block;
                                 border-bottom: none;
 
                                 button {
@@ -267,51 +268,7 @@
                 height: calc(100% - #{$footer-size});
                 overflow: hidden;
                 background-color: $canvas-margin-color;
-
-                & > div {
-                    // @broadcast/index.js > Containers
-                    background-color: black;
-                    position: absolute;
-                    display: inline-block;
-                    aspect-ratio: 16/9;
-                    overflow: hidden;
-
-                    & > div {
-                        // @broadcast/overlay/index.js > OverlayContainer
-                        position: absolute;
-                        height: 100%;
-                        width: 100%;
-                        overflow: hidden;
-
-                        & > ol > li > div {
-                            // @broadcast/overlay/overlay.js > Overlay
-                            display: inline-block;
-                            position: absolute;
-
-                            * {
-                                border: none;
-                            }
-
-                            video {
-                                width: 100%;
-                                height: 100%;
-                            }
-
-                            div.video-handle {
-                                position: absolute;
-                                top: 16px;
-                                left: 16px;
-                                display: none;
-                                background-color: white;
-                                padding: 16px;
-                                border-radius: $border-radius;
-                                border: map-get($map: $border, $key: 'narrow');
-                            }
-                        }
-                    }
-                }
             }
-
             & > footer {
                 // @broadcast/index.js > Broadcast
                 display: flex;
@@ -372,32 +329,75 @@
             }
         }
     }
-}
 
-.autosuggest-suggestionsContainerOpen {
-    position: fixed;
-    bottom: #{$footer-padding + $footer-height / 2};
-    border: map-get($map: $border, $key: 'normal');
-    background-color: white;
-    max-height: 300px;
-    width: 250px;
-    overflow-y: scroll;
-}
-
-.autosuggest-suggestion {
-    line-height: 1.2;
-    padding: 8px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-    border: map-get($map: $border, $key: 'normal');
-
-    &.autosuggest-highlighted {
-        background-color: map-get($map: $color, $key: 'dark');
-        color: map-get($map: $color, $key: 'darktext');
+    .autosuggest-suggestionsContainerOpen {
+        position: fixed;
+        bottom: #{$footer-padding + $footer-height / 2};
+        border: map-get($map: $border, $key: 'normal');
+        background-color: white;
+        max-height: 300px;
+        width: 250px;
+        overflow-y: scroll;
     }
 
-    &:first-child {
-        border: none;
+    .autosuggest-suggestion {
+        line-height: 1.2;
+        padding: 8px;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+        border: map-get($map: $border, $key: 'normal');
+
+        &.autosuggest-highlighted {
+            background-color: map-get($map: $color, $key: 'dark');
+            color: map-get($map: $color, $key: 'darktext');
+        }
+
+        &:first-child {
+            border: none;
+        }
+    }
+}
+
+div.overlayContainer {
+    background-color: black;
+    position: absolute;
+    display: inline-block;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+
+    & > div {
+        // @broadcast/overlay/index.js > OverlayContainer
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        background-color: black;
+
+        & > ol > li > div {
+            // @broadcast/overlay/overlay.js > Overlay
+            display: inline-block;
+            position: absolute;
+
+            * {
+                border: none;
+            }
+
+            video {
+                width: 100%;
+                height: 100%;
+            }
+
+            div.video-handle {
+                position: absolute;
+                top: 16px;
+                left: 16px;
+                display: none;
+                background-color: white;
+                padding: 16px;
+                border-radius: $border-radius;
+                border: map-get($map: $border, $key: 'narrow');
+            }
+        }
     }
 }

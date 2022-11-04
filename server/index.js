@@ -397,7 +397,7 @@ io.on('connect', async (socket) => {
                     browsers[room][jobId] = out_name
                     socket.emit(`streamBrowser_${id}`, jobId)
                     log(`Started browser (jobId = ${jobId}, outputName = ${out_name})`)
-                }, 15000),
+                }, 20000),
                 for: out_name,
             }
 

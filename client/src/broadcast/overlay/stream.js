@@ -210,6 +210,7 @@ export class BrowserOverlay extends WebcamOverlay {
                         padding: `${params.padding * props.ratio}px`,
                         height: props.height * props.ratio,
                         width: props.width * props.ratio,
+                        backgroundColor: !props.isPreview && 'white',
                     }}
                     ref={props.referrer}
                     onMouseEnter={(e) => {
@@ -220,50 +221,56 @@ export class BrowserOverlay extends WebcamOverlay {
                         if (props.isPreview) return
                         handleRef.current.dataset.handle === 'false' && (handleRef.current.style.display = 'none')
                     }}>
-                    <ReactHlsPlayer
-                        width='100%'
-                        height='100%'
-                        alt=''
-                        src={this.state.src}
-                        playerRef={videoRef}
-                        autoPlay={true}
-                        loop
-                        muted
-                        controls={false}
-                        hlsConfig={{
-                            maxLoadingDelay: 4,
-                            minAutoBitrate: 0,
-                            lowLatencyMode: true,
-                        }}
-                        style={{
-                            // position: 'absolute',
-                            // minWidth: '100%',
-                            // minHeight: '100%',
-                            // top: '50%',
-                            // left: '50%',
-                            // transform: 'translate(-50%, -50%)',
-                            objectFit: 'fill',
-                        }}
-                        data-muted={true}
-                        onClick={(e) => {
-                            if (e.target.dataset.muted !== 'true') return
-                            e.target.muted = false
-                        }}
-                        onLoadedMetadata={(e) => {
-                            if (props.isTemp === true) return
-                            let conn = Connector.getInstance()
-                            console.log('unregisterBrowser')
-                            conn.unregisterElement(this.overlayType, this.props.value.id, BI().currentScene().id, true)
-                            console.log('registerBrowser')
-                            conn.registerElement(
-                                this.overlayType,
-                                this.props.value.id,
-                                BI().currentScene().id,
-                                e.target
-                            )
-                            e.target.currentTime = e.target.duration - 2
-                        }}
-                    />
+                    {props.isPreview && (
+                        <ReactHlsPlayer
+                            width='100%'
+                            height='100%'
+                            alt=''
+                            src={this.state.src}
+                            playerRef={videoRef}
+                            autoPlay={true}
+                            loop
+                            controls={false}
+                            hlsConfig={{
+                                maxLoadingDelay: 4,
+                                minAutoBitrate: 0,
+                                lowLatencyMode: true,
+                            }}
+                            style={{
+                                // position: 'absolute',
+                                // minWidth: '100%',
+                                // minHeight: '100%',
+                                // top: '50%',
+                                // left: '50%',
+                                // transform: 'translate(-50%, -50%)',
+                                objectFit: 'fill',
+                            }}
+                            data-muted={true}
+                            onClick={(e) => {
+                                if (e.target.dataset.muted !== 'true') return
+                                e.target.muted = false
+                            }}
+                            onLoadedMetadata={(e) => {
+                                if (props.isTemp === true) return
+                                let conn = Connector.getInstance()
+                                console.log('unregisterBrowser')
+                                conn.unregisterElement(
+                                    this.overlayType,
+                                    this.props.value.id,
+                                    BI().currentScene().id,
+                                    true
+                                )
+                                console.log('registerBrowser')
+                                conn.registerElement(
+                                    this.overlayType,
+                                    this.props.value.id,
+                                    BI().currentScene().id,
+                                    e.target
+                                )
+                                e.target.currentTime = e.target.duration - 2
+                            }}
+                        />
+                    )}
                     <div
                         ref={handleRef}
                         className='video-handle'
@@ -327,6 +334,8 @@ export class BrowserOverlay extends WebcamOverlay {
     }
 
     attachStream() {
+        if (!this.props.isPreview) return
+
         let conn = Connector.getInstance()
         this.attach('')
         if (this.url === '') return
@@ -334,6 +343,8 @@ export class BrowserOverlay extends WebcamOverlay {
     }
 
     detachStream() {
+        if (!this.props.isPreview) return
+
         let conn = Connector.getInstance()
         console.log(this.props.value.id, this.sid, this.jobId)
         if (this.jobId === -1) return

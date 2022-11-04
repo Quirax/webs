@@ -183,7 +183,7 @@ export default function OverlayContainer(props) {
                 preview: props.preview,
                 isTemp: props.isTemp,
             }}>
-            <animated.div className='overlayContainer' style={styles} ref={props.referrer}>
+            <animated.div style={styles} ref={props.referrer}>
                 <ol>
                     <OverlayElems overlay={overlayList} isTemp={props.isTemp} />
                 </ol>
@@ -214,8 +214,14 @@ function OverlayElems(props) {
                     case OverlayType.BROWSER:
                         return (
                             <OVERLAY_PROPS.Consumer key={i}>
-                                {({ ratio }) => (
-                                    <BrowserOverlay idx={i} value={v} isTemp={props.isTemp} ratio={ratio} />
+                                {({ ratio, preview }) => (
+                                    <BrowserOverlay
+                                        idx={i}
+                                        value={v}
+                                        isTemp={props.isTemp}
+                                        ratio={ratio}
+                                        isPreview={preview}
+                                    />
                                 )}
                             </OVERLAY_PROPS.Consumer>
                         )
