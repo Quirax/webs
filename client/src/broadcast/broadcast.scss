@@ -217,11 +217,11 @@
                             }
 
                             &:last-child {
-                                display: inline-block;
                                 border-bottom: none;
 
                                 button {
                                     width: calc(50% - 4px);
+                                    display: inline-block;
 
                                     &:first-child {
                                         margin-right: 8px;

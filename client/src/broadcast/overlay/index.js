@@ -81,12 +81,12 @@ export const OverlayGenerator = (name, type) => {
         type,
         id: GenerateID(),
         params: {
-            background_color: '#000000',
+            background_color: '#FFFFFF',
             background_opacity: 0,
             opacity: 1,
             aspect_ratio: false,
             radius: 0,
-            border_color: '#000000',
+            border_color: '#FFFFFF',
             border_opacity: 1,
             border_width: 0,
             border_style: OverlayParam.border_style.SOLID,
@@ -117,7 +117,7 @@ export const OverlayGenerator = (name, type) => {
                     underline: false,
                     strike: false,
                 },
-                font_color: '#000000',
+                font_color: '#FFFFFF',
                 font_opacity: 1,
                 text_align_horizontal: OverlayParam.text_align_horizontal.LEFT,
                 text_align_vertical: OverlayParam.text_align_vertical.TOP,
@@ -127,6 +127,8 @@ export const OverlayGenerator = (name, type) => {
         case OverlayType.SHAPE:
             Object.assign(obj.params, {
                 shape_type: OverlayParam.shape_type.RECTANGLE,
+                background_opacity: 1,
+                triangle_position: 50,
             })
             break
         case OverlayType.IMAGE:

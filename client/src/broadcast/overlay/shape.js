@@ -30,7 +30,7 @@ export class ShapeOverlay extends Overlay {
 
             return (
                 <div
-                    referrer={props.referrer}
+                    ref={props.referrer}
                     style={{
                         height: props.height * props.ratio,
                         width: props.width * props.ratio,

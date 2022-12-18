@@ -512,10 +512,13 @@ class Description extends React.Component {
                     this.props.mode === ItemlistType.OVERLAYS
                         ? BI().currentScene()?.defaultCategory
                         : BI().info?.category
-                let category = ''
-                if (category_id) category = (await twitch.getCategoryWithID(category_id)).name || ''
+                let category = undefined
+                if (category_id) category = await twitch.getCategoryWithID(category_id)
                 this.setState({
-                    category: category,
+                    category: category?.name || '',
+                    category_image:
+                        category.box_art_url.replace('{width}', '52').replace('{height}', '72') ||
+                        'https://static-cdn.jtvnw.net/ttv-static/404_boxart-52x72.jpg',
                     title:
                         (this.props.mode === ItemlistType.OVERLAYS
                             ? BI().currentScene()?.defaultTitle
