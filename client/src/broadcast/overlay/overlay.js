@@ -1,6 +1,5 @@
 import React from 'react'
 import { OVERLAY_PROPS } from '.'
-import { Div } from '../../components'
 import Moveable from 'react-moveable'
 import BI from '../info'
 
@@ -89,6 +88,7 @@ export class Overlay extends React.Component {
 
     // FIXME : 크로마키 지원
 
+    // TODO: Redesign
     render() {
         return (
             <OVERLAY_PROPS.Consumer>
@@ -102,16 +102,14 @@ export class Overlay extends React.Component {
 
                     return (
                         <li onMouseDown={this.setFocus}>
-                            <Div
+                            <div
                                 className='overlay'
-                                display='inline-block'
-                                position='absolute'
-                                referrer={this.contentRef}
-                                height={(this.props.value.transform.height + this.sizeBias()) * ratio}
-                                width={(this.props.value.transform.width + this.sizeBias()) * ratio}
-                                top={this.props.value.transform.y * ratio}
-                                left={this.props.value.transform.x * ratio}
+                                ref={this.contentRef}
                                 style={{
+                                    height: (this.props.value.transform.height + this.sizeBias()) * ratio,
+                                    width: (this.props.value.transform.width + this.sizeBias()) * ratio,
+                                    top: this.props.value.transform.y * ratio,
+                                    left: this.props.value.transform.x * ratio,
                                     transform: `rotate(${this.props.value.transform.rotate}deg)`,
                                 }}
                                 onMouseDown={(e) => {
@@ -134,7 +132,7 @@ export class Overlay extends React.Component {
                                     isTemp={this.props.isTemp}
                                     isPreview={this.props.preview || props.preview}
                                 />
-                            </Div>
+                            </div>
                             <Moveable
                                 ref={this.moveableRef}
                                 hideDefaultLines={!moveable}

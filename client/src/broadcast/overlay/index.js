@@ -1,6 +1,5 @@
 import React from 'react'
 import BI, { GenerateID } from '../info'
-import { Ol } from '../../components'
 
 // HACK : 오버레이 추가
 import { TextOverlay } from './text'
@@ -10,7 +9,6 @@ import { VideoOverlay } from './video'
 import { WebcamOverlay, DisplayOverlay, BrowserOverlay } from './stream'
 import getTransitionEffect from '../transition'
 import { useSpring, animated } from 'react-spring'
-import { CANVAS_RECT } from '../index'
 
 export const OVERLAY_PROPS = React.createContext()
 
@@ -83,12 +81,12 @@ export const OverlayGenerator = (name, type) => {
         type,
         id: GenerateID(),
         params: {
-            background_color: '#000000',
+            background_color: '#FFFFFF',
             background_opacity: 0,
             opacity: 1,
             aspect_ratio: false,
             radius: 0,
-            border_color: '#000000',
+            border_color: '#FFFFFF',
             border_opacity: 1,
             border_width: 0,
             border_style: OverlayParam.border_style.SOLID,
@@ -119,7 +117,7 @@ export const OverlayGenerator = (name, type) => {
                     underline: false,
                     strike: false,
                 },
-                font_color: '#000000',
+                font_color: '#FFFFFF',
                 font_opacity: 1,
                 text_align_horizontal: OverlayParam.text_align_horizontal.LEFT,
                 text_align_vertical: OverlayParam.text_align_vertical.TOP,
@@ -129,6 +127,8 @@ export const OverlayGenerator = (name, type) => {
         case OverlayType.SHAPE:
             Object.assign(obj.params, {
                 shape_type: OverlayParam.shape_type.RECTANGLE,
+                background_opacity: 1,
+                triangle_position: 50,
             })
             break
         case OverlayType.IMAGE:
@@ -177,6 +177,7 @@ export default function OverlayContainer(props) {
 
     console.log(getTransitionEffect(BI().currentTransition()))
 
+    // TODO: [1] restyle
     return (
         <OVERLAY_PROPS.Provider
             value={{
@@ -184,48 +185,11 @@ export default function OverlayContainer(props) {
                 preview: props.preview,
                 isTemp: props.isTemp,
             }}>
-            <CANVAS_RECT.Consumer>
-                {({ width }) => (
-                    <animated.div
-                        className='overlayContainer'
-                        style={{
-                            position: 'absolute',
-                            height: '100%',
-                            width: '100%',
-                            overflow: 'hidden',
-                            // width: props.preview ? 1920 : width,
-                            // display: 'inline-block',
-                            // aspectRatio: '16/9',
-                            // top: props.preview ? 0 : '50%',
-                            // left: props.preview ? 0 : '50%',
-                            // transform: !props.preview && 'translate(-50%, -50%)',
-                            ...styles,
-                        }}
-                        ref={props.referrer}>
-                        {/* <Div
-                            // background='white'
-                            position='absolute'
-                            width={props.preview ? 1920 : width}
-                            // max-height={this.props.preview ? null : '100%'}
-                            display='inline-block'
-                            aspect-ratio='16/9'
-                            top={props.preview ? 0 : '50%'}
-                            left={props.preview ? 0 : '50%'}
-                            style={
-                                props.preview
-                                    ? null
-                                    : {
-                                          transform: 'translate(-50%, -50%)',
-                                      }
-                            }
-                            referrer={props.referrer}> */}
-                        <Ol>
-                            <OverlayElems overlay={overlayList} isTemp={props.isTemp} />
-                        </Ol>
-                        {/* </Div> */}
-                    </animated.div>
-                )}
-            </CANVAS_RECT.Consumer>
+            <animated.div style={styles} ref={props.referrer}>
+                <ol>
+                    <OverlayElems overlay={overlayList} isTemp={props.isTemp} />
+                </ol>
+            </animated.div>
         </OVERLAY_PROPS.Provider>
     )
 }
@@ -252,8 +216,14 @@ function OverlayElems(props) {
                     case OverlayType.BROWSER:
                         return (
                             <OVERLAY_PROPS.Consumer key={i}>
-                                {({ ratio }) => (
-                                    <BrowserOverlay idx={i} value={v} isTemp={props.isTemp} ratio={ratio} />
+                                {({ ratio, preview }) => (
+                                    <BrowserOverlay
+                                        idx={i}
+                                        value={v}
+                                        isTemp={props.isTemp}
+                                        ratio={ratio}
+                                        isPreview={preview}
+                                    />
                                 )}
                             </OVERLAY_PROPS.Consumer>
                         )

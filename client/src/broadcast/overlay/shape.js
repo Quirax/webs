@@ -1,5 +1,4 @@
 import React from 'react'
-import { Div } from '../../components'
 import { Overlay, HexToRGB } from './overlay'
 import { OverlayParam } from '.'
 
@@ -30,12 +29,11 @@ export class ShapeOverlay extends Overlay {
             }
 
             return (
-                <Div
-                    referrer={props.referrer}
-                    border='none'
-                    height={props.height * props.ratio}
-                    width={props.width * props.ratio}
+                <div
+                    ref={props.referrer}
                     style={{
+                        height: props.height * props.ratio,
+                        width: props.width * props.ratio,
                         backgroundColor: params.shape_type !== OverlayParam.shape_type.TRIANGLE && bgcs,
                         backgroundImage:
                             params.shape_type === OverlayParam.shape_type.TRIANGLE &&
@@ -59,7 +57,8 @@ export class ShapeOverlay extends Overlay {
                             props.ratio
                         }px`,
                         padding: `${params.padding * props.ratio}px`,
-                    }}></Div>
+                    }}
+                />
             )
         }
     }

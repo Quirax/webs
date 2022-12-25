@@ -1,0 +1,11 @@
+@import '../common.scss';
+
+#root > main {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    @include flex-align(center);
+    @include flex-justify(center);
+    flex-direction: column;
+    background-color: map-get($map: $color, $key: 'light');
+}

@@ -135,6 +135,14 @@ export default class Connector {
             })
         }
 
+        this.attachMicStream = (cb, reset) => {
+            attachStream('main', 'this', cb, reset, () => {
+                return new Promise((resolve, reject) => {
+                    navigator.mediaDevices.getUserMedia({ audio: true }).then(resolve).catch(reject)
+                })
+            })
+        }
+
         function assignBrowser(jobId, url, hls_url) {
             Connector.instance.browser[jobId] = {
                 url: url,
@@ -470,12 +478,8 @@ export default class Connector {
         }
     }
 
-    unregisterElement(type, oid, scene) {
-        if (
-            // scene === BI().getTempScene().id ||
-            scene === BI().currentScene().id
-        )
-            return
+    unregisterElement(type, oid, scene, force = false) {
+        if (scene === BI().currentScene().id && !force) return
 
         const id = `${scene}_${oid}`
         console.log(id)
@@ -494,7 +498,7 @@ export default class Connector {
                 })
 
             for (let e in socket[id].events) {
-                socket[id].elem.addEventListener(e, socket[id].events[e])
+                socket[id].elem.removeEventListener(e, socket[id].events[e])
             }
 
             delete socket[id]
@@ -526,6 +530,10 @@ export default class Connector {
         delete this.stream[id]
 
         this.socket.emit('disconnectStream', id)
+    }
+
+    detachMic() {
+        this.detachStream('main', 'this')
     }
 
     messageBrowser = (oid, scene, jobId, message) => {

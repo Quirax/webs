@@ -1,5 +1,5 @@
 import React from 'react'
-import { Button, Div } from '../components'
+import './landing.scss'
 import Twitch from '../twitch'
 
 export default class Landing extends React.Component {
@@ -13,17 +13,18 @@ export default class Landing extends React.Component {
         }
     }
 
+    // TODO: Redesign
     render() {
         return (
-            <Div height='100%' width='100%' flex flex-align='center' flex-justify='center' flex-direction='column'>
-                <Button
+            <main>
+                <button
                     onClick={() => {
                         const twitch = Twitch.getInstance()
                         twitch.requestAuth()
                     }}>
                     트위치로 로그인
-                </Button>
-            </Div>
+                </button>
+            </main>
         )
     }
 }

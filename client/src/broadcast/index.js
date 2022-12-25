@@ -1,8 +1,15 @@
+import './broadcast.scss'
 import React from 'react'
-import { Header, Main, Div, Footer, Article, CommonProps } from '../components'
-import './index.scss'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUserAlt } from '@fortawesome/free-solid-svg-icons'
+import {
+    faFloppyDisk,
+    faMicrophone,
+    faMicrophoneSlash,
+    faPlay,
+    faStop,
+    faTrash,
+    faUserAlt,
+} from '@fortawesome/free-solid-svg-icons'
 import Connector from '../connector'
 import OverlayContainer from './overlay'
 import Itemlist, { ItemlistType } from './itemlist'
@@ -19,6 +26,7 @@ export default class Broadcast extends React.Component {
         this.state = {
             canvasRect: { height: 1080, width: 1920 },
             isBroadcasting: false,
+            isMic: false,
             mode: '',
         }
 
@@ -70,6 +78,24 @@ export default class Broadcast extends React.Component {
         }
         this.toggleBroadcast = this.toggleBroadcast.bind(this)
 
+        this.toggleMic = async () => {
+            let connector = Connector.getInstance()
+            connector.connect()
+
+            if (this.state.isMic) {
+                connector.detachMic()
+                this.setState({
+                    isMic: false,
+                })
+            } else
+                await connector.attachMicStream((stream) => {
+                    this.setState({
+                        isMic: true,
+                    })
+                })
+        }
+        this.toggleMic = this.toggleMic.bind(this)
+
         this.changeMode = (mode) => {
             BI().afterChange()
             this.setState({
@@ -120,36 +146,33 @@ export default class Broadcast extends React.Component {
     render() {
         if (this.props.preview) {
             return (
-                <CommonProps>
+                <>
+                    <Microphoner />
                     <Containers
                         ratio={this.getCanvasRatio(1)}
                         referrer={this.workplaceRef}
                         tempReferrer={this.tempWorkplaceRef}
                         preview
                     />
-                </CommonProps>
+                </>
             )
         }
+
         return (
-            <CommonProps>
+            <>
                 <Toolbar
                     saveScene={this.saveScene}
                     toggleBroadcast={this.toggleBroadcast}
                     isBroadcasting={this.state.isBroadcasting}
+                    toggleMic={this.toggleMic}
+                    isMic={this.state.isMic}
                     mode={this.state.mode}
                     onClickTitle={this.onClickTitle}
                 />
-                <Div flex height='calc(100% - 65px)' width='100%'>
+                <div>
                     <Itemlist mode={this.state.mode} changeMode={this.changeMode} />
-                    <Main flex flex-direction='column' width='100%'>
-                        <Article
-                            position='relative'
-                            align='center'
-                            height='calc(100% - 65px)'
-                            style={{
-                                overflow: 'hidden',
-                                backgroundColor: 'gray',
-                            }}>
+                    <main>
+                        <article>
                             <CANVAS_RECT.Provider value={this.state.canvasRect}>
                                 <Containers
                                     ratio={this.getCanvasRatio(1)}
@@ -157,15 +180,37 @@ export default class Broadcast extends React.Component {
                                     preview={this.props.preview}
                                 />
                             </CANVAS_RECT.Provider>
-                        </Article>
-                        <Footer flex fixsize flex-justify='space-between' height='64' border-top='normal'>
+                        </article>
+                        <footer>
                             <Description mode={this.state.mode} />
                             <Status />
-                        </Footer>
-                    </Main>
-                </Div>
-            </CommonProps>
+                        </footer>
+                    </main>
+                </div>
+            </>
         )
+    }
+}
+
+class Microphoner extends React.Component {
+    state = {}
+
+    constructor() {
+        super()
+
+        this.AudioRef = React.createRef()
+    }
+
+    async componentDidMount() {
+        const connector = Connector.getInstance()
+
+        await connector.attachMicStream((stream) => {
+            this.AudioRef.current && (this.AudioRef.current.srcObject = stream)
+        })
+    }
+
+    render() {
+        return <audio alt='mic' ref={this.AudioRef} autoPlay muted={false} />
     }
 }
 
@@ -186,18 +231,13 @@ class Containers extends React.Component {
         return (
             <CANVAS_RECT.Consumer>
                 {({ width }) => (
-                    <Div
+                    <div
                         className='overlayContainer'
-                        background='black'
-                        position='absolute'
-                        width={width}
-                        display='inline-block'
-                        aspect-ratio='16/9'
-                        top={this.props.preview ? 0 : '50%'}
-                        left={this.props.preview ? 0 : '50%'}
-                        referrer={this.props.referrer}
+                        ref={this.props.referrer}
                         style={{
-                            overflow: 'hidden',
+                            width: width,
+                            top: this.props.preview ? 0 : '50%',
+                            left: this.props.preview ? 0 : '50%',
                             transform: !this.props.preview && 'translate(-50%, -50%)',
                         }}>
                         <OverlayContainer
@@ -214,7 +254,7 @@ class Containers extends React.Component {
                             preview={this.props.preview}
                             isTransition={this.state.isTransition}
                         />
-                    </Div>
+                    </div>
                 )}
             </CANVAS_RECT.Consumer>
         )
@@ -222,6 +262,10 @@ class Containers extends React.Component {
 }
 
 class Toolbar extends React.Component {
+    state = {
+        profile_img: '',
+    }
+
     constructor() {
         super()
 
@@ -230,28 +274,43 @@ class Toolbar extends React.Component {
         })
     }
 
+    componentDidMount() {}
+
     render() {
+        function getWidth(s) {
+            let i, b, c
+            for (b = i = 0; !isNaN((c = s.charCodeAt(i++))); b += c >> 7 ? 2 : 1);
+            return b + 2
+        }
         function CurrentScene({ mode, saveScene, onClickTitle }) {
             switch (mode) {
                 case ItemlistType.TRANSITIONS:
                     return <h1 onClick={onClickTitle}>장면 전환</h1>
                 case ItemlistType.OVERLAYS:
+                    const placeholder = '장면 이름'
                     return (
                         <>
                             <input
                                 type='text'
                                 defaultValue={BI().currentScene().name}
+                                placeholder={placeholder}
+                                style={{
+                                    width: `${getWidth(BI().currentScene().name || placeholder)}ch`,
+                                }}
                                 onChange={(e) => {
                                     BI().currentScene().name = e.target.value
+                                    e.target.style.width = `${getWidth(e.target.value || placeholder)}ch`
                                 }}
                             />
-                            <button onClick={saveScene}>저장</button>
+                            <button onClick={saveScene}>
+                                <FontAwesomeIcon icon={faFloppyDisk} />
+                            </button>
                             <button
                                 onClick={() => {
                                     BI().deleteScene(BI().info.scene.indexOf(BI().currentScene()))
                                     saveScene()
                                 }}>
-                                삭제
+                                <FontAwesomeIcon icon={faTrash} />
                             </button>
                         </>
                     )
@@ -260,21 +319,37 @@ class Toolbar extends React.Component {
             }
         }
 
+        const twitch = Twitch.getInstance()
+
         return (
-            <Header flex fixsize flex-justify='space-between' flex-align='center' border-bottom='normal' height='64'>
-                <Div flex fixsize padding-left='8'>
+            <header>
+                <div>
                     <CurrentScene
                         mode={this.props.mode}
                         saveScene={this.props.saveScene}
                         onClickTitle={this.props.onClickTitle}
                     />
-                </Div>
-                <Div fixsize padding-right='8'>
-                    <button onClick={this.props.toggleBroadcast}>
-                        {this.props.isBroadcasting ? '방송 종료' : '방송 시작'}
+                </div>
+                <div>
+                    <button onClick={this.props.toggleMic}>
+                        <FontAwesomeIcon icon={this.props.isMic ? faMicrophone : faMicrophoneSlash} />
                     </button>
-                </Div>
-            </Header>
+                    <button
+                        onClick={this.props.toggleBroadcast}
+                        alt={this.props.isBroadcasting ? '방송 중지' : '방송 시작'}>
+                        <FontAwesomeIcon icon={this.props.isBroadcasting ? faStop : faPlay} />
+                    </button>
+                    <button>
+                        <img
+                            src={
+                                twitch.user.profile_image_url ||
+                                'https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png'
+                            }
+                            alt='twitch profile'
+                        />
+                    </button>
+                </div>
+            </header>
         )
     }
 }
@@ -284,6 +359,7 @@ class Description extends React.Component {
         category: '',
         suggestions: [],
         title: '',
+        category_image: 'https://static-cdn.jtvnw.net/ttv-static/404_boxart-52x72.jpg',
     }
 
     constructor() {
@@ -343,28 +419,8 @@ class Description extends React.Component {
         const getSuggestion = (suggestion) => suggestion.name
 
         const renderSuggestion = (suggestion, { isHighlighted }) => (
-            <div
-                style={{
-                    backgroundColor: isHighlighted ? 'blue' : null,
-                    color: isHighlighted ? 'white' : null,
-                    lineHeight: 1.2,
-                    padding: '8px',
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                    whiteSpace: 'nowrap',
-                    borderTop: suggestion.id === this.state.suggestions[0].id ? null : '1px solid black',
-                }}>
-                <img
-                    src={suggestion.box_art_url}
-                    alt={suggestion.name}
-                    style={{
-                        height: '48px',
-                        padding: '4px',
-                        border: '1px solid black',
-                        marginRight: '8px',
-                        verticalAlign: 'middle',
-                    }}
-                />
+            <div className={['autosuggest-suggestion', isHighlighted ? 'autosuggest-highlighted' : null].join(' ')}>
+                <img src={suggestion.box_art_url} alt={suggestion.name} />
                 {suggestion.name}
             </div>
         )
@@ -381,45 +437,43 @@ class Description extends React.Component {
                     title: BI().info.title,
                 })
             }
+            this.setState({
+                category_image: suggestion.box_art_url,
+            })
             BI().afterChange()
         }
 
         this.render = () => {
             return (
-                <Div flex flex-direction='column' flex-justify='center' padding-left='8'>
-                    <input
-                        type='text'
-                        placeholder='방송제목'
-                        value={this.state.title || ''}
-                        onChange={onChangeTitle}
-                        onBlur={onBlurTitle}
-                    />
-                    <Autosuggest
-                        suggestions={this.state.suggestions}
-                        onSuggestionsFetchRequested={onFetchReq}
-                        onSuggestionsClearRequested={onClearReq}
-                        getSuggestionValue={getSuggestion}
-                        renderSuggestion={renderSuggestion}
-                        onSuggestionSelected={onSelected}
-                        highlightFirstSuggestion={true}
-                        inputProps={{
-                            placeholder: '카테고리',
-                            value: this.state.category,
-                            onChange: onChangeCategory,
-                        }}
-                        theme={{
-                            suggestionsContainerOpen: {
-                                position: 'fixed',
-                                bottom: `${8 + 16 * 1.2 + 2 + 2}px`,
-                                border: '1px solid black',
-                                backgroundColor: 'white',
-                                maxHeight: '300px',
-                                width: '250px',
-                                overflowY: 'scroll',
-                            },
-                        }}
-                    />
-                </Div>
+                <div>
+                    <img src={this.state.category_image} alt={this.state.category} />
+                    <div>
+                        <input
+                            type='text'
+                            placeholder='방송제목'
+                            value={this.state.title || ''}
+                            onChange={onChangeTitle}
+                            onBlur={onBlurTitle}
+                        />
+                        <Autosuggest
+                            suggestions={this.state.suggestions}
+                            onSuggestionsFetchRequested={onFetchReq}
+                            onSuggestionsClearRequested={onClearReq}
+                            getSuggestionValue={getSuggestion}
+                            renderSuggestion={renderSuggestion}
+                            onSuggestionSelected={onSelected}
+                            highlightFirstSuggestion={true}
+                            inputProps={{
+                                placeholder: '카테고리',
+                                value: this.state.category,
+                                onChange: onChangeCategory,
+                            }}
+                            theme={{
+                                suggestionsContainerOpen: 'autosuggest-suggestionsContainerOpen',
+                            }}
+                        />
+                    </div>
+                </div>
             )
         }
 
@@ -436,8 +490,13 @@ class Description extends React.Component {
             conn.setDescription(desc)
             ;(async () => {
                 const twitch = Twitch.getInstance()
+                const category = await twitch.getCategoryWithID(desc.category_id)
+                console.log(category)
                 this.setState({
-                    category: (await twitch.getCategoryWithID(desc.category_id)).name || '',
+                    category: category.name || '',
+                    category_image:
+                        category.box_art_url.replace('{width}', '52').replace('{height}', '72') ||
+                        'https://static-cdn.jtvnw.net/ttv-static/404_boxart-52x72.jpg',
                     title: desc.title,
                 })
                 await twitch.setDescription(desc)
@@ -453,10 +512,13 @@ class Description extends React.Component {
                     this.props.mode === ItemlistType.OVERLAYS
                         ? BI().currentScene()?.defaultCategory
                         : BI().info?.category
-                let category = ''
-                if (category_id) category = (await twitch.getCategoryWithID(category_id)).name || ''
+                let category = undefined
+                if (category_id) category = await twitch.getCategoryWithID(category_id)
                 this.setState({
-                    category: category,
+                    category: category?.name || '',
+                    category_image:
+                        category.box_art_url.replace('{width}', '52').replace('{height}', '72') ||
+                        'https://static-cdn.jtvnw.net/ttv-static/404_boxart-52x72.jpg',
                     title:
                         (this.props.mode === ItemlistType.OVERLAYS
                             ? BI().currentScene()?.defaultTitle
@@ -527,8 +589,7 @@ class Status extends React.Component {
             seconds = Math.floor((timeElapsed % 3600) % 60)
 
         return (
-            <Div flex flex-direction='column' flex-justify='center' padding-right='8' align='right'>
-                {/* FIXME: 방송 시 방송 통계와 동기화 */}
+            <div>
                 <div
                     style={{
                         color: this.state.timeStarted && 'red',
@@ -542,7 +603,7 @@ class Status extends React.Component {
                         String(seconds).padStart(2, '0'),
                     ].join(':')}
                 </div>
-            </Div>
+            </div>
         )
     }
 }
